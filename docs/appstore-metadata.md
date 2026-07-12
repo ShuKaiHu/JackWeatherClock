@@ -1,216 +1,119 @@
-# App Store Connect Metadata / App Store Connect 素材
+# Rainy Clock App Store Metadata
 
 ## App Information
 
-| Field | Value |
-|-------|-------|
-| App Name | Rainy Clock |
-| Subtitle | Rain-aware alarm for commuters |
-| Bundle ID | com.shukaihu.RainyClock |
-| SKU | rainyclock-1 |
-| Primary Category | Utilities |
-| Content Rating | Expected 4+ |
-| Privacy Policy URL | `https://shukaihu.github.io/RainyClock/privacy-policy.html` |
-| Support URL | `https://shukaihu.github.io/RainyClock/support.html` |
-| Marketing URL | Optional: `https://shukaihu.github.io/RainyClock/` |
-| Copyright | TODO: `2026 Shu-Kai Hu` or legal entity name |
-| Price | TODO: Free or paid tier |
-
----
+| Field | English | 繁體中文 |
+| --- | --- | --- |
+| App Name | Rainy Clock | 雨天鬧鐘 |
+| Subtitle | Rain-aware commute alarm | 通勤雨天智慧鬧鐘 |
+| Category | Weather | 天氣 |
+| Secondary Category | Utilities | 工具程式 |
+| Price | Free | 免費 |
+| Copyright | 2026 Shu-Kai Hu | 2026 Shu-Kai Hu |
+| Support URL | `https://shukaihu.github.io/RainyClock/support.html` | `https://shukaihu.github.io/RainyClock/support.html` |
+| Privacy Policy URL | `https://shukaihu.github.io/RainyClock/privacy-policy.html` | `https://shukaihu.github.io/RainyClock/privacy-policy.html` |
 
 ## Promotional Text
 
-English:
-```
-Wake up earlier only when rain is expected along your commute route.
-```
+### English
 
-繁體中文：
-```
-通勤路線可能下雨時，自動把鬧鐘提前。
-```
+Rainy Clock checks your commute weather and helps schedule an earlier alarm when rain may slow you down.
 
----
+### 繁體中文
 
-## Description (English — 4000 chars max)
+雨天鬧鐘會檢查通勤天氣，當雨勢可能影響出門時間時，協助你提前安排鬧鐘。
 
-```
-Rainy Clock sets your morning alarm earlier when it's going to rain on your commute.
+## Description
 
-HOW IT WORKS
-Enter your home and work address, pick your commute mode (car, scooter, or walking), and set your normal alarm time. Then tell the app how early you want to wake up on rainy days, and a rain probability threshold.
+### English
 
-When you tap "Schedule Smart Alarm," the app checks the weather forecast along your commute route using Apple Weather. If any route segment looks rainy, it schedules your alarm early.
+Rainy Clock is a simple commute alarm for rainy mornings.
 
-FEATURES
-• Route-based forecast — checks the commute path, not just a single city
-• Supports car, scooter, and walking modes
-• Adjustable lead time: 1 to 120 minutes earlier
-• Adjustable rain probability threshold: 10% to 90%
-• Weekday selection
-• Custom alarm sounds with preview
-• English and Traditional Chinese interface
-• Weather data provided by Apple Weather
+Set your home and work addresses, choose a commute mode, then set your normal alarm time. Rainy Clock previews your route, checks Apple Weather for your home and office areas around the alarm check time, and schedules a local notification alarm earlier when the rain chance exceeds your threshold.
 
-PRIVACY
-Your settings are stored on your device. The app has no account system, no advertising SDK, and no analytics SDK. Weather and routing queries are handled through Apple's services.
+Key features:
+- Route setup with Apple Maps preview
+- Home and office weather checks powered by Apple Weather
+- Adjustable rain lead time from 1 to 60 minutes
+- Adjustable rain probability threshold
+- Weekday alarm selection
+- Built-in alarm sounds with preview
+- Local notifications for scheduled alarms
 
-REQUIREMENTS
-• iPhone with iOS 17.0 or later
-• Internet connection for route and weather data
-• Notifications enabled for alarm alerts
-```
+Rainy Clock does not require an account and does not run its own backend server.
 
----
+### 繁體中文
 
-## Description (Traditional Chinese / 繁體中文)
+雨天鬧鐘是一個為雨天通勤設計的簡單鬧鐘。
 
-```
-雨天鬧鐘：通勤路線預報下雨時，自動把鬧鐘提前。
+設定住家與工作地址、選擇通勤方式，再設定平常的鬧鐘時間。雨天鬧鐘會預覽通勤路線，並在鬧鐘判斷時間附近透過 Apple Weather 檢查住家與公司附近的天氣；如果降雨機率超過你設定的門檻，就會提前安排本機通知鬧鐘。
 
-如何使用
-輸入住家和公司地址，選擇通勤方式（開車、機車或步行），設定平常鬧鐘時間，再告訴 App 雨天要提前幾分鐘，以及降雨機率門檻。
+主要功能：
+- 使用 Apple Maps 預覽通勤路線
+- 透過 Apple Weather 檢查住家與公司附近天氣
+- 雨天提前時間可在 1 到 60 分鐘間調整
+- 可調整降雨機率門檻
+- 可選擇每週哪些天響鈴
+- 內建多種鬧鈴音效並支援試聽
+- 使用本機通知排程鬧鐘
 
-點下「排程智慧鬧鐘」後，App 會透過 Apple Weather 檢查你通勤路線上的天氣預報。只要任一路段看起來會下雨，就自動把鬧鐘提前排程。
+雨天鬧鐘不需要註冊帳號，也沒有自建後端伺服器。
 
-功能特色
-• 以通勤路線為依據的預報，而非只看單一城市
-• 支援開車、機車和步行模式
-• 可調整提前時間：1 到 120 分鐘
-• 可調整降雨門檻：10% 到 90%
-• 可選擇每週響鈴日
-• 可選擇與試聽鬧鐘音效
-• 支援英文與繁體中文介面
-• 天氣資料由 Apple Weather 提供
+## Keywords
 
-隱私保護
-你的設定會儲存在裝置上。App 沒有帳號系統、沒有廣告 SDK，也沒有分析 SDK。路線與天氣查詢會透過 Apple 的服務處理。
+### English
 
-系統需求
-• iPhone，iOS 17.0 或更新版本
-• 需要網路連線以取得路線和天氣資料
-• 需要開啟通知權限以收到鬧鐘提醒
-```
+rain alarm,weather alarm,commute alarm,smart alarm,rain,weather,alarm clock,commute
 
----
+### 繁體中文
 
-## Keywords (English — 100 chars max)
+雨天鬧鐘,天氣鬧鐘,通勤鬧鐘,智慧鬧鐘,降雨,天氣,鬧鐘,通勤
 
-```
-weather,alarm,rain,commute,clock,smart alarm,weather alarm,rain alert,forecast
-```
+## Version 1.3 “What’s New”
 
-## Keywords (Traditional Chinese — 100 chars max)
+### English
 
-```
-天氣,鬧鐘,下雨,通勤,雨天,智慧鬧鐘,氣象,路線,提醒,預報
-```
+- Improved address validation and route preview handling.
+- Updated route weather checks to use Apple Weather.
+- Added clearer actual-address hints when a typed address resolves to a suggested location.
+- Refined alarm lead-time controls and route/alarm layout.
 
----
+### 繁體中文
 
-## What's New (Version 1.0)
+- 改善地址驗證與路線預覽處理。
+- 路線天氣改用 Apple Weather。
+- 當輸入地址被解析為建議地點時，顯示更清楚的實際使用地址提示。
+- 調整雨天提前時間控制與路線／鬧鐘頁面排版。
 
-English:
-```
-Initial release. Rainy Clock checks weather along your commute route and helps schedule an earlier alarm on rainy days.
-```
+## App Review Notes
 
-繁體中文：
-```
-初始版本。雨天鬧鐘會檢查通勤路線的天氣預報，在可能下雨時協助排程提前鬧鐘。
-```
+### English
 
----
+Rainy Clock uses Apple Maps for route preview and Apple Weather / WeatherKit for home and office weather checks. Alarm scheduling uses local notifications only. The app includes a Google AdMob banner ad at the bottom of the screen. No login is required.
 
-## Review Notes
+### 繁體中文
 
-English:
-```
-Rainy Clock does not require an account. To test:
-1. Allow notifications when prompted.
-2. Enter a home address and work address.
-3. Select car, scooter, or walking.
-4. Adjust the alarm time, rain lead time, rain threshold, weekdays, and alarm sound.
-5. Tap Schedule Smart Alarm.
+雨天鬧鐘使用 Apple Maps 顯示路線預覽，並使用 Apple Weather / WeatherKit 檢查住家與公司附近天氣。鬧鐘排程只使用本機通知。App 底部有 Google AdMob 橫幅廣告。不需要登入。
 
-The app uses Apple Maps for route preview and Apple Weather / WeatherKit for route weather in Release builds. Weather data attribution is shown in-app.
-```
+## Privacy Nutrition Label Draft
 
-繁體中文：
-```
-雨天鬧鐘不需要帳號。測試方式：
-1. 允許通知權限。
-2. 輸入住家地址與公司地址。
-3. 選擇開車、機車或步行。
-4. 調整鬧鐘時間、雨天提前時間、降雨門檻、星期與鬧鐘音效。
-5. 點選「排程智慧鬧鐘」。
+Final answers should be verified in App Store Connect before submission.
 
-Release builds 會使用 Apple Maps 預覽路線，並透過 Apple Weather / WeatherKit 查詢路線天氣。App 內已顯示天氣資料來源標示。
-```
+| Area | Draft Answer |
+| --- | --- |
+| Account creation | No |
+| User-generated content | No |
+| Location data | Used for app functionality when resolving route/weather locations |
+| Contact info | Not collected by the app |
+| Backend server | None |
+| Third-party SDKs | Google Mobile Ads SDK, Google User Messaging Platform |
+| Advertising | Google AdMob banner ads |
+| Tracking | Confirm based on final AdMob/UMP consent and IDFA configuration before submission |
 
----
+## Screenshots Still Needed
 
-## Privacy Nutrition Label (Recommended App Store Connect answers)
+Prepare screenshots for the required device sizes in App Store Connect:
 
-Recommended conservative answer:
-
-- Tracking: No
-- Analytics: No
-- Advertising: No
-- Precise location/address use: App Functionality only
-- Linked to user by developer: No
-
-Suggested data types if App Store Connect asks:
-
-- Location → Precise Location
-  - Purpose: App Functionality
-  - Linked to user: No
-  - Used for tracking: No
-- Contact Info → Physical Address / Other User Contact Info, only if the form treats typed home/work addresses as collected data
-  - Purpose: App Functionality
-  - Linked to user: No
-  - Used for tracking: No
-
-Rationale:
-
-- The app has no developer backend, no account system, no analytics SDK, and no advertising SDK.
-- Home/work address text is stored locally with `UserDefaults`.
-- Address text and derived coordinates are used to request Apple Maps / WeatherKit functionality.
-
-繁體中文建議：
-
-- 追蹤：否
-- 分析：否
-- 廣告：否
-- 精確位置 / 地址使用：僅用於 App 功能
-- 是否由開發者連結到使用者：否
-
----
-
-## Screenshot States to Capture
-
-### Screenshot 1 — Route tab / 路線分頁
-- Shows home/work address fields, route mode selector, route preview map, and route weather cards.
-
-### Screenshot 2 — Alarm tab / 鬧鐘分頁
-- Shows weekday selector, alarm time, rain lead time, rain threshold, alarm sound, and schedule button.
-
-### Screenshot 3 — Scheduled result / 排程結果
-- Shows a completed smart alarm schedule and route weather result.
-
-Recommended: capture both English and Traditional Chinese screenshots if both localizations are submitted.
-
----
-
-## Privacy Policy / Support Hosting Options
-
-**Option A — GitHub Pages**
-1. Push `docs/privacy-policy.html`, `docs/support.html`, and `docs/index.html` to GitHub.
-2. GitHub repo Settings → Pages → Source: Deploy from branch → `/docs`.
-3. Use these URLs in App Store Connect:
-   - `https://shukaihu.github.io/RainyClock/privacy-policy.html`
-   - `https://shukaihu.github.io/RainyClock/support.html`
-
-**Option B — custom domain later**
-1. Add `www.shukaihu.com` as the GitHub Pages custom domain.
-2. Update App Store Connect URLs only after the custom domain is live.
+- Route tab with valid addresses, route preview, and route weather.
+- Alarm tab with weekday selection, alarm time, rain lead-time slider, rain threshold, and sound picker.
+- Optional: address validation state showing the actual address in use.

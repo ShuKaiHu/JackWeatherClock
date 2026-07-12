@@ -1,4 +1,5 @@
 import AVFoundation
+import MapKit
 import SwiftUI
 
 struct ContentView: View {
@@ -12,19 +13,26 @@ struct ContentView: View {
     var showsWeatherAttribution = false
 
     var body: some View {
+        TabView(selection: $selectedTab) {
+            RouteTabView(
+                viewModel: viewModel,
+                showsWeatherAttribution: showsWeatherAttribution
+            )
+                .tag(AppTab.route)
+
+            AlarmTabView(viewModel: viewModel)
+            .tag(AppTab.alarm)
+        }
+        .tabViewStyle(.page(indexDisplayMode: .never))
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            bottomControls
+        }
+        .background(Color.appBackground.ignoresSafeArea())
+        .preferredColorScheme(.dark)
+    }
+
+    private var bottomControls: some View {
         VStack(spacing: 0) {
-            TabView(selection: $selectedTab) {
-                RouteTabView(
-                    viewModel: viewModel,
-                    showsWeatherAttribution: showsWeatherAttribution
-                )
-                    .tag(AppTab.route)
-
-                AlarmTabView(viewModel: viewModel)
-                .tag(AppTab.alarm)
-            }
-            .tabViewStyle(.page(indexDisplayMode: .never))
-
             HStack(spacing: 0) {
                 tabButton(
                     title: String(localized: "tab_route"),
@@ -37,12 +45,25 @@ struct ContentView: View {
                     tab: .alarm
                 )
             }
-            .padding(.top, 8)
-            .padding(.bottom, 6)
-            .background(Color.appCardBackground)
+            .padding(6)
+            .background(.ultraThinMaterial, in: Capsule())
+            .background(Color.white.opacity(0.04), in: Capsule())
+            .overlay(
+                Capsule()
+                    .stroke(Color.white.opacity(0.16), lineWidth: 1)
+            )
+            .shadow(color: .black.opacity(0.35), radius: 14, x: 0, y: 8)
+            .padding(.horizontal, 34)
+            .padding(.top, 12)
+            .padding(.bottom, 22)
+
+            if !AppEnvironment.isRunningTests {
+                AdMobBannerView(adUnitID: AppEnvironment.adMobBannerAdUnitID)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.appBackground)
+            }
         }
-        .background(Color.appBackground.ignoresSafeArea())
-        .preferredColorScheme(.dark)
+        .background(Color.appBackground)
     }
 
     private func tabButton(title: String, systemImage: String, tab: AppTab) -> some View {
@@ -57,7 +78,16 @@ struct ContentView: View {
                 Text(title)
                     .font(.caption)
             }
+            .padding(.vertical, 8)
             .frame(maxWidth: .infinity)
+            .background(
+                Group {
+                    if selectedTab == tab {
+                        Capsule()
+                            .fill(Color.white.opacity(0.14))
+                    }
+                }
+            )
             .foregroundStyle(selectedTab == tab ? Color.accentColor : Color.secondary)
         }
         .buttonStyle(.plain)
@@ -71,8 +101,15 @@ private struct RouteTabView: View {
         .walking
     ]
 
+    private enum AddressField: Hashable {
+        case home
+        case work
+    }
+
     @ObservedObject var viewModel: AlarmViewModel
     let showsWeatherAttribution: Bool
+    @StateObject private var addressCompleter = AddressSearchCompleter()
+    @FocusState private var focusedAddressField: AddressField?
     @State private var previewTask: Task<Void, Never>?
     @State private var weatherTask: Task<Void, Never>?
 
@@ -85,13 +122,33 @@ private struct RouteTabView: View {
                             AddressFieldRow(
                                 label: String(localized: "home_label"),
                                 placeholder: String(localized: "home_address"),
-                                text: $viewModel.settings.homeAddress
+                                text: $viewModel.settings.homeAddress,
+                                isInvalid: viewModel.invalidAddressFields.contains(.home),
+                                suggestedMatch: viewModel.suggestedAddressMatches[CommuteAddressField.home],
+                                focusedField: $focusedAddressField,
+                                field: .home,
+                                onSubmit: submitAddressSearch,
+                                onClear: { clearAddress(.home) },
+                                onConfirmSuggestion: { viewModel.confirmSuggestedAddress(.home) }
                             )
                             AddressFieldRow(
                                 label: String(localized: "work_label"),
                                 placeholder: String(localized: "work_address"),
-                                text: $viewModel.settings.workAddress
+                                text: $viewModel.settings.workAddress,
+                                isInvalid: viewModel.invalidAddressFields.contains(.work),
+                                suggestedMatch: viewModel.suggestedAddressMatches[CommuteAddressField.work],
+                                focusedField: $focusedAddressField,
+                                field: .work,
+                                onSubmit: submitAddressSearch,
+                                onClear: { clearAddress(.work) },
+                                onConfirmSuggestion: { viewModel.confirmSuggestedAddress(.work) }
                             )
+
+                            if focusedAddressField != nil && !addressCompleter.completions.isEmpty {
+                                AddressCompletionList(completions: addressCompleter.completions) { completion in
+                                    selectAddressCompletion(completion)
+                                }
+                            }
                         }
 
                         HStack(spacing: 12) {
@@ -116,23 +173,34 @@ private struct RouteTabView: View {
 
                             RoutePreviewMapView(preview: preview)
 
-                            HStack(spacing: 12) {
-                                MetricCard(
-                                    title: String(localized: "route_preview_travel_time"),
-                                    value: String.localizedStringWithFormat(
-                                        String(localized: "route_preview_minutes_value"),
-                                        preview.expectedTravelTimeMinutes
+                            if let expectedTravelTimeMinutes = preview.expectedTravelTimeMinutes,
+                               let distanceKilometers = preview.distanceKilometers {
+                                HStack(spacing: 12) {
+                                    MetricCard(
+                                        title: String(localized: "route_preview_travel_time"),
+                                        value: String.localizedStringWithFormat(
+                                            String(localized: "route_preview_minutes_value"),
+                                            expectedTravelTimeMinutes
+                                        )
                                     )
-                                )
-                                MetricCard(
-                                    title: String(localized: "route_preview_distance"),
-                                    value: String.localizedStringWithFormat(
-                                        String(localized: "route_preview_distance_value"),
-                                        preview.distanceKilometers
+                                    MetricCard(
+                                        title: String(localized: "route_preview_distance"),
+                                        value: String.localizedStringWithFormat(
+                                            String(localized: "route_preview_distance_value"),
+                                            distanceKilometers
+                                        )
                                     )
-                                )
+                                }
                             }
+
+                            Text(viewModel.routePreviewStatusMessage)
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
                         }
+                    } else if viewModel.isPreviewingRoute || viewModel.routePreviewStatusMessage != String(localized: "route_preview_empty") {
+                        Text(viewModel.routePreviewStatusMessage)
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
                     }
 
                     VStack(alignment: .leading, spacing: 14) {
@@ -165,11 +233,19 @@ private struct RouteTabView: View {
                     }
                 }
                 .padding(.horizontal, 20)
-                .padding(.vertical, 20)
+                .padding(.top, 0)
+                .padding(.bottom, 20)
             }
             .navigationTitle(String(localized: "tab_route"))
-            .toolbarBackground(.visible, for: .navigationBar)
-            .toolbarBackground(Color.appBackground, for: .navigationBar)
+            .toolbar(.hidden, for: .navigationBar)
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("done") {
+                        focusedAddressField = nil
+                    }
+                }
+            }
             .background(Color.appBackground)
         }
         .onAppear {
@@ -181,13 +257,14 @@ private struct RouteTabView: View {
             previewTask?.cancel()
             weatherTask?.cancel()
         }
+        .onChange(of: focusedAddressField) { _, _ in
+            updateAddressCompletions()
+        }
         .onChange(of: viewModel.settings.homeAddress) { _, _ in
-            scheduleRoutePreview()
-            scheduleRouteWeather()
+            updateAddressCompletions()
         }
         .onChange(of: viewModel.settings.workAddress) { _, _ in
-            scheduleRoutePreview()
-            scheduleRouteWeather()
+            updateAddressCompletions()
         }
         .onChange(of: viewModel.settings.commuteMode) { _, _ in
             normalizeRouteMode()
@@ -195,6 +272,9 @@ private struct RouteTabView: View {
             scheduleRouteWeather()
         }
         .onChange(of: viewModel.settings.alarmTime) { _, _ in
+            scheduleRouteWeather()
+        }
+        .onChange(of: viewModel.settings.selectedWeekdays) { _, _ in
             scheduleRouteWeather()
         }
     }
@@ -207,7 +287,60 @@ private struct RouteTabView: View {
         viewModel.settings.commuteMode = .car
     }
 
-    private func scheduleRoutePreview() {
+    private func submitAddressSearch() {
+        focusedAddressField = nil
+        addressCompleter.clear()
+        scheduleRoutePreview(delay: .zero)
+        scheduleRouteWeather(delay: .zero)
+    }
+
+    private func clearAddress(_ field: AddressField) {
+        switch field {
+        case .home:
+            viewModel.settings.homeAddress = ""
+            viewModel.clearAddressState(.home)
+        case .work:
+            viewModel.settings.workAddress = ""
+            viewModel.clearAddressState(.work)
+        }
+
+        focusedAddressField = field
+        addressCompleter.clear()
+        previewTask?.cancel()
+        weatherTask?.cancel()
+        viewModel.clearRoutePreview()
+        viewModel.clearRouteWeather()
+    }
+
+    private func selectAddressCompletion(_ completion: MKLocalSearchCompletion) {
+        let address = [completion.title, completion.subtitle]
+            .filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+            .joined(separator: ", ")
+
+        switch focusedAddressField {
+        case .home:
+            viewModel.setAddressFromSuggestion(address, field: .home)
+        case .work:
+            viewModel.setAddressFromSuggestion(address, field: .work)
+        case nil:
+            break
+        }
+
+        submitAddressSearch()
+    }
+
+    private func updateAddressCompletions() {
+        switch focusedAddressField {
+        case .home:
+            addressCompleter.update(query: viewModel.settings.homeAddress)
+        case .work:
+            addressCompleter.update(query: viewModel.settings.workAddress)
+        case nil:
+            addressCompleter.clear()
+        }
+    }
+
+    private func scheduleRoutePreview(delay: Duration = .milliseconds(700)) {
         previewTask?.cancel()
         previewTask = Task {
             guard viewModel.canPreviewRoute else {
@@ -217,16 +350,18 @@ private struct RouteTabView: View {
                 return
             }
 
-            try? await Task.sleep(for: .milliseconds(700))
-            guard !Task.isCancelled else {
-                return
+            if delay > .zero {
+                try? await Task.sleep(for: delay)
+                guard !Task.isCancelled else {
+                    return
+                }
             }
 
             await viewModel.previewRoute()
         }
     }
 
-    private func scheduleRouteWeather() {
+    private func scheduleRouteWeather(delay: Duration = .milliseconds(700)) {
         weatherTask?.cancel()
         weatherTask = Task {
             guard viewModel.canPreviewRoute else {
@@ -236,9 +371,11 @@ private struct RouteTabView: View {
                 return
             }
 
-            try? await Task.sleep(for: .milliseconds(700))
-            guard !Task.isCancelled else {
-                return
+            if delay > .zero {
+                try? await Task.sleep(for: delay)
+                guard !Task.isCancelled else {
+                    return
+                }
             }
 
             await viewModel.refreshRouteWeather()
@@ -250,7 +387,6 @@ private struct AlarmTabView: View {
     private let weekdayOrder = [1, 2, 3, 4, 5, 6, 7]
 
     @ObservedObject var viewModel: AlarmViewModel
-    @State private var alarmEnabled = true
     @State private var showsTimePicker = false
     @State private var audioPlayer: AVAudioPlayer?
     @State private var previewingSound: CommuteAlarmSettings.AlarmSound?
@@ -260,56 +396,48 @@ private struct AlarmTabView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
-                    VStack(alignment: .leading, spacing: 14) {
-                        Text("alarm")
-                            .font(.title.weight(.bold))
-
-                        VStack(alignment: .leading, spacing: 20) {
-                            HStack(alignment: .top) {
-                                HStack(spacing: 14) {
-                                    ForEach(weekdayOrder, id: \.self) { weekday in
-                                        Button {
-                                            toggleWeekday(weekday)
-                                        } label: {
-                                            Text(label(for: weekday))
-                                                .font(.title3.weight(.semibold))
-                                                .foregroundStyle(viewModel.settings.selectedWeekdays.contains(weekday) ? .white : .secondary)
-                                        }
-                                        .buttonStyle(.plain)
-                                    }
+                    VStack(alignment: .leading, spacing: 20) {
+                        HStack(spacing: 12) {
+                            ForEach(weekdayOrder, id: \.self) { weekday in
+                                Button {
+                                    toggleWeekday(weekday)
+                                } label: {
+                                    Text(label(for: weekday))
+                                        .font(.title3.weight(.semibold))
+                                        .lineLimit(1)
+                                        .minimumScaleFactor(0.72)
+                                        .frame(maxWidth: .infinity)
+                                        .foregroundStyle(viewModel.settings.selectedWeekdays.contains(weekday) ? .white : Color.white.opacity(0.28))
                                 }
-
-                                Spacer()
-
-                                Toggle("", isOn: $alarmEnabled)
-                                    .labelsHidden()
-                                    .tint(.cyan)
+                                .buttonStyle(.plain)
                             }
-
-                            Button {
-                                showsTimePicker = true
-                            } label: {
-                                Text(timeText(for: viewModel.settings.alarmTime))
-                                    .font(.system(size: 60, weight: .regular, design: .rounded))
-                                    .lineLimit(1)
-                                    .minimumScaleFactor(0.75)
-                                    .frame(maxWidth: .infinity)
-                            }
-                            .buttonStyle(.plain)
-                            .contentShape(Rectangle())
                         }
-                        .padding(22)
-                        .background(Color.appCardBackground, in: RoundedRectangle(cornerRadius: 30, style: .continuous))
+
+                        Button {
+                            showsTimePicker = true
+                        } label: {
+                            Text(timeText(for: viewModel.settings.alarmTime))
+                                .font(.system(size: 60, weight: .regular, design: .rounded))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.75)
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.plain)
+                        .contentShape(Rectangle())
                     }
+                    .padding(22)
+                    .background(Color.appCardBackground, in: RoundedRectangle(cornerRadius: 30, style: .continuous))
 
                     VStack(spacing: 18) {
-                        Stepper(value: $viewModel.settings.rainLeadTimeMinutes, in: 1...120, step: 1) {
+                        VStack(alignment: .leading, spacing: 8) {
                             HStack {
                                 Text("rain_lead_time")
                                 Spacer()
                                 Text(String.localizedStringWithFormat(String(localized: "rain_lead_time_value"), viewModel.settings.rainLeadTimeMinutes))
                                     .foregroundStyle(.secondary)
                             }
+
+                            Slider(value: rainLeadTimeSliderValue, in: 1...60, step: 1)
                         }
 
                         VStack(alignment: .leading, spacing: 8) {
@@ -361,7 +489,7 @@ private struct AlarmTabView: View {
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(.cyan)
-                    .disabled(!alarmEnabled || !viewModel.canSchedule || viewModel.isScheduling)
+                    .disabled(!viewModel.canSchedule || viewModel.isScheduling)
 
                     Text(viewModel.statusMessage)
                         .foregroundStyle(.secondary)
@@ -382,11 +510,11 @@ private struct AlarmTabView: View {
                     }
                 }
                 .padding(.horizontal, 20)
-                .padding(.vertical, 20)
+                .padding(.top, 0)
+                .padding(.bottom, 20)
             }
             .navigationTitle(String(localized: "tab_alarm"))
-            .toolbarBackground(.visible, for: .navigationBar)
-            .toolbarBackground(Color.appBackground, for: .navigationBar)
+            .toolbar(.hidden, for: .navigationBar)
             .background(Color.appBackground)
         }
         .sheet(isPresented: $showsTimePicker) {
@@ -409,6 +537,9 @@ private struct AlarmTabView: View {
                 }
             }
         }
+        .onAppear {
+            clampRainLeadTime()
+        }
         .onDisappear {
             stopSoundPreview()
         }
@@ -420,6 +551,18 @@ private struct AlarmTabView: View {
         } else {
             viewModel.settings.selectedWeekdays.insert(weekday)
         }
+    }
+
+    private var rainLeadTimeSliderValue: Binding<Double> {
+        Binding {
+            Double(min(max(viewModel.settings.rainLeadTimeMinutes, 1), 60))
+        } set: { newValue in
+            viewModel.settings.rainLeadTimeMinutes = min(max(Int(newValue.rounded()), 1), 60)
+        }
+    }
+
+    private func clampRainLeadTime() {
+        viewModel.settings.rainLeadTimeMinutes = min(max(viewModel.settings.rainLeadTimeMinutes, 1), 60)
     }
 
     private func label(for weekday: Int) -> String {
@@ -542,24 +685,190 @@ private struct RouteModePicker: View {
     }
 }
 
-private struct AddressFieldRow: View {
+private struct AddressCompletionList: View {
+    let completions: [MKLocalSearchCompletion]
+    let onSelect: (MKLocalSearchCompletion) -> Void
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ForEach(completions.indices, id: \.self) { index in
+                let completion = completions[index]
+                Button {
+                    onSelect(completion)
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "magnifyingglass")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 22)
+
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(completion.title)
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(.primary)
+                                .lineLimit(1)
+                            if !completion.subtitle.isEmpty {
+                                Text(completion.subtitle)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
+                            }
+                        }
+
+                        Spacer()
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+
+                if index < completions.indices.last ?? 0 {
+                    Divider()
+                        .overlay(Color.white.opacity(0.08))
+                        .padding(.leading, 48)
+                }
+            }
+        }
+        .background(Color.appCardBackground, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+}
+
+private final class AddressSearchCompleter: NSObject, ObservableObject, MKLocalSearchCompleterDelegate, @unchecked Sendable {
+    @Published private(set) var completions: [MKLocalSearchCompletion] = []
+
+    private let completer = MKLocalSearchCompleter()
+
+    override init() {
+        super.init()
+        completer.delegate = self
+        completer.resultTypes = [.address, .pointOfInterest]
+    }
+
+    func update(query: String) {
+        let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmedQuery.count >= 2 else {
+            clear()
+            return
+        }
+
+        let candidates = MapItemResolver.candidateQueries(for: trimmedQuery)
+        let autocompleteQuery = candidates.first { candidate in
+            !candidate.contains(",")
+                && !candidate.contains("，")
+                && !candidate.localizedStandardContains("股份有限公司")
+                && !candidate.localizedStandardContains("Corporation")
+        } ?? candidates.first ?? trimmedQuery
+
+        completer.queryFragment = autocompleteQuery
+    }
+
+    func clear() {
+        completer.queryFragment = ""
+        completions = []
+    }
+
+    func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
+        completions = Array(completer.results.prefix(5))
+    }
+
+    func completer(_ completer: MKLocalSearchCompleter, didFailWithError error: Error) {
+        completions = []
+    }
+}
+
+private struct AddressFieldRow<Field: Hashable>: View {
     let label: String
     let placeholder: String
     @Binding var text: String
+    let isInvalid: Bool
+    let suggestedMatch: SuggestedAddressMatch?
+    var focusedField: FocusState<Field?>.Binding
+    let field: Field
+    let onSubmit: () -> Void
+    let onClear: () -> Void
+    let onConfirmSuggestion: () -> Void
 
     var body: some View {
-        HStack(spacing: 12) {
-            Text(label)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .frame(width: 44, alignment: .leading)
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 12) {
+                Text(label)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(isInvalid ? Color.red : .secondary)
+                    .frame(width: 44, alignment: .leading)
 
-            TextField(placeholder, text: $text, axis: .vertical)
-                .textContentType(.fullStreetAddress)
-                .textFieldStyle(.plain)
+                TextField(placeholder, text: $text)
+                    .textContentType(.fullStreetAddress)
+                    .submitLabel(.search)
+                    .focused(focusedField, equals: field)
+                    .onSubmit(onSubmit)
+                    .textFieldStyle(.plain)
+                    .lineLimit(1)
+                    .tint(isInvalid ? .red : .accentColor)
+
+                if !text.isEmpty {
+                    Button {
+                        onClear()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.body.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 28, height: 28)
+                            .contentShape(Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(String(localized: "clear_address"))
+                }
+            }
+            .padding(14)
+            .background(
+                (isInvalid ? Color.red.opacity(0.20) : Color.appFieldBackground),
+                in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(isInvalid ? Color.red : Color.clear, lineWidth: 2.5)
+            )
+
+            if isInvalid {
+                Text(String(localized: "address_not_found_inline"))
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.red)
+                    .padding(.horizontal, 14)
+            } else if let suggestedMatch {
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(alignment: .top, spacing: 6) {
+                        Image(systemName: suggestedMatch.isConfirmed ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                            .font(.caption)
+                            .foregroundStyle(suggestedMatch.isConfirmed ? .green : .yellow)
+                        Text(
+                            String.localizedStringWithFormat(
+                                String(localized: "suggested_address_prefix"),
+                                suggestedMatch.suggestedAddress
+                            )
+                        )
+                        .font(.caption)
+                        .foregroundStyle(suggestedMatch.isConfirmed ? Color.secondary : Color.yellow)
+                        .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    if suggestedMatch.isConfirmed {
+                        Text(String(localized: "confirmed_suggested_address"))
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(.green)
+                    } else {
+                        Button(String(localized: "confirm_suggested_address")) {
+                            onConfirmSuggestion()
+                        }
+                        .font(.caption.weight(.semibold))
+                        .buttonStyle(.bordered)
+                        .controlSize(.mini)
+                        .tint(.yellow)
+                    }
+                }
+                .padding(.horizontal, 14)
+            }
         }
-        .padding(14)
-        .background(Color.appFieldBackground, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
 
@@ -655,7 +964,6 @@ private struct RouteWeatherCard: View {
 private struct RouteWeatherPlaceholderCards: View {
     private let titles = [
         String(localized: "segment_home_area"),
-        String(localized: "segment_route_placeholder"),
         String(localized: "segment_office_area")
     ]
 

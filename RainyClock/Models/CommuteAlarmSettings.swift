@@ -29,10 +29,28 @@ struct CommuteAlarmSettings: Codable, Equatable {
         case rainyClock
         case morningBell
         case softPiano
+        case brightChime
+        case gentleWaves
+        case digitalBeep
+        case forestBirds
+        case energeticPulse
+        case deepResonance
+        case minimalTap
         case systemDefault
 
         static var allCases: [AlarmSound] {
-            [.rainyClock, .morningBell, .softPiano]
+            [
+                .rainyClock,
+                .morningBell,
+                .softPiano,
+                .brightChime,
+                .gentleWaves,
+                .digitalBeep,
+                .forestBirds,
+                .energeticPulse,
+                .deepResonance,
+                .minimalTap
+            ]
         }
 
         var id: String { rawValue }
@@ -45,6 +63,20 @@ struct CommuteAlarmSettings: Codable, Equatable {
                 String(localized: "alarm_sound_morning_bell")
             case .softPiano:
                 String(localized: "alarm_sound_soft_piano")
+            case .brightChime:
+                String(localized: "alarm_sound_bright_chime")
+            case .gentleWaves:
+                String(localized: "alarm_sound_gentle_waves")
+            case .digitalBeep:
+                String(localized: "alarm_sound_digital_beep")
+            case .forestBirds:
+                String(localized: "alarm_sound_forest_birds")
+            case .energeticPulse:
+                String(localized: "alarm_sound_energetic_pulse")
+            case .deepResonance:
+                String(localized: "alarm_sound_deep_resonance")
+            case .minimalTap:
+                String(localized: "alarm_sound_minimal_tap")
             case .systemDefault:
                 String(localized: "alarm_sound_system_default")
             }
@@ -58,6 +90,20 @@ struct CommuteAlarmSettings: Codable, Equatable {
                 "MorningBell.wav"
             case .softPiano:
                 "SoftPiano.wav"
+            case .brightChime:
+                "BrightChime.wav"
+            case .gentleWaves:
+                "GentleWaves.wav"
+            case .digitalBeep:
+                "DigitalBeep.wav"
+            case .forestBirds:
+                "ForestBirds.wav"
+            case .energeticPulse:
+                "EnergeticPulse.wav"
+            case .deepResonance:
+                "DeepResonance.wav"
+            case .minimalTap:
+                "MinimalTap.wav"
             case .systemDefault:
                 "AlarmTone.wav"
             }
@@ -93,6 +139,7 @@ struct CommuteAlarmSettings: Codable, Equatable {
 
 struct RouteWeatherSnapshot: Equatable {
     var checkedAt: Date
+    var forecastAt: Date
     var segments: [RouteWeatherSegment]
 
     func exceedsRainThreshold(_ threshold: Double) -> Bool {

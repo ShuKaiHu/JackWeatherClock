@@ -1,3 +1,4 @@
+import GoogleMobileAds
 import SwiftUI
 import UserNotifications
 
@@ -5,13 +6,17 @@ import UserNotifications
 struct RainyClockApp: App {
     init() {
         UNUserNotificationCenter.current().delegate = NotificationPresentationDelegate.shared
+        LocalNotificationScheduler.registerNotificationCategories()
+        if !AppEnvironment.isRunningTests {
+            MobileAds.shared.start()
+        }
     }
 
     var body: some Scene {
         WindowGroup {
             ContentView(
                 viewModel: AlarmViewModel(routeWeatherService: AppEnvironment.routeWeatherService),
-                showsWeatherAttribution: AppEnvironment.usesWeatherKit
+                showsWeatherAttribution: AppEnvironment.showsWeatherAttribution
             )
         }
     }

@@ -1,9 +1,28 @@
 import Foundation
 
+enum CommuteAddressField: Hashable {
+    case home
+    case work
+}
+
+struct SuggestedAddressMatch: Equatable {
+    var originalInput: String
+    var suggestedAddress: String
+    var isConfirmed: Bool
+}
+
 @MainActor
 final class AlarmViewModel: ObservableObject {
     @Published var settings: CommuteAlarmSettings {
         didSet {
+            if oldValue.homeAddress != settings.homeAddress {
+                invalidAddressFields.remove(.home)
+                clearSuggestedAddressIfInputChanged(.home, input: settings.homeAddress)
+            }
+            if oldValue.workAddress != settings.workAddress {
+                invalidAddressFields.remove(.work)
+                clearSuggestedAddressIfInputChanged(.work, input: settings.workAddress)
+            }
             saveSettings()
         }
     }
@@ -16,11 +35,15 @@ final class AlarmViewModel: ObservableObject {
     @Published private(set) var isScheduling = false
     @Published private(set) var isPreviewingRoute = false
     @Published private(set) var isRefreshingRouteWeather = false
+    @Published private(set) var invalidAddressFields: Set<CommuteAddressField> = []
+    @Published private(set) var suggestedAddressMatches: [CommuteAddressField: SuggestedAddressMatch] = [:]
 
     private let routeWeatherService: RouteWeatherService
     private let routePreviewService: RoutePreviewService
     private let notificationScheduler: NotificationScheduling
     private let settingsStorage: UserDefaults
+    private var suggestionSelectedInputs: [CommuteAddressField: String] = [:]
+    private static let addressValidationTimeout: Duration = .seconds(4)
     private static let settingsStorageKey = "commuteAlarmSettings"
 
     init(
@@ -41,11 +64,16 @@ final class AlarmViewModel: ObservableObject {
             && !settings.workAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && !settings.selectedWeekdays.isEmpty
             && settings.rainLeadTimeMinutes > 0
+            && !hasUnconfirmedSuggestedAddresses
     }
 
     var canPreviewRoute: Bool {
         !settings.homeAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && !settings.workAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    var requiresSuggestedAddressConfirmation: Bool {
+        hasUnconfirmedSuggestedAddresses
     }
 
     func previewRoute() async {
@@ -65,14 +93,22 @@ final class AlarmViewModel: ObservableObject {
                 mode: settings.commuteMode
             )
             routePreview = preview
-            routePreviewStatusMessage = String.localizedStringWithFormat(
-                String(localized: "route_preview_ready"),
-                preview.routeName,
-                preview.expectedTravelTimeMinutes,
-                preview.distanceKilometers
-            )
+            invalidAddressFields.removeAll()
+            updateSuggestedAddressMatches(homeLocation: preview.homeLocation, workLocation: preview.workLocation)
+            if let expectedTravelTimeMinutes = preview.expectedTravelTimeMinutes,
+               let distanceKilometers = preview.distanceKilometers {
+                routePreviewStatusMessage = String.localizedStringWithFormat(
+                    String(localized: "route_preview_ready"),
+                    preview.routeName,
+                    expectedTravelTimeMinutes,
+                    distanceKilometers
+                )
+            } else {
+                routePreviewStatusMessage = String(localized: "route_preview_locations_only_message")
+            }
         } catch {
             routePreview = nil
+            updateAddressValidation(for: error)
             routePreviewStatusMessage = String.localizedStringWithFormat(
                 String(localized: "route_preview_failed"),
                 error.localizedDescription
@@ -83,6 +119,45 @@ final class AlarmViewModel: ObservableObject {
     func clearRoutePreview(message: String = String(localized: "route_preview_empty")) {
         routePreview = nil
         routePreviewStatusMessage = message
+    }
+
+    func confirmSuggestedAddress(_ field: CommuteAddressField) {
+        guard let match = suggestedAddressMatches[field] else {
+            return
+        }
+
+        let actualAddress = match.suggestedAddress.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !actualAddress.isEmpty else {
+            return
+        }
+
+        suggestionSelectedInputs[field] = actualAddress
+        switch field {
+        case .home:
+            settings.homeAddress = actualAddress
+        case .work:
+            settings.workAddress = actualAddress
+        }
+        suggestedAddressMatches.removeValue(forKey: field)
+        invalidAddressFields.remove(field)
+    }
+
+    func clearAddressState(_ field: CommuteAddressField) {
+        invalidAddressFields.remove(field)
+        suggestedAddressMatches.removeValue(forKey: field)
+        suggestionSelectedInputs.removeValue(forKey: field)
+    }
+
+    func setAddressFromSuggestion(_ address: String, field: CommuteAddressField) {
+        let trimmedAddress = address.trimmingCharacters(in: .whitespacesAndNewlines)
+        suggestionSelectedInputs[field] = trimmedAddress
+
+        switch field {
+        case .home:
+            settings.homeAddress = address
+        case .work:
+            settings.workAddress = address
+        }
     }
 
     func refreshRouteWeather() async {
@@ -96,22 +171,27 @@ final class AlarmViewModel: ObservableObject {
         defer { isRefreshingRouteWeather = false }
 
         do {
+            let now = Date()
             let snapshot = try await routeWeatherService.fetchRouteWeather(
                 from: settings.homeAddress,
                 to: settings.workAddress,
                 mode: settings.commuteMode,
-                around: settings.alarmTime
+                around: nextWeatherCheckDate(now: now)
             )
             routeWeatherSnapshot = snapshot
+            invalidAddressFields.removeAll()
+            let forecastAt = snapshot.forecastAt.formatted(date: .abbreviated, time: .shortened)
             routeWeatherStatusMessage = String.localizedStringWithFormat(
                 String(localized: "route_weather_updated"),
+                forecastAt,
                 snapshot.checkedAt.formatted(date: .omitted, time: .shortened)
             )
         } catch {
             routeWeatherSnapshot = nil
+            updateAddressValidation(for: error)
             routeWeatherStatusMessage = String.localizedStringWithFormat(
                 String(localized: "route_weather_failed"),
-                error.localizedDescription
+                Self.userFacingMessage(for: error)
             )
         }
     }
@@ -123,7 +203,9 @@ final class AlarmViewModel: ObservableObject {
 
     func evaluateRouteAndScheduleAlarm() async {
         guard canSchedule else {
-            statusMessage = String(localized: "status_required")
+            statusMessage = hasUnconfirmedSuggestedAddresses
+                ? String(localized: "status_confirm_suggested_address")
+                : String(localized: "status_required")
             return
         }
 
@@ -137,22 +219,26 @@ final class AlarmViewModel: ObservableObject {
                 return
             }
 
+            let now = Date()
+            let weatherCheckDate = nextWeatherCheckDate(now: now)
             let snapshot = try await routeWeatherService.fetchRouteWeather(
                 from: settings.homeAddress,
                 to: settings.workAddress,
                 mode: settings.commuteMode,
-                around: settings.alarmTime
+                around: weatherCheckDate
             )
             routeWeatherSnapshot = snapshot
+            invalidAddressFields.removeAll()
 
             let exceedsThreshold = snapshot.exceedsRainThreshold(settings.rainProbabilityThreshold)
-            let summary = AlarmTimeCalculator.nextAlarmDate(
+            let summary = AlarmTimeCalculator.nextAlarmDateForWeatherCheck(
                 alarmTime: settings.alarmTime,
                 leadTimeMinutes: settings.rainLeadTimeMinutes,
                 shouldApplyLeadTime: exceedsThreshold,
                 rainProbabilityThreshold: settings.rainProbabilityThreshold,
                 maximumPrecipitationProbability: snapshot.maximumPrecipitationProbability,
-                selectedWeekdays: settings.selectedWeekdays
+                selectedWeekdays: settings.selectedWeekdays,
+                now: now
             )
             scheduledAlarmSummary = summary
 
@@ -169,11 +255,159 @@ final class AlarmViewModel: ObservableObject {
             )
 
             let checkedAt = snapshot.checkedAt.formatted(date: .omitted, time: .shortened)
+            let forecastAt = snapshot.forecastAt.formatted(date: .abbreviated, time: .shortened)
             let statusKey = exceedsThreshold ? "status_adjusted_checked" : "status_normal_checked"
-            statusMessage = String.localizedStringWithFormat(String(localized: String.LocalizationValue(statusKey)), checkedAt)
+            statusMessage = String.localizedStringWithFormat(String(localized: String.LocalizationValue(statusKey)), forecastAt, checkedAt)
         } catch {
-            statusMessage = String.localizedStringWithFormat(String(localized: "status_schedule_failed"), error.localizedDescription)
+            updateAddressValidation(for: error)
+            statusMessage = String.localizedStringWithFormat(
+                String(localized: "status_schedule_failed"),
+                Self.userFacingMessage(for: error)
+            )
         }
+    }
+
+    private static func userFacingMessage(for error: Error) -> String {
+        let description = error.localizedDescription
+        let lowercasedDescription = description.lowercased()
+        if lowercasedDescription.contains("weatherdaemon")
+            || lowercasedDescription.contains("jwtauthenticator") {
+            return String(localized: "error_weather_unavailable")
+        }
+
+        return description
+    }
+
+    private var hasUnconfirmedSuggestedAddresses: Bool {
+        suggestedAddressMatches.values.contains { !$0.isConfirmed }
+    }
+
+    private func updateSuggestedAddressMatches(
+        homeLocation: ResolvedMapLocation,
+        workLocation: ResolvedMapLocation
+    ) {
+        updateSuggestedAddressMatch(.home, input: settings.homeAddress, location: homeLocation)
+        updateSuggestedAddressMatch(.work, input: settings.workAddress, location: workLocation)
+    }
+
+    private func updateSuggestedAddressMatch(
+        _ field: CommuteAddressField,
+        input: String,
+        location: ResolvedMapLocation
+    ) {
+        let trimmedInput = input.trimmingCharacters(in: .whitespacesAndNewlines)
+        let wasSelectedFromSuggestions = suggestionSelectedInputs[field] == trimmedInput
+        let shouldShowActualAddress = location.resolution == .suggested || !wasSelectedFromSuggestions
+        guard shouldShowActualAddress else {
+            suggestedAddressMatches.removeValue(forKey: field)
+            return
+        }
+
+        let suggestedAddress = location.displayAddress?.trimmingCharacters(in: .whitespacesAndNewlines)
+        suggestedAddressMatches[field] = SuggestedAddressMatch(
+            originalInput: trimmedInput,
+            suggestedAddress: suggestedAddress?.isEmpty == false ? suggestedAddress! : trimmedInput,
+            isConfirmed: suggestedAddressMatches[field]?.originalInput == trimmedInput
+                ? suggestedAddressMatches[field]?.isConfirmed ?? false
+                : false
+        )
+    }
+
+    private func clearSuggestedAddressIfInputChanged(_ field: CommuteAddressField, input: String) {
+        let trimmedInput = input.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard suggestedAddressMatches[field]?.originalInput != trimmedInput else {
+            return
+        }
+
+        suggestedAddressMatches.removeValue(forKey: field)
+        if suggestionSelectedInputs[field] != trimmedInput {
+            suggestionSelectedInputs.removeValue(forKey: field)
+        }
+    }
+
+    private func updateAddressValidation(for error: Error) {
+        guard let routeError = error as? MapKitRouteWeatherServiceError else {
+            let description = error.localizedDescription.lowercased()
+            if description.contains("route")
+                || description.contains("directions")
+                || description.contains("路線")
+                || description.contains("路徑") {
+                validateAddressesIndividuallyInBackground()
+            }
+            return
+        }
+
+        switch routeError {
+        case .addressNotFound(let address):
+            markAddressNotFound(address)
+        case .routeNotFound:
+            validateAddressesIndividuallyInBackground()
+        }
+    }
+
+    private func validateAddressesIndividuallyInBackground() {
+        Task { @MainActor in
+            await validateAddressesIndividually()
+        }
+    }
+
+    private func markAddressNotFound(_ address: String) {
+        let normalizedAddress = address.trimmingCharacters(in: .whitespacesAndNewlines)
+        if normalizedAddress == settings.homeAddress.trimmingCharacters(in: .whitespacesAndNewlines) {
+            invalidAddressFields.insert(.home)
+        }
+        if normalizedAddress == settings.workAddress.trimmingCharacters(in: .whitespacesAndNewlines) {
+            invalidAddressFields.insert(.work)
+        }
+    }
+
+    private func validateAddressesIndividually() async {
+        async let homeResolved = canResolveAddress(settings.homeAddress)
+        async let workResolved = canResolveAddress(settings.workAddress)
+
+        var fields: Set<CommuteAddressField> = []
+        if !(await homeResolved) {
+            fields.insert(.home)
+        }
+        if !(await workResolved) {
+            fields.insert(.work)
+        }
+
+        invalidAddressFields = fields
+    }
+
+    private func canResolveAddress(_ address: String) async -> Bool {
+        let trimmedAddress = address.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedAddress.isEmpty else {
+            return false
+        }
+
+        return await withTaskGroup(of: Bool.self) { group in
+            group.addTask {
+                await MapItemResolver().canResolvePrecisely(trimmedAddress)
+            }
+
+            group.addTask {
+                try? await Task.sleep(for: Self.addressValidationTimeout)
+                return false
+            }
+
+            let result = await group.next() ?? false
+            group.cancelAll()
+            return result
+        }
+    }
+
+    private func nextWeatherCheckDate(now: Date = Date()) -> Date {
+        AlarmTimeCalculator.nextAlarmDateForWeatherCheck(
+            alarmTime: settings.alarmTime,
+            leadTimeMinutes: settings.rainLeadTimeMinutes,
+            shouldApplyLeadTime: false,
+            rainProbabilityThreshold: settings.rainProbabilityThreshold,
+            maximumPrecipitationProbability: 0,
+            selectedWeekdays: settings.selectedWeekdays,
+            now: now
+        ).weatherRefreshDate
     }
 
     private func saveSettings() {

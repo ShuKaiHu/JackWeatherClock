@@ -106,9 +106,48 @@ final class AlarmTimeCalculatorTests: XCTestCase {
         XCTAssertEqual(summary.scheduledAlarmDate, now)
     }
 
+    func testWeatherCheckUsesTodayWhenLeadTimeIsStillAhead() {
+        let now = date(year: 2026, month: 5, day: 17, hour: 6, minute: 45)
+        let alarmTime = date(year: 2026, month: 5, day: 17, hour: 7, minute: 30)
+
+        let summary = AlarmTimeCalculator.nextAlarmDateForWeatherCheck(
+            alarmTime: alarmTime,
+            leadTimeMinutes: 30,
+            shouldApplyLeadTime: false,
+            rainProbabilityThreshold: 0.5,
+            maximumPrecipitationProbability: 0.2,
+            selectedWeekdays: [1],
+            now: now,
+            calendar: calendar
+        )
+
+        XCTAssertEqual(summary.normalAlarmDate, date(year: 2026, month: 5, day: 17, hour: 7, minute: 30))
+        XCTAssertEqual(summary.weatherRefreshDate, date(year: 2026, month: 5, day: 17, hour: 7, minute: 0))
+    }
+
+    func testWeatherCheckRollsToNextSelectedWeekdayWhenLeadTimeAlreadyPassed() {
+        let now = date(year: 2026, month: 5, day: 17, hour: 7, minute: 15)
+        let alarmTime = date(year: 2026, month: 5, day: 17, hour: 7, minute: 30)
+
+        let summary = AlarmTimeCalculator.nextAlarmDateForWeatherCheck(
+            alarmTime: alarmTime,
+            leadTimeMinutes: 30,
+            shouldApplyLeadTime: false,
+            rainProbabilityThreshold: 0.5,
+            maximumPrecipitationProbability: 0.2,
+            selectedWeekdays: [1],
+            now: now,
+            calendar: calendar
+        )
+
+        XCTAssertEqual(summary.normalAlarmDate, date(year: 2026, month: 5, day: 24, hour: 7, minute: 30))
+        XCTAssertEqual(summary.weatherRefreshDate, date(year: 2026, month: 5, day: 24, hour: 7, minute: 0))
+    }
+
     func testRouteWeatherThresholdUsesGreaterThanOrEqual() {
         let snapshot = RouteWeatherSnapshot(
             checkedAt: date(year: 2026, month: 5, day: 17, hour: 6, minute: 0),
+            forecastAt: date(year: 2026, month: 5, day: 17, hour: 7, minute: 30),
             segments: [
                 RouteWeatherSegment(name: "Segment A", condition: .cloudy, precipitationProbability: 0.49),
                 RouteWeatherSegment(name: "Segment B", condition: .rain, precipitationProbability: 0.5)

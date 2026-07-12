@@ -14,27 +14,41 @@ protocol RoutePreviewService {
 struct RoutePreview {
     var homeCoordinate: CLLocationCoordinate2D
     var workCoordinate: CLLocationCoordinate2D
-    var route: MKRoute
+    var homeLocation: ResolvedMapLocation
+    var workLocation: ResolvedMapLocation
+    var route: MKRoute?
 
     var routeName: String {
-        route.name.isEmpty ? String(localized: "route_preview_selected_route") : route.name
+        guard let route else {
+            return String(localized: "route_preview_locations_only")
+        }
+
+        return route.name.isEmpty ? String(localized: "route_preview_selected_route") : route.name
     }
 
-    var expectedTravelTimeMinutes: Int {
-        max(1, Int((route.expectedTravelTime / 60).rounded()))
+    var expectedTravelTimeMinutes: Int? {
+        guard let route else {
+            return nil
+        }
+
+        return max(1, Int((route.expectedTravelTime / 60).rounded()))
     }
 
-    var distanceKilometers: Double {
-        route.distance / 1_000
+    var distanceKilometers: Double? {
+        guard let route else {
+            return nil
+        }
+
+        return route.distance / 1_000
     }
 }
 
 @MainActor
 final class MapKitRoutePreviewService: RoutePreviewService {
-    private let geocoder: CLGeocoder
+    private let mapItemResolver: MapItemResolver
 
-    init(geocoder: CLGeocoder = CLGeocoder()) {
-        self.geocoder = geocoder
+    init() {
+        self.mapItemResolver = MapItemResolver()
     }
 
     func previewRoute(
@@ -42,48 +56,42 @@ final class MapKitRoutePreviewService: RoutePreviewService {
         to workAddress: String,
         mode: CommuteAlarmSettings.CommuteMode
     ) async throws -> RoutePreview {
-        let homePlacemark = try await geocode(homeAddress)
-        let workPlacemark = try await geocode(workAddress)
-        let route = try await route(from: homePlacemark, to: workPlacemark, mode: mode)
-
-        guard let homeCoordinate = homePlacemark.location?.coordinate,
-              let workCoordinate = workPlacemark.location?.coordinate else {
-            throw MapKitRouteWeatherServiceError.routeNotFound
-        }
+        let homeLocation = try await mapItemResolver.resolve(homeAddress)
+        let workLocation = try await mapItemResolver.resolve(workAddress)
+        let route = try? await route(from: homeLocation.mapItem, to: workLocation.mapItem, mode: mode)
 
         return RoutePreview(
-            homeCoordinate: homeCoordinate,
-            workCoordinate: workCoordinate,
+            homeCoordinate: homeLocation.coordinate,
+            workCoordinate: workLocation.coordinate,
+            homeLocation: homeLocation,
+            workLocation: workLocation,
             route: route
         )
     }
 
-    private func geocode(_ address: String) async throws -> CLPlacemark {
-        let placemarks = try await geocoder.geocodeAddressString(address)
-        guard let placemark = placemarks.first, placemark.location != nil else {
-            throw MapKitRouteWeatherServiceError.addressNotFound(address)
-        }
-
-        return placemark
-    }
-
     private func route(
-        from homePlacemark: CLPlacemark,
-        to workPlacemark: CLPlacemark,
+        from homeItem: MKMapItem,
+        to workItem: MKMapItem,
         mode: CommuteAlarmSettings.CommuteMode
     ) async throws -> MKRoute {
         let request = MKDirections.Request()
-        request.source = MKMapItem(placemark: MKPlacemark(placemark: homePlacemark))
-        request.destination = MKMapItem(placemark: MKPlacemark(placemark: workPlacemark))
+        request.source = homeItem
+        request.destination = workItem
         request.transportType = mode.routePreviewTransportType
         request.highwayPreference = mode == .scooter ? .avoid : .any
 
-        let response = try await MKDirections(request: request).calculate()
-        guard let route = response.routes.min(by: { $0.expectedTravelTime < $1.expectedTravelTime }) else {
+        do {
+            let response = try await MKDirections(request: request).calculate()
+            guard let route = response.routes.min(by: { $0.expectedTravelTime < $1.expectedTravelTime }) else {
+                throw MapKitRouteWeatherServiceError.routeNotFound
+            }
+
+            return route
+        } catch let error as MapKitRouteWeatherServiceError {
+            throw error
+        } catch {
             throw MapKitRouteWeatherServiceError.routeNotFound
         }
-
-        return route
     }
 }
 
