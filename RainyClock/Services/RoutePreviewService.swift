@@ -6,7 +6,9 @@ import MapKit
 protocol RoutePreviewService {
     func previewRoute(
         from homeAddress: String,
+        homeLocation selectedHomeLocation: ResolvedMapLocation?,
         to workAddress: String,
+        workLocation selectedWorkLocation: ResolvedMapLocation?,
         mode: CommuteAlarmSettings.CommuteMode
     ) async throws -> RoutePreview
 }
@@ -17,29 +19,35 @@ struct RoutePreview {
     var homeLocation: ResolvedMapLocation
     var workLocation: ResolvedMapLocation
     var route: MKRoute?
+    var estimatedTravelTime: TimeInterval?
+    var estimatedDistance: CLLocationDistance?
 
     var routeName: String {
-        guard let route else {
-            return String(localized: "route_preview_locations_only")
+        if let route {
+            return route.name.isEmpty ? String(localized: "route_preview_selected_route") : route.name
         }
 
-        return route.name.isEmpty ? String(localized: "route_preview_selected_route") : route.name
+        if estimatedTravelTime != nil {
+            return String(localized: "route_preview_transit_route")
+        }
+
+        return String(localized: "route_preview_locations_only")
     }
 
     var expectedTravelTimeMinutes: Int? {
-        guard let route else {
+        guard let travelTime = route?.expectedTravelTime ?? estimatedTravelTime else {
             return nil
         }
 
-        return max(1, Int((route.expectedTravelTime / 60).rounded()))
+        return max(1, Int((travelTime / 60).rounded()))
     }
 
     var distanceKilometers: Double? {
-        guard let route else {
+        guard let distance = route?.distance ?? estimatedDistance else {
             return nil
         }
 
-        return route.distance / 1_000
+        return distance / 1_000
     }
 }
 
@@ -53,11 +61,39 @@ final class MapKitRoutePreviewService: RoutePreviewService {
 
     func previewRoute(
         from homeAddress: String,
+        homeLocation selectedHomeLocation: ResolvedMapLocation? = nil,
         to workAddress: String,
+        workLocation selectedWorkLocation: ResolvedMapLocation? = nil,
         mode: CommuteAlarmSettings.CommuteMode
     ) async throws -> RoutePreview {
-        let homeLocation = try await mapItemResolver.resolve(homeAddress)
-        let workLocation = try await mapItemResolver.resolve(workAddress)
+        let homeLocation: ResolvedMapLocation
+        if let selectedHomeLocation {
+            homeLocation = selectedHomeLocation
+        } else {
+            homeLocation = try await mapItemResolver.resolve(homeAddress)
+        }
+
+        let workLocation: ResolvedMapLocation
+        if let selectedWorkLocation {
+            workLocation = selectedWorkLocation
+        } else {
+            workLocation = try await mapItemResolver.resolve(workAddress)
+        }
+        // MKDirections.calculate() does not support the transit transport type;
+        // only calculateETA() does, so transit previews use the ETA estimate.
+        if mode == .publicTransit {
+            let eta = try? await transitETA(from: homeLocation.mapItem, to: workLocation.mapItem)
+            return RoutePreview(
+                homeCoordinate: homeLocation.coordinate,
+                workCoordinate: workLocation.coordinate,
+                homeLocation: homeLocation,
+                workLocation: workLocation,
+                route: nil,
+                estimatedTravelTime: eta?.expectedTravelTime,
+                estimatedDistance: eta?.distance
+            )
+        }
+
         let route = try? await route(from: homeLocation.mapItem, to: workLocation.mapItem, mode: mode)
 
         return RoutePreview(
@@ -67,6 +103,18 @@ final class MapKitRoutePreviewService: RoutePreviewService {
             workLocation: workLocation,
             route: route
         )
+    }
+
+    private func transitETA(
+        from homeItem: MKMapItem,
+        to workItem: MKMapItem
+    ) async throws -> MKDirections.ETAResponse {
+        let request = MKDirections.Request()
+        request.source = homeItem
+        request.destination = workItem
+        request.transportType = .transit
+
+        return try await MKDirections(request: request).calculateETA()
     }
 
     private func route(

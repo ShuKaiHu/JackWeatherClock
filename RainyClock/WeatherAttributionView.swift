@@ -5,7 +5,7 @@ struct WeatherAttributionView: View {
 
     var body: some View {
         Link(destination: attributionURL) {
-            Text(verbatim: "Weather data by Apple Weather")
+            Text(String(localized: "weather_data_attribution"))
                 .font(.caption2)
                 .foregroundStyle(.secondary)
         }

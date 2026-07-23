@@ -2,7 +2,7 @@ import CoreLocation
 import Foundation
 import MapKit
 
-struct ResolvedMapLocation: Sendable {
+struct ResolvedMapLocation: Codable, Equatable, Sendable {
     var latitude: Double
     var longitude: Double
     var displayAddress: String?
@@ -17,7 +17,7 @@ struct ResolvedMapLocation: Sendable {
     }
 }
 
-enum AddressResolution: Sendable, Equatable {
+enum AddressResolution: Codable, Sendable, Equatable {
     case exact
     case suggested
 }
@@ -28,6 +28,28 @@ actor MapItemResolver {
 
     func resolve(_ rawAddress: String) async throws -> ResolvedMapLocation {
         try await resolve(queries: Self.candidateQueries(for: rawAddress), fallbackAddress: rawAddress)
+    }
+
+    @MainActor
+    static func resolvedLocation(for completion: MKLocalSearchCompletion) async -> ResolvedMapLocation? {
+        let request = MKLocalSearch.Request(completion: completion)
+
+        do {
+            let response = try await MKLocalSearch(request: request).start()
+            guard let mapItem = response.mapItems.first(where: { $0.placemark.location != nil }),
+                  let coordinate = mapItem.placemark.location?.coordinate else {
+                return nil
+            }
+
+            return ResolvedMapLocation(
+                latitude: coordinate.latitude,
+                longitude: coordinate.longitude,
+                displayAddress: displayAddress(for: mapItem),
+                resolution: .exact
+            )
+        } catch {
+            return nil
+        }
     }
 
     func canResolvePrecisely(_ rawAddress: String) async -> Bool {
@@ -166,7 +188,9 @@ actor MapItemResolver {
     private static func deduplicatedQueries(_ queries: [String]) -> [String] {
         return queries.reduce(into: [String]()) { result, query in
             let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard trimmed.count >= 2, !result.contains(trimmed) else {
+            guard trimmed.count >= 2,
+                  !isWeakStandaloneQuery(trimmed),
+                  !result.contains(trimmed) else {
                 return
             }
 
@@ -251,7 +275,7 @@ actor MapItemResolver {
         .nilIfEmpty
     }
 
-    private static func displayAddress(for mapItem: MKMapItem) -> String? {
+    static func displayAddress(for mapItem: MKMapItem) -> String? {
         [
             mapItem.name,
             mapItem.placemark.title
@@ -262,21 +286,31 @@ actor MapItemResolver {
 
     static func isAcceptableResolvedAddress(query: String, displayAddress: String?) -> Bool {
         let normalizedQuery = normalizeForMatching(query)
-        guard normalizedQuery.count >= 2 else {
+        guard normalizedQuery.count >= 2, !isWeakStandaloneQuery(query) else {
             return false
         }
 
         guard let displayAddress,
               !displayAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            return true
-        }
-
-        let normalizedDisplayAddress = normalizeForMatching(displayAddress)
-        guard !normalizedDisplayAddress.isEmpty else {
             return false
         }
 
-        if normalizedDisplayAddress.contains(normalizedQuery) || normalizedQuery.contains(normalizedDisplayAddress) {
+        let normalizedDisplayAddress = normalizeForMatching(displayAddress)
+        guard !normalizedDisplayAddress.isEmpty,
+              !isWeakStandaloneQuery(displayAddress) else {
+            return false
+        }
+
+        if normalizedDisplayAddress.contains(normalizedQuery) {
+            return true
+        }
+
+        if normalizedQuery.contains(normalizedDisplayAddress) {
+            // A bare-locality display (e.g. "台南市" for a full street-address query)
+            // must not bypass the street-level evidence check below.
+            if isSpecificTaiwanStreetAddress(query) {
+                return hasSpecificTaiwanStreetAddressEvidence(query: query, displayAddress: displayAddress)
+            }
             return true
         }
 
@@ -297,7 +331,7 @@ actor MapItemResolver {
         }
 
         if isSpecificTaiwanStreetAddress(query) {
-            return true
+            return hasSpecificTaiwanStreetAddressEvidence(query: query, displayAddress: displayAddress)
         }
 
         if normalizedQuery.count <= 8 {
@@ -372,6 +406,187 @@ actor MapItemResolver {
             || normalized.contains("鎮")
 
         return hasHouseNumber && hasStreet && hasLocality
+    }
+
+    private static func hasSpecificTaiwanStreetAddressEvidence(query: String, displayAddress: String) -> Bool {
+        let normalizedQuery = query
+            .replacingOccurrences(of: "臺", with: "台")
+            .lowercased()
+        let normalizedDisplayAddress = displayAddress
+            .replacingOccurrences(of: "臺", with: "台")
+            .lowercased()
+
+        guard !hasConflictingTaiwanCity(query: normalizedQuery, display: normalizedDisplayAddress) else {
+            return false
+        }
+
+        let queryHouseNumber = firstMatch(in: normalizedQuery, pattern: #"(\d+)\s*號"#)
+        let displayHasHouseNumber = queryHouseNumber.map { houseNumber in
+            normalizedDisplayAddress.range(of: #"\bno\.?\s*\#(houseNumber)\b"#, options: .regularExpression) != nil
+                || normalizedDisplayAddress.range(of: #"#\#(houseNumber)\b"#, options: .regularExpression) != nil
+                || normalizedDisplayAddress.range(of: #"(?<!\d)\#(houseNumber)號"#, options: .regularExpression) != nil
+        } ?? false
+
+        guard displayHasHouseNumber else {
+            return false
+        }
+
+        let normalizedDisplayForMatching = normalizeForMatching(displayAddress)
+        let placeTokens = taiwanPlaceTokens(from: normalizedQuery)
+        if placeTokens.contains(where: { normalizedDisplayForMatching.contains($0) }) {
+            return true
+        }
+
+        return romanizedTaiwanPlaceTokens(from: normalizedQuery).contains { token in
+            romanizedTokenMatches(token, in: normalizedDisplayAddress)
+        }
+    }
+
+    private static func romanizedTaiwanPlaceTokens(from text: String) -> [String] {
+        var tokens: [String] = []
+
+        for (han, romanized) in taiwanPostalRomanizations where text.contains(han) {
+            tokens.append(romanized)
+        }
+
+        let placeMarkers: Set<Character> = ["市", "縣", "區", "鎮", "鄉", "村", "里", "路", "街"]
+        for placeToken in taiwanPlaceTokens(from: text) {
+            var name = placeToken
+            if let last = name.last, placeMarkers.contains(last) {
+                name.removeLast()
+            }
+            // Single-character names transliterate to fragments like "dong" that
+            // falsely match unrelated street names, so require two characters.
+            guard name.count >= 2, let romanized = latinTransliteration(of: name) else {
+                continue
+            }
+            tokens.append(romanized)
+        }
+
+        return tokens
+    }
+
+    private static func romanizedTokenMatches(_ token: String, in display: String) -> Bool {
+        guard display.contains(token) else {
+            return false
+        }
+
+        // "taipei" must not satisfy a Taipei query against a New Taipei display.
+        if token == "taipei" && display.contains("new taipei") {
+            return false
+        }
+
+        return true
+    }
+
+    /// Rejects results whose display names a different city/county than the query.
+    /// Both inputs are lowercased with 臺 normalized to 台.
+    private static func hasConflictingTaiwanCity(query: String, display: String) -> Bool {
+        let queryCities = mentionedTaiwanCities(in: query)
+        let displayCities = mentionedTaiwanCities(in: display)
+        guard !queryCities.isEmpty, !displayCities.isEmpty else {
+            return false
+        }
+
+        return queryCities.isDisjoint(with: displayCities)
+    }
+
+    private static func mentionedTaiwanCities(in text: String) -> Set<String> {
+        var cities: Set<String> = []
+        let mentionsNewTaipei = text.contains("新北市") || text.contains("new taipei city")
+        if mentionsNewTaipei {
+            cities.insert("new taipei")
+        }
+
+        for (han, romanized) in taiwanPostalRomanizations {
+            if romanized == "new taipei" {
+                continue
+            }
+
+            // Only a 市/縣 (or "city"/"county") suffix marks a CITY mention; bare
+            // occurrences would misread streets named after counties (金門街, 基隆路).
+            let mentionedInHan = text.contains("\(han)市") || text.contains("\(han)縣")
+            var mentionedInRomanized = text.contains("\(romanized) city") || text.contains("\(romanized) county")
+            if romanized == "taipei" && mentionsNewTaipei {
+                mentionedInRomanized = text
+                    .replacingOccurrences(of: "new taipei city", with: "")
+                    .contains("taipei city")
+            }
+
+            if mentionedInHan || mentionedInRomanized {
+                cities.insert(romanized)
+            }
+        }
+
+        return cities
+    }
+
+    // All Taiwan special municipalities, cities, and counties with their common
+    // English names (postal romanization where it differs from Hanyu Pinyin).
+    private static let taiwanPostalRomanizations: [(han: String, romanized: String)] = [
+        ("台北", "taipei"),
+        ("新北", "new taipei"),
+        ("桃園", "taoyuan"),
+        ("台中", "taichung"),
+        ("台南", "tainan"),
+        ("高雄", "kaohsiung"),
+        ("基隆", "keelung"),
+        ("新竹", "hsinchu"),
+        ("苗栗", "miaoli"),
+        ("彰化", "changhua"),
+        ("南投", "nantou"),
+        ("雲林", "yunlin"),
+        ("嘉義", "chiayi"),
+        ("屏東", "pingtung"),
+        ("宜蘭", "yilan"),
+        ("花蓮", "hualien"),
+        ("台東", "taitung"),
+        ("澎湖", "penghu"),
+        ("金門", "kinmen"),
+        ("連江", "lienchiang")
+    ]
+
+    private static func latinTransliteration(of hanText: String) -> String? {
+        guard !hanText.isEmpty,
+              let latin = hanText
+                  .applyingTransform(.toLatin, reverse: false)?
+                  .applyingTransform(.stripDiacritics, reverse: false) else {
+            return nil
+        }
+
+        let compact = latin
+            .lowercased()
+            .replacingOccurrences(of: " ", with: "")
+            .replacingOccurrences(of: "'", with: "")
+        return compact.count >= 4 ? compact : nil
+    }
+
+    private static func firstMatch(in text: String, pattern: String) -> String? {
+        guard let regex = try? NSRegularExpression(pattern: pattern) else {
+            return nil
+        }
+
+        let range = NSRange(text.startIndex..<text.endIndex, in: text)
+        guard let match = regex.firstMatch(in: text, range: range),
+              match.numberOfRanges > 1,
+              let tokenRange = Range(match.range(at: 1), in: text) else {
+            return nil
+        }
+
+        return String(text[tokenRange])
+    }
+
+    private static func isWeakStandaloneQuery(_ value: String) -> Bool {
+        let normalized = normalizeForMatching(value)
+        guard !normalized.isEmpty else {
+            return true
+        }
+
+        if normalized.allSatisfy(\.isNumber) {
+            return true
+        }
+
+        return normalized.range(of: #"^\d{3,6}台灣?$"#, options: .regularExpression) != nil
     }
 
     private static func isASCIIAlphanumericIdentifier(_ token: String) -> Bool {

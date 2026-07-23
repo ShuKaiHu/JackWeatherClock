@@ -78,7 +78,7 @@
 "commute_mode_car" = "Car";
 "commute_mode_scooter" = "Scooter";
 "commute_mode_walking" = "Walking";
-"commute_mode_public_transit" = "Public Transit";
+"commute_mode_public_transit" = "Transit";
 "status_enter_settings" = "Enter your commute and alarm settings.";
 "status_required" = "Home, work, and lead time are required.";
 "status_permission_denied" = "Notification permission was not granted.";
@@ -100,6 +100,10 @@
 "clear_address" = "Clear address";
 "suggested_address_prefix" = "Actual address in use: %@";
 "confirm_suggested_address" = "Use this location";
+"choose_another_address" = "Choose another";
+"route_preview_transit_route" = "Transit route";
+"address_suggestions_loading" = "Searching suggestions...";
+"address_suggestions_empty" = "No other suggestions yet";
 "confirmed_suggested_address" = "Confirmed for this suggested location.";
 "status_confirm_suggested_address" = "Confirm the suggested address before scheduling.";
 "error_address_not_found" = "Could not find this address: %@";

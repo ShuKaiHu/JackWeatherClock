@@ -40,8 +40,18 @@ private struct AdMobBannerContainer: UIViewRepresentable {
         banner.adUnitID = adUnitID
         banner.delegate = context.coordinator
         banner.rootViewController = UIApplication.shared.rainyClockRootViewController
-        banner.load(Request())
+        banner.load(Self.nonPersonalizedRequest())
         return banner
+    }
+
+    // The app declares no tracking and never asks for ATT authorization,
+    // so ads must stay non-personalized.
+    private static func nonPersonalizedRequest() -> Request {
+        let request = Request()
+        let extras = Extras()
+        extras.additionalParameters = ["npa": "1"]
+        request.register(extras)
+        return request
     }
 
     func updateUIView(_ banner: BannerView, context: Context) {

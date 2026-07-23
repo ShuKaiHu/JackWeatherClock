@@ -112,6 +112,8 @@ struct CommuteAlarmSettings: Codable, Equatable {
 
     var homeAddress: String = ""
     var workAddress: String = ""
+    var homeResolvedLocation: ResolvedMapLocation?
+    var workResolvedLocation: ResolvedMapLocation?
     var commuteMode: CommuteMode = .car
     var alarmTime: Date = Calendar.current.date(bySettingHour: 7, minute: 30, second: 0, of: Date()) ?? Date()
     var rainLeadTimeMinutes: Int = 30
@@ -125,6 +127,8 @@ struct CommuteAlarmSettings: Codable, Equatable {
         let values = try decoder.container(keyedBy: CodingKeys.self)
         homeAddress = try values.decodeIfPresent(String.self, forKey: .homeAddress) ?? ""
         workAddress = try values.decodeIfPresent(String.self, forKey: .workAddress) ?? ""
+        homeResolvedLocation = try values.decodeIfPresent(ResolvedMapLocation.self, forKey: .homeResolvedLocation)
+        workResolvedLocation = try values.decodeIfPresent(ResolvedMapLocation.self, forKey: .workResolvedLocation)
         commuteMode = try values.decodeIfPresent(CommuteMode.self, forKey: .commuteMode) ?? .car
         alarmTime = try values.decodeIfPresent(Date.self, forKey: .alarmTime)
             ?? Calendar.current.date(bySettingHour: 7, minute: 30, second: 0, of: Date())

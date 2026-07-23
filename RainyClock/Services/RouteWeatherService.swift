@@ -3,7 +3,9 @@ import Foundation
 protocol RouteWeatherService: Sendable {
     func fetchRouteWeather(
         from homeAddress: String,
+        homeLocation selectedHomeLocation: ResolvedMapLocation?,
         to workAddress: String,
+        workLocation selectedWorkLocation: ResolvedMapLocation?,
         mode: CommuteAlarmSettings.CommuteMode,
         around commuteTime: Date
     ) async throws -> RouteWeatherSnapshot
@@ -12,7 +14,9 @@ protocol RouteWeatherService: Sendable {
 struct MockRouteWeatherService: RouteWeatherService {
     func fetchRouteWeather(
         from homeAddress: String,
+        homeLocation selectedHomeLocation: ResolvedMapLocation? = nil,
         to workAddress: String,
+        workLocation selectedWorkLocation: ResolvedMapLocation? = nil,
         mode: CommuteAlarmSettings.CommuteMode,
         around commuteTime: Date
     ) async throws -> RouteWeatherSnapshot {

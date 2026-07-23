@@ -18,10 +18,16 @@ final class AlarmViewModel: ObservableObject {
             if oldValue.homeAddress != settings.homeAddress {
                 invalidAddressFields.remove(.home)
                 clearSuggestedAddressIfInputChanged(.home, input: settings.homeAddress)
+                if suggestionSelectedInputs[.home] != settings.homeAddress.trimmingCharacters(in: .whitespacesAndNewlines) {
+                    settings.homeResolvedLocation = nil
+                }
             }
             if oldValue.workAddress != settings.workAddress {
                 invalidAddressFields.remove(.work)
                 clearSuggestedAddressIfInputChanged(.work, input: settings.workAddress)
+                if suggestionSelectedInputs[.work] != settings.workAddress.trimmingCharacters(in: .whitespacesAndNewlines) {
+                    settings.workResolvedLocation = nil
+                }
             }
             saveSettings()
         }
@@ -43,6 +49,8 @@ final class AlarmViewModel: ObservableObject {
     private let notificationScheduler: NotificationScheduling
     private let settingsStorage: UserDefaults
     private var suggestionSelectedInputs: [CommuteAddressField: String] = [:]
+    private var previewGeneration = 0
+    private var weatherGeneration = 0
     private static let addressValidationTimeout: Duration = .seconds(4)
     private static let settingsStorageKey = "commuteAlarmSettings"
 
@@ -82,16 +90,28 @@ final class AlarmViewModel: ObservableObject {
             return
         }
 
+        previewGeneration += 1
+        let generation = previewGeneration
         isPreviewingRoute = true
         routePreviewStatusMessage = String(localized: "previewing_route")
-        defer { isPreviewingRoute = false }
+        defer {
+            if generation == previewGeneration {
+                isPreviewingRoute = false
+            }
+        }
 
         do {
             let preview = try await routePreviewService.previewRoute(
                 from: settings.homeAddress,
+                homeLocation: settings.homeResolvedLocation,
                 to: settings.workAddress,
+                workLocation: settings.workResolvedLocation,
                 mode: settings.commuteMode
             )
+            // A newer preview request (or a clear) supersedes this in-flight result.
+            guard generation == previewGeneration else {
+                return
+            }
             routePreview = preview
             invalidAddressFields.removeAll()
             updateSuggestedAddressMatches(homeLocation: preview.homeLocation, workLocation: preview.workLocation)
@@ -107,6 +127,9 @@ final class AlarmViewModel: ObservableObject {
                 routePreviewStatusMessage = String(localized: "route_preview_locations_only_message")
             }
         } catch {
+            guard generation == previewGeneration else {
+                return
+            }
             routePreview = nil
             updateAddressValidation(for: error)
             routePreviewStatusMessage = String.localizedStringWithFormat(
@@ -117,6 +140,8 @@ final class AlarmViewModel: ObservableObject {
     }
 
     func clearRoutePreview(message: String = String(localized: "route_preview_empty")) {
+        previewGeneration += 1
+        isPreviewingRoute = false
         routePreview = nil
         routePreviewStatusMessage = message
     }
@@ -135,8 +160,10 @@ final class AlarmViewModel: ObservableObject {
         switch field {
         case .home:
             settings.homeAddress = actualAddress
+            settings.homeResolvedLocation = nil
         case .work:
             settings.workAddress = actualAddress
+            settings.workResolvedLocation = nil
         }
         suggestedAddressMatches.removeValue(forKey: field)
         invalidAddressFields.remove(field)
@@ -146,17 +173,25 @@ final class AlarmViewModel: ObservableObject {
         invalidAddressFields.remove(field)
         suggestedAddressMatches.removeValue(forKey: field)
         suggestionSelectedInputs.removeValue(forKey: field)
+        switch field {
+        case .home:
+            settings.homeResolvedLocation = nil
+        case .work:
+            settings.workResolvedLocation = nil
+        }
     }
 
-    func setAddressFromSuggestion(_ address: String, field: CommuteAddressField) {
+    func setAddressFromSuggestion(_ address: String, location: ResolvedMapLocation?, field: CommuteAddressField) {
         let trimmedAddress = address.trimmingCharacters(in: .whitespacesAndNewlines)
         suggestionSelectedInputs[field] = trimmedAddress
 
         switch field {
         case .home:
             settings.homeAddress = address
+            settings.homeResolvedLocation = location
         case .work:
             settings.workAddress = address
+            settings.workResolvedLocation = location
         }
     }
 
@@ -166,18 +201,30 @@ final class AlarmViewModel: ObservableObject {
             return
         }
 
+        weatherGeneration += 1
+        let generation = weatherGeneration
         isRefreshingRouteWeather = true
         routeWeatherStatusMessage = String(localized: "route_weather_refreshing")
-        defer { isRefreshingRouteWeather = false }
+        defer {
+            if generation == weatherGeneration {
+                isRefreshingRouteWeather = false
+            }
+        }
 
         do {
             let now = Date()
             let snapshot = try await routeWeatherService.fetchRouteWeather(
                 from: settings.homeAddress,
+                homeLocation: settings.homeResolvedLocation,
                 to: settings.workAddress,
+                workLocation: settings.workResolvedLocation,
                 mode: settings.commuteMode,
                 around: nextWeatherCheckDate(now: now)
             )
+            // A newer refresh (or a clear) supersedes this in-flight result.
+            guard generation == weatherGeneration else {
+                return
+            }
             routeWeatherSnapshot = snapshot
             invalidAddressFields.removeAll()
             let forecastAt = snapshot.forecastAt.formatted(date: .abbreviated, time: .shortened)
@@ -187,6 +234,9 @@ final class AlarmViewModel: ObservableObject {
                 snapshot.checkedAt.formatted(date: .omitted, time: .shortened)
             )
         } catch {
+            guard generation == weatherGeneration else {
+                return
+            }
             routeWeatherSnapshot = nil
             updateAddressValidation(for: error)
             routeWeatherStatusMessage = String.localizedStringWithFormat(
@@ -197,8 +247,22 @@ final class AlarmViewModel: ObservableObject {
     }
 
     func clearRouteWeather(message: String = String(localized: "route_weather_empty")) {
+        weatherGeneration += 1
+        isRefreshingRouteWeather = false
         routeWeatherSnapshot = nil
         routeWeatherStatusMessage = message
+    }
+
+    /// Invalidates an in-flight preview request so its late result cannot land while a
+    /// replacement request is still in its debounce delay.
+    func supersedeRoutePreview() {
+        previewGeneration += 1
+    }
+
+    /// Invalidates an in-flight weather refresh so its late result cannot land while a
+    /// replacement request is still in its debounce delay.
+    func supersedeRouteWeather() {
+        weatherGeneration += 1
     }
 
     func evaluateRouteAndScheduleAlarm() async {
@@ -219,16 +283,30 @@ final class AlarmViewModel: ObservableObject {
                 return
             }
 
+            // Scheduling supersedes any in-flight background weather refresh, and must
+            // also clear the refresh spinner that refresh will no longer reset.
+            weatherGeneration += 1
+            let weatherFetchGeneration = weatherGeneration
+            isRefreshingRouteWeather = false
             let now = Date()
             let weatherCheckDate = nextWeatherCheckDate(now: now)
             let snapshot = try await routeWeatherService.fetchRouteWeather(
                 from: settings.homeAddress,
+                homeLocation: settings.homeResolvedLocation,
                 to: settings.workAddress,
+                workLocation: settings.workResolvedLocation,
                 mode: settings.commuteMode,
                 around: weatherCheckDate
             )
-            routeWeatherSnapshot = snapshot
-            invalidAddressFields.removeAll()
+            if weatherFetchGeneration == weatherGeneration {
+                routeWeatherSnapshot = snapshot
+                invalidAddressFields.removeAll()
+                routeWeatherStatusMessage = String.localizedStringWithFormat(
+                    String(localized: "route_weather_updated"),
+                    snapshot.forecastAt.formatted(date: .abbreviated, time: .shortened),
+                    snapshot.checkedAt.formatted(date: .omitted, time: .shortened)
+                )
+            }
 
             let exceedsThreshold = snapshot.exceedsRainThreshold(settings.rainProbabilityThreshold)
             let summary = AlarmTimeCalculator.nextAlarmDateForWeatherCheck(
@@ -248,6 +326,7 @@ final class AlarmViewModel: ObservableObject {
 
             try await notificationScheduler.scheduleAlarm(
                 at: summary.scheduledAlarmDate,
+                normalAlarmDate: summary.normalAlarmDate,
                 weekdays: settings.selectedWeekdays,
                 sound: settings.alarmSound,
                 title: String(localized: "notification_title"),

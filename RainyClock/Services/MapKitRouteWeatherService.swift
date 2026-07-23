@@ -15,12 +15,25 @@ actor MapKitRouteWeatherService: RouteWeatherService {
 
     func fetchRouteWeather(
         from homeAddress: String,
+        homeLocation selectedHomeLocation: ResolvedMapLocation? = nil,
         to workAddress: String,
+        workLocation selectedWorkLocation: ResolvedMapLocation? = nil,
         mode: CommuteAlarmSettings.CommuteMode,
         around commuteTime: Date
     ) async throws -> RouteWeatherSnapshot {
-        let homeLocation = try await mapItemResolver.resolve(homeAddress)
-        let workLocation = try await mapItemResolver.resolve(workAddress)
+        let homeLocation: ResolvedMapLocation
+        if let selectedHomeLocation {
+            homeLocation = selectedHomeLocation
+        } else {
+            homeLocation = try await mapItemResolver.resolve(homeAddress)
+        }
+
+        let workLocation: ResolvedMapLocation
+        if let selectedWorkLocation {
+            workLocation = selectedWorkLocation
+        } else {
+            workLocation = try await mapItemResolver.resolve(workAddress)
+        }
         let segments = try await makeSegments(
             homeLocation: homeLocation,
             workLocation: workLocation,

@@ -78,7 +78,7 @@
 "commute_mode_car" = "開車";
 "commute_mode_scooter" = "騎車";
 "commute_mode_walking" = "步行";
-"commute_mode_public_transit" = "大眾運輸";
+"commute_mode_public_transit" = "大眾交通";
 "status_enter_settings" = "請輸入通勤與鬧鐘設定。";
 "status_required" = "需要填入住家、公司與提前時間。";
 "status_permission_denied" = "尚未授權通知權限。";
@@ -100,6 +100,10 @@
 "clear_address" = "清除地址";
 "suggested_address_prefix" = "實際使用地址：%@";
 "confirm_suggested_address" = "確認使用";
+"choose_another_address" = "選其他建議";
+"route_preview_transit_route" = "大眾交通路線";
+"address_suggestions_loading" = "搜尋建議中...";
+"address_suggestions_empty" = "目前沒有其他建議";
 "confirmed_suggested_address" = "已確認使用此建議地點。";
 "status_confirm_suggested_address" = "請先確認系統建議的地址後再排程。";
 "error_address_not_found" = "找不到這個地址：%@";

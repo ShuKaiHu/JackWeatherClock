@@ -98,6 +98,7 @@ private struct RouteTabView: View {
     private static let routeModes: [CommuteAlarmSettings.CommuteMode] = [
         .car,
         .scooter,
+        .publicTransit,
         .walking
     ]
 
@@ -110,6 +111,8 @@ private struct RouteTabView: View {
     let showsWeatherAttribution: Bool
     @StateObject private var addressCompleter = AddressSearchCompleter()
     @FocusState private var focusedAddressField: AddressField?
+    @State private var expandedAddressSuggestionField: AddressField?
+    @State private var addressSelectionGeneration = 0
     @State private var previewTask: Task<Void, Never>?
     @State private var weatherTask: Task<Void, Never>?
 
@@ -129,7 +132,8 @@ private struct RouteTabView: View {
                                 field: .home,
                                 onSubmit: submitAddressSearch,
                                 onClear: { clearAddress(.home) },
-                                onConfirmSuggestion: { viewModel.confirmSuggestedAddress(.home) }
+                                onConfirmSuggestion: { viewModel.confirmSuggestedAddress(.home) },
+                                onChooseAnotherSuggestion: { focusAddressForSuggestion(.home) }
                             )
                             AddressFieldRow(
                                 label: String(localized: "work_label"),
@@ -141,12 +145,18 @@ private struct RouteTabView: View {
                                 field: .work,
                                 onSubmit: submitAddressSearch,
                                 onClear: { clearAddress(.work) },
-                                onConfirmSuggestion: { viewModel.confirmSuggestedAddress(.work) }
+                                onConfirmSuggestion: { viewModel.confirmSuggestedAddress(.work) },
+                                onChooseAnotherSuggestion: { focusAddressForSuggestion(.work) }
                             )
 
-                            if focusedAddressField != nil && !addressCompleter.completions.isEmpty {
-                                AddressCompletionList(completions: addressCompleter.completions) { completion in
-                                    selectAddressCompletion(completion)
+                            if shouldShowAddressCompletionPanel {
+                                AddressCompletionList(
+                                    completions: addressCompleter.completions,
+                                    isSearching: addressCompleter.isSearching
+                                ) { completion in
+                                    Task { @MainActor in
+                                        await selectAddressCompletion(completion)
+                                    }
                                 }
                             }
                         }
@@ -289,6 +299,7 @@ private struct RouteTabView: View {
 
     private func submitAddressSearch() {
         focusedAddressField = nil
+        expandedAddressSuggestionField = nil
         addressCompleter.clear()
         scheduleRoutePreview(delay: .zero)
         scheduleRouteWeather(delay: .zero)
@@ -305,6 +316,7 @@ private struct RouteTabView: View {
         }
 
         focusedAddressField = field
+        expandedAddressSuggestionField = nil
         addressCompleter.clear()
         previewTask?.cancel()
         weatherTask?.cancel()
@@ -312,36 +324,71 @@ private struct RouteTabView: View {
         viewModel.clearRouteWeather()
     }
 
-    private func selectAddressCompletion(_ completion: MKLocalSearchCompletion) {
-        let address = [completion.title, completion.subtitle]
+    private func focusAddressForSuggestion(_ field: AddressField) {
+        focusedAddressField = field
+        expandedAddressSuggestionField = field
+        updateAddressCompletions(forceRefresh: true)
+    }
+
+    @MainActor
+    private func selectAddressCompletion(_ completion: MKLocalSearchCompletion) async {
+        // Capture the target field before any await: focus can move (or clear) while
+        // the completion resolves over the network, and the result must not follow it.
+        // The generation makes the LATEST tap win when taps overlap in flight.
+        guard let targetField = focusedAddressField else {
+            return
+        }
+
+        addressSelectionGeneration += 1
+        let generation = addressSelectionGeneration
+
+        let fallbackAddress = [completion.title, completion.subtitle]
             .filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
             .joined(separator: ", ")
+        let resolvedLocation = await MapItemResolver.resolvedLocation(for: completion)
+        guard generation == addressSelectionGeneration else {
+            return
+        }
 
-        switch focusedAddressField {
+        let resolvedAddress = resolvedLocation?.displayAddress?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let address = resolvedAddress?.isEmpty == false ? resolvedAddress! : fallbackAddress
+
+        switch targetField {
         case .home:
-            viewModel.setAddressFromSuggestion(address, field: .home)
+            viewModel.setAddressFromSuggestion(address, location: resolvedLocation, field: .home)
         case .work:
-            viewModel.setAddressFromSuggestion(address, field: .work)
-        case nil:
-            break
+            viewModel.setAddressFromSuggestion(address, location: resolvedLocation, field: .work)
         }
 
         submitAddressSearch()
     }
 
-    private func updateAddressCompletions() {
+    private var shouldShowAddressCompletionPanel: Bool {
+        guard let focusedAddressField else {
+            return false
+        }
+
+        return !addressCompleter.completions.isEmpty || expandedAddressSuggestionField == focusedAddressField
+    }
+
+    private func updateAddressCompletions(forceRefresh: Bool = false) {
         switch focusedAddressField {
         case .home:
-            addressCompleter.update(query: viewModel.settings.homeAddress)
+            addressCompleter.update(query: viewModel.settings.homeAddress, forceRefresh: forceRefresh)
         case .work:
-            addressCompleter.update(query: viewModel.settings.workAddress)
+            addressCompleter.update(query: viewModel.settings.workAddress, forceRefresh: forceRefresh)
         case nil:
+            expandedAddressSuggestionField = nil
             addressCompleter.clear()
         }
     }
 
     private func scheduleRoutePreview(delay: Duration = .milliseconds(700)) {
         previewTask?.cancel()
+        // Cancellation cannot abort an already-running fetch, so also invalidate it —
+        // otherwise its stale result could land during the debounce delay below.
+        viewModel.supersedeRoutePreview()
         previewTask = Task {
             guard viewModel.canPreviewRoute else {
                 await MainActor.run {
@@ -363,6 +410,7 @@ private struct RouteTabView: View {
 
     private func scheduleRouteWeather(delay: Duration = .milliseconds(700)) {
         weatherTask?.cancel()
+        viewModel.supersedeRouteWeather()
         weatherTask = Task {
             guard viewModel.canPreviewRoute else {
                 await MainActor.run {
@@ -666,13 +714,15 @@ private struct RouteModePicker: View {
     let modes: [CommuteAlarmSettings.CommuteMode]
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 6) {
             ForEach(modes) { mode in
                 Button {
                     selection = mode
                 } label: {
                     Text(mode.displayName)
-                        .font(.body.weight(.semibold))
+                        .font(.subheadline.weight(.semibold))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 10)
                 }
@@ -687,46 +737,68 @@ private struct RouteModePicker: View {
 
 private struct AddressCompletionList: View {
     let completions: [MKLocalSearchCompletion]
+    let isSearching: Bool
     let onSelect: (MKLocalSearchCompletion) -> Void
 
     var body: some View {
         VStack(spacing: 0) {
-            ForEach(completions.indices, id: \.self) { index in
-                let completion = completions[index]
-                Button {
-                    onSelect(completion)
-                } label: {
-                    HStack(spacing: 12) {
+            if completions.isEmpty {
+                HStack(spacing: 12) {
+                    if isSearching {
+                        ProgressView()
+                            .controlSize(.small)
+                    } else {
                         Image(systemName: "magnifyingglass")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.secondary)
-                            .frame(width: 22)
-
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(completion.title)
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(.primary)
-                                .lineLimit(1)
-                            if !completion.subtitle.isEmpty {
-                                Text(completion.subtitle)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(1)
-                            }
-                        }
-
-                        Spacer()
                     }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
 
-                if index < completions.indices.last ?? 0 {
-                    Divider()
-                        .overlay(Color.white.opacity(0.08))
-                        .padding(.leading, 48)
+                    Text(String(localized: isSearching ? "address_suggestions_loading" : "address_suggestions_empty"))
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.secondary)
+
+                    Spacer()
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 14)
+            } else {
+                ForEach(completions.indices, id: \.self) { index in
+                    let completion = completions[index]
+                    Button {
+                        onSelect(completion)
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "magnifyingglass")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                                .frame(width: 22)
+
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(completion.title)
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(.primary)
+                                    .lineLimit(1)
+                                if !completion.subtitle.isEmpty {
+                                    Text(completion.subtitle)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(1)
+                                }
+                            }
+
+                            Spacer()
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+
+                    if index < completions.indices.last ?? 0 {
+                        Divider()
+                            .overlay(Color.white.opacity(0.08))
+                            .padding(.leading, 48)
+                    }
                 }
             }
         }
@@ -736,6 +808,7 @@ private struct AddressCompletionList: View {
 
 private final class AddressSearchCompleter: NSObject, ObservableObject, MKLocalSearchCompleterDelegate, @unchecked Sendable {
     @Published private(set) var completions: [MKLocalSearchCompletion] = []
+    @Published private(set) var isSearching = false
 
     private let completer = MKLocalSearchCompleter()
 
@@ -745,7 +818,7 @@ private final class AddressSearchCompleter: NSObject, ObservableObject, MKLocalS
         completer.resultTypes = [.address, .pointOfInterest]
     }
 
-    func update(query: String) {
+    func update(query: String, forceRefresh: Bool = false) {
         let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard trimmedQuery.count >= 2 else {
             clear()
@@ -760,20 +833,35 @@ private final class AddressSearchCompleter: NSObject, ObservableObject, MKLocalS
                 && !candidate.localizedStandardContains("Corporation")
         } ?? candidates.first ?? trimmedQuery
 
-        completer.queryFragment = autocompleteQuery
+        if forceRefresh && completer.queryFragment == autocompleteQuery {
+            isSearching = true
+            completions = []
+            completer.queryFragment = ""
+            DispatchQueue.main.async { [weak self] in
+                self?.completer.queryFragment = autocompleteQuery
+            }
+        } else if completer.queryFragment != autocompleteQuery {
+            isSearching = true
+            completer.queryFragment = autocompleteQuery
+        }
+        // Same query as the current search: assigning an unchanged queryFragment never
+        // triggers a delegate callback, so leave isSearching untouched to avoid a stuck spinner.
     }
 
     func clear() {
         completer.queryFragment = ""
         completions = []
+        isSearching = false
     }
 
     func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
         completions = Array(completer.results.prefix(5))
+        isSearching = false
     }
 
     func completer(_ completer: MKLocalSearchCompleter, didFailWithError error: Error) {
         completions = []
+        isSearching = false
     }
 }
 
@@ -788,6 +876,7 @@ private struct AddressFieldRow<Field: Hashable>: View {
     let onSubmit: () -> Void
     let onClear: () -> Void
     let onConfirmSuggestion: () -> Void
+    let onChooseAnotherSuggestion: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -857,13 +946,23 @@ private struct AddressFieldRow<Field: Hashable>: View {
                             .font(.caption2.weight(.semibold))
                             .foregroundStyle(.green)
                     } else {
-                        Button(String(localized: "confirm_suggested_address")) {
-                            onConfirmSuggestion()
+                        HStack(spacing: 8) {
+                            Button(String(localized: "confirm_suggested_address")) {
+                                onConfirmSuggestion()
+                            }
+                            .font(.caption.weight(.semibold))
+                            .buttonStyle(.bordered)
+                            .controlSize(.mini)
+                            .tint(.yellow)
+
+                            Button(String(localized: "choose_another_address")) {
+                                onChooseAnotherSuggestion()
+                            }
+                            .font(.caption.weight(.semibold))
+                            .buttonStyle(.bordered)
+                            .controlSize(.mini)
+                            .tint(.secondary)
                         }
-                        .font(.caption.weight(.semibold))
-                        .buttonStyle(.bordered)
-                        .controlSize(.mini)
-                        .tint(.yellow)
                     }
                 }
                 .padding(.horizontal, 14)
