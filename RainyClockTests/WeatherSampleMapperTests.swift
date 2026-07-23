@@ -118,6 +118,34 @@ final class WeatherSampleMapperTests: XCTestCase {
         ))
     }
 
+    func testMapItemResolverAcceptsEnglishPOIWithLocalizedAddressDisplay() {
+        XCTAssertTrue(MapItemResolver.isAcceptableResolvedAddress(
+            query: "Taipei Main Station",
+            displayAddress: "3 Beiping W Rd, Zhongzheng District, Taipei City"
+        ))
+    }
+
+    func testMapItemResolverRejectsNewTaipeiFragmentForEnglishTaipeiQuery() {
+        XCTAssertFalse(MapItemResolver.isAcceptableResolvedAddress(
+            query: "Taipei Main Station",
+            displayAddress: "Maan, Fushan Village, Wulai District, New Taipei City"
+        ))
+    }
+
+    func testMapItemResolverRejectsEnglishQueryWithWrongCity() {
+        XCTAssertFalse(MapItemResolver.isAcceptableResolvedAddress(
+            query: "Zhongzheng Rd, Taipei City",
+            displayAddress: "Zhongzheng Rd, Qianjin District, Kaohsiung City"
+        ))
+    }
+
+    func testPreferredSearchLocaleFollowsQueryLanguage() {
+        XCTAssertEqual(MapItemResolver.preferredSearchLocale(for: "台北市中正區北平西路3號").identifier, "zh-Hant-TW")
+        XCTAssertEqual(MapItemResolver.preferredSearchLocale(for: "Taipei Main Station").identifier, "en-US")
+        // Mixed input keeps Chinese results.
+        XCTAssertEqual(MapItemResolver.preferredSearchLocale(for: "台積電 Fab 18, Tainan").identifier, "zh-Hant-TW")
+    }
+
     func testMapItemResolverAcceptsStreetsNamedAfterCounties() {
         // 金門街 is a Taipei street; the county name inside it must not register as a
         // city mention and trigger the wrong-city rejection.

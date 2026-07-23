@@ -30,6 +30,26 @@ actor MapItemResolver {
         try await resolve(queries: Self.candidateQueries(for: rawAddress), fallbackAddress: rawAddress)
     }
 
+    /// Results should come back in the language the user typed, not the device
+    /// language: Han characters in the query mean Chinese, otherwise English.
+    static func preferredSearchLocale(for query: String) -> Locale {
+        Locale(identifier: containsHanCharacters(query) ? "zh-Hant-TW" : "en-US")
+    }
+
+    static func containsHanCharacters(_ text: String) -> Bool {
+        text.unicodeScalars.contains { scalar in
+            (0x4E00...0x9FFF).contains(scalar.value)
+                || (0x3400...0x4DBF).contains(scalar.value)
+                || (0xF900...0xFAFF).contains(scalar.value)
+        }
+    }
+
+    /// True when the display text's script already matches what the locale asks for.
+    private static func scriptMatches(_ text: String, locale: Locale) -> Bool {
+        let wantsHan = locale.identifier.hasPrefix("zh")
+        return wantsHan == containsHanCharacters(text)
+    }
+
     @MainActor
     static func resolvedLocation(for completion: MKLocalSearchCompletion) async -> ResolvedMapLocation? {
         let request = MKLocalSearch.Request(completion: completion)
@@ -41,10 +61,22 @@ actor MapItemResolver {
                 return nil
             }
 
+            // Store the address in the language of the suggestion the user picked,
+            // even when the device language differs.
+            let locale = preferredSearchLocale(for: "\(completion.title) \(completion.subtitle)")
+            var displayAddress = displayAddress(for: mapItem)
+            if displayAddress == nil || !scriptMatches(displayAddress!, locale: locale) {
+                let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+                if let placemark = try? await CLGeocoder().reverseGeocodeLocation(location, preferredLocale: locale).first,
+                   let localized = Self.displayAddress(for: placemark) {
+                    displayAddress = localized
+                }
+            }
+
             return ResolvedMapLocation(
                 latitude: coordinate.latitude,
                 longitude: coordinate.longitude,
-                displayAddress: displayAddress(for: mapItem),
+                displayAddress: displayAddress,
                 resolution: .exact
             )
         } catch {
@@ -94,7 +126,11 @@ actor MapItemResolver {
 
     private func geocode(_ query: String, resolution: AddressResolution) async throws -> ResolvedMapLocation? {
         do {
-            let placemarks = try await geocoder.geocodeAddressString(query)
+            let placemarks = try await geocoder.geocodeAddressString(
+                query,
+                in: nil,
+                preferredLocale: Self.preferredSearchLocale(for: query)
+            )
             guard let placemark = placemarks.first(where: { $0.location != nil }),
                   let coordinate = placemark.location?.coordinate else {
                 return nil
@@ -129,7 +165,13 @@ actor MapItemResolver {
                   let coordinate = mapItem.placemark.location?.coordinate else {
                 return nil
             }
-            let displayAddress = Self.displayAddress(for: mapItem)
+            let locale = Self.preferredSearchLocale(for: query)
+            var displayAddress = Self.displayAddress(for: mapItem)
+            // MKLocalSearch results follow the device language; when that clashes with
+            // the language the user typed, re-localize via reverse geocoding.
+            if displayAddress == nil || !Self.scriptMatches(displayAddress!, locale: locale) {
+                displayAddress = await localizedDisplayAddress(at: coordinate, locale: locale) ?? displayAddress
+            }
             guard Self.isAcceptableResolvedAddress(query: query, displayAddress: displayAddress) else {
                 return nil
             }
@@ -143,6 +185,15 @@ actor MapItemResolver {
         } catch {
             return nil
         }
+    }
+
+    private func localizedDisplayAddress(at coordinate: CLLocationCoordinate2D, locale: Locale) async -> String? {
+        let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+        guard let placemark = try? await geocoder.reverseGeocodeLocation(location, preferredLocale: locale).first else {
+            return nil
+        }
+
+        return Self.displayAddress(for: placemark)
     }
 
     static func candidateQueries(for rawAddress: String) -> [String] {
@@ -319,7 +370,18 @@ actor MapItemResolver {
             return false
         }
 
-        let matchedTokens = tokens.filter { normalizedDisplayAddress.contains($0) }
+        let matchedTokens = tokens.filter { token in
+            guard normalizedDisplayAddress.contains(token) else {
+                return false
+            }
+            // "taipei" inside "new taipei" is a different city, not a match.
+            if token == "taipei",
+               normalizedDisplayAddress.contains("newtaipei"),
+               !normalizedQuery.contains("newtaipei") {
+                return false
+            }
+            return true
+        }
         let hasImportantAlphanumericToken = tokens.contains { token in
             isASCIIAlphanumericIdentifier(token)
         }
@@ -335,6 +397,19 @@ actor MapItemResolver {
         }
 
         if normalizedQuery.count <= 8 {
+            return !matchedTokens.isEmpty
+        }
+
+        // Cross-language POI queries (e.g. English "Taipei Main Station" on a Chinese
+        // device) can only ever match locality tokens in the localized display, so one
+        // solid match plus no city conflict is enough; the manual-input confirmation
+        // flow guards against wrong picks.
+        if !containsHanCharacters(query) {
+            let queryText = query.replacingOccurrences(of: "臺", with: "台").lowercased()
+            let displayText = displayAddress.replacingOccurrences(of: "臺", with: "台").lowercased()
+            guard !hasConflictingTaiwanCity(query: queryText, display: displayText) else {
+                return false
+            }
             return !matchedTokens.isEmpty
         }
 

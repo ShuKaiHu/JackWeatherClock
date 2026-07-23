@@ -34,7 +34,7 @@ struct GooglePlaceResolver {
         components.queryItems = [
             URLQueryItem(name: "address", value: query),
             URLQueryItem(name: "region", value: "tw"),
-            URLQueryItem(name: "language", value: Locale.current.identifier.replacingOccurrences(of: "_", with: "-")),
+            URLQueryItem(name: "language", value: MapItemResolver.containsHanCharacters(query) ? "zh-TW" : "en"),
             URLQueryItem(name: "key", value: apiKey)
         ]
 
