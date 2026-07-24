@@ -168,7 +168,7 @@ struct RouteWeatherSegment: Identifiable, Equatable {
     var precipitationProbability: Double
 }
 
-struct ScheduledAlarmSummary: Equatable {
+struct ScheduledAlarmSummary: Codable, Equatable {
     var normalAlarmDate: Date
     var scheduledAlarmDate: Date
     var weatherRefreshDate: Date

@@ -53,6 +53,7 @@ final class AlarmViewModel: ObservableObject {
     private var weatherGeneration = 0
     private static let addressValidationTimeout: Duration = .seconds(4)
     private static let settingsStorageKey = "commuteAlarmSettings"
+    private static let scheduledStateStorageKey = "scheduledAlarmDisplayState"
 
     init(
         routeWeatherService: RouteWeatherService = MockRouteWeatherService(),
@@ -65,6 +66,14 @@ final class AlarmViewModel: ObservableObject {
         self.routePreviewService = routePreviewService
         self.notificationScheduler = notificationScheduler
         self.settingsStorage = settingsStorage
+
+        // The scheduled-alarm card and status live only in memory, so a cold launch
+        // (e.g. tapping the alarm notification after iOS terminated the app) would
+        // otherwise come up looking as if the alarm had been reset.
+        if let displayState = Self.loadScheduledDisplayState(from: settingsStorage) {
+            scheduledAlarmSummary = displayState.summary
+            statusMessage = displayState.statusMessage
+        }
     }
 
     var canSchedule: Bool {
@@ -337,6 +346,7 @@ final class AlarmViewModel: ObservableObject {
             let forecastAt = snapshot.forecastAt.formatted(date: .abbreviated, time: .shortened)
             let statusKey = exceedsThreshold ? "status_adjusted_checked" : "status_normal_checked"
             statusMessage = String.localizedStringWithFormat(String(localized: String.LocalizationValue(statusKey)), forecastAt, checkedAt)
+            saveScheduledDisplayState(summary: summary)
         } catch {
             updateAddressValidation(for: error)
             statusMessage = String.localizedStringWithFormat(
@@ -503,5 +513,27 @@ final class AlarmViewModel: ObservableObject {
         }
 
         return try? JSONDecoder().decode(CommuteAlarmSettings.self, from: data)
+    }
+
+    private struct ScheduledAlarmDisplayState: Codable {
+        var summary: ScheduledAlarmSummary
+        var statusMessage: String
+    }
+
+    private func saveScheduledDisplayState(summary: ScheduledAlarmSummary) {
+        let state = ScheduledAlarmDisplayState(summary: summary, statusMessage: statusMessage)
+        guard let data = try? JSONEncoder().encode(state) else {
+            return
+        }
+
+        settingsStorage.set(data, forKey: Self.scheduledStateStorageKey)
+    }
+
+    private static func loadScheduledDisplayState(from storage: UserDefaults) -> ScheduledAlarmDisplayState? {
+        guard let data = storage.data(forKey: scheduledStateStorageKey) else {
+            return nil
+        }
+
+        return try? JSONDecoder().decode(ScheduledAlarmDisplayState.self, from: data)
     }
 }
