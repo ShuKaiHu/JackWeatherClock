@@ -98,6 +98,7 @@
 "segment_route_format" = "%@路線";
 "segment_route_sample_format" = "%@取樣 %d";
 "weather_data_attribution" = "天氣資料由 Apple Weather 提供。";
+"weather_data_source_link" = "其他資料來源";
 "address_not_found_inline" = "找不到這個地址或路線，請重新輸入或選擇建議地址。";
 "clear_address" = "清除地址";
 "suggested_address_prefix" = "實際使用地址：%@";

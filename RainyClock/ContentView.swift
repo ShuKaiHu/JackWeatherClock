@@ -229,10 +229,6 @@ private struct RouteTabView: View {
                                     RouteWeatherCard(segment: segment)
                                 }
                             }
-
-                            if showsWeatherAttribution {
-                                WeatherAttributionView()
-                            }
                         } else {
                             RouteWeatherPlaceholderCards()
                         }
@@ -240,6 +236,12 @@ private struct RouteTabView: View {
                         Text(viewModel.routeWeatherStatusMessage)
                             .font(.footnote)
                             .foregroundStyle(.secondary)
+
+                        // WeatherKit attribution must always be visible where weather
+                        // data is presented, not only once a forecast has loaded.
+                        if showsWeatherAttribution {
+                            WeatherAttributionView()
+                        }
                     }
                 }
                 .padding(.horizontal, 20)
