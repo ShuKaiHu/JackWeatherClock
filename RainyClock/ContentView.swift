@@ -165,7 +165,9 @@ private struct RouteTabView: View {
                             Text("mode")
                                 .font(.subheadline.weight(.semibold))
                                 .foregroundStyle(.secondary)
-                                .frame(width: 44, alignment: .leading)
+                                .lineLimit(1)
+                                .fixedSize(horizontal: true, vertical: false)
+                                .frame(minWidth: 44, alignment: .leading)
                             RouteModePicker(
                                 selection: $viewModel.settings.commuteMode,
                                 modes: Self.routeModes
@@ -891,7 +893,9 @@ private struct AddressFieldRow<Field: Hashable>: View {
                 Text(label)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(isInvalid ? Color.red : .secondary)
-                    .frame(width: 44, alignment: .leading)
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
+                    .frame(minWidth: 44, alignment: .leading)
 
                 TextField(placeholder, text: $text)
                     .textContentType(.fullStreetAddress)

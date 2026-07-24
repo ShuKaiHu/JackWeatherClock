@@ -98,7 +98,6 @@
 "segment_route_format" = "%@ route";
 "segment_route_sample_format" = "%@ sample %d";
 "weather_data_attribution" = "Weather data provided by Apple Weather.";
-"weather_data_source_link" = "Other data sources";
 "address_not_found_inline" = "Address or route not found. Re-enter it or choose a suggested address.";
 "clear_address" = "Clear address";
 "suggested_address_prefix" = "Actual address in use: %@";

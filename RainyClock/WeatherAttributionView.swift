@@ -10,25 +10,21 @@ struct WeatherAttributionView: View {
     private let fallbackLegalURL = URL(string: "https://weatherkit.apple.com/legal-attribution.html")!
 
     var body: some View {
+        // The mark itself links to the legal attribution page, satisfying the
+        // WeatherKit requirement of showing the Apple Weather trademark together
+        // with a link to its data-source attribution.
         Link(destination: attribution?.legalPageURL ?? fallbackLegalURL) {
-            HStack(spacing: 6) {
-                if let markURL = attribution?.combinedMarkDarkURL {
-                    AsyncImage(url: markURL) { image in
-                        image
-                            .resizable()
-                            .scaledToFit()
-                    } placeholder: {
-                        fallbackLabel
-                    }
-                    .frame(height: 16)
-                } else {
+            if let markURL = attribution?.combinedMarkDarkURL {
+                AsyncImage(url: markURL) { image in
+                    image
+                        .resizable()
+                        .scaledToFit()
+                } placeholder: {
                     fallbackLabel
                 }
-
-                Text("weather_data_source_link")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .underline()
+                .frame(height: 16)
+            } else {
+                fallbackLabel
             }
         }
         .task {
