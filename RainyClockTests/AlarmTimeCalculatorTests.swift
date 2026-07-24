@@ -158,6 +158,64 @@ final class AlarmTimeCalculatorTests: XCTestCase {
         XCTAssertEqual(snapshot.maximumPrecipitationProbability, 0.5)
     }
 
+    func testScheduledSummaryRollsForwardToNextSelectedWeekday() {
+        // Monday 2026-07-20 07:30, weekdays Mon-Fri; reloaded Wednesday noon.
+        let normal = date(year: 2026, month: 7, day: 20, hour: 7, minute: 30)
+        let summary = ScheduledAlarmSummary(
+            normalAlarmDate: normal,
+            scheduledAlarmDate: normal,
+            weatherRefreshDate: date(year: 2026, month: 7, day: 20, hour: 7, minute: 0),
+            exceedsRainThreshold: false,
+            leadTimeMinutes: 0,
+            rainProbabilityThreshold: 0.5,
+            maximumPrecipitationProbability: 0.1
+        )
+        let now = date(year: 2026, month: 7, day: 22, hour: 12, minute: 0)
+
+        let rolled = summary.rollingForward(selectedWeekdays: [2, 3, 4, 5, 6], now: now, calendar: calendar)
+
+        XCTAssertEqual(rolled.normalAlarmDate, date(year: 2026, month: 7, day: 23, hour: 7, minute: 30))
+        XCTAssertEqual(rolled.scheduledAlarmDate, date(year: 2026, month: 7, day: 23, hour: 7, minute: 30))
+        XCTAssertEqual(rolled.weatherRefreshDate, date(year: 2026, month: 7, day: 23, hour: 7, minute: 0))
+    }
+
+    func testScheduledSummaryRollForwardKeepsMidnightCrossingDayShift() {
+        // Monday-only alarm at 00:20 whose rain lead time moved the ring to Sunday 23:50.
+        let summary = ScheduledAlarmSummary(
+            normalAlarmDate: date(year: 2026, month: 7, day: 20, hour: 0, minute: 20),
+            scheduledAlarmDate: date(year: 2026, month: 7, day: 19, hour: 23, minute: 50),
+            weatherRefreshDate: date(year: 2026, month: 7, day: 19, hour: 23, minute: 50),
+            exceedsRainThreshold: true,
+            leadTimeMinutes: 30,
+            rainProbabilityThreshold: 0.5,
+            maximumPrecipitationProbability: 0.8
+        )
+        let now = date(year: 2026, month: 7, day: 22, hour: 12, minute: 0)
+
+        let rolled = summary.rollingForward(selectedWeekdays: [2], now: now, calendar: calendar)
+
+        XCTAssertEqual(rolled.normalAlarmDate, date(year: 2026, month: 7, day: 27, hour: 0, minute: 20))
+        XCTAssertEqual(rolled.scheduledAlarmDate, date(year: 2026, month: 7, day: 26, hour: 23, minute: 50))
+        XCTAssertEqual(rolled.weatherRefreshDate, date(year: 2026, month: 7, day: 26, hour: 23, minute: 50))
+    }
+
+    func testScheduledSummaryWithFutureDatesStaysUnchanged() {
+        let summary = ScheduledAlarmSummary(
+            normalAlarmDate: date(year: 2026, month: 7, day: 24, hour: 7, minute: 30),
+            scheduledAlarmDate: date(year: 2026, month: 7, day: 24, hour: 7, minute: 30),
+            weatherRefreshDate: date(year: 2026, month: 7, day: 24, hour: 7, minute: 0),
+            exceedsRainThreshold: false,
+            leadTimeMinutes: 0,
+            rainProbabilityThreshold: 0.5,
+            maximumPrecipitationProbability: 0.1
+        )
+        let now = date(year: 2026, month: 7, day: 22, hour: 12, minute: 0)
+
+        let rolled = summary.rollingForward(selectedWeekdays: [2, 3, 4, 5, 6], now: now, calendar: calendar)
+
+        XCTAssertEqual(rolled, summary)
+    }
+
     private func date(year: Int, month: Int, day: Int, hour: Int, minute: Int) -> Date {
         calendar.date(from: DateComponents(
             timeZone: calendar.timeZone,

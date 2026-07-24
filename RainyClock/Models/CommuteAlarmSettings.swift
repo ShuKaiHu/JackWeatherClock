@@ -114,6 +114,8 @@ struct CommuteAlarmSettings: Codable, Equatable {
     var workAddress: String = ""
     var homeResolvedLocation: ResolvedMapLocation?
     var workResolvedLocation: ResolvedMapLocation?
+    var confirmedHomeAddressInput: String?
+    var confirmedWorkAddressInput: String?
     var commuteMode: CommuteMode = .car
     var alarmTime: Date = Calendar.current.date(bySettingHour: 7, minute: 30, second: 0, of: Date()) ?? Date()
     var rainLeadTimeMinutes: Int = 30
@@ -129,6 +131,8 @@ struct CommuteAlarmSettings: Codable, Equatable {
         workAddress = try values.decodeIfPresent(String.self, forKey: .workAddress) ?? ""
         homeResolvedLocation = try values.decodeIfPresent(ResolvedMapLocation.self, forKey: .homeResolvedLocation)
         workResolvedLocation = try values.decodeIfPresent(ResolvedMapLocation.self, forKey: .workResolvedLocation)
+        confirmedHomeAddressInput = try values.decodeIfPresent(String.self, forKey: .confirmedHomeAddressInput)
+        confirmedWorkAddressInput = try values.decodeIfPresent(String.self, forKey: .confirmedWorkAddressInput)
         commuteMode = try values.decodeIfPresent(CommuteMode.self, forKey: .commuteMode) ?? .car
         alarmTime = try values.decodeIfPresent(Date.self, forKey: .alarmTime)
             ?? Calendar.current.date(bySettingHour: 7, minute: 30, second: 0, of: Date())
@@ -168,7 +172,7 @@ struct RouteWeatherSegment: Identifiable, Equatable {
     var precipitationProbability: Double
 }
 
-struct ScheduledAlarmSummary: Equatable {
+struct ScheduledAlarmSummary: Codable, Equatable {
     var normalAlarmDate: Date
     var scheduledAlarmDate: Date
     var weatherRefreshDate: Date
@@ -176,4 +180,86 @@ struct ScheduledAlarmSummary: Equatable {
     var leadTimeMinutes: Int
     var rainProbabilityThreshold: Double
     var maximumPrecipitationProbability: Double
+}
+
+extension ScheduledAlarmSummary {
+    /// Returns the summary with past dates advanced to their next weekly occurrence,
+    /// so a summary reloaded after relaunch still describes the upcoming ring.
+    func rollingForward(
+        selectedWeekdays: Set<Int>,
+        now: Date = Date(),
+        calendar: Calendar = .current
+    ) -> ScheduledAlarmSummary {
+        let weekdays = selectedWeekdays.isEmpty ? CommuteAlarmSettings.allWeekdays : selectedWeekdays
+        var summary = self
+        summary.scheduledAlarmDate = Self.nextOccurrence(
+            of: scheduledAlarmDate,
+            weekdays: Self.shiftedWeekdays(weekdays, from: normalAlarmDate, to: scheduledAlarmDate, calendar: calendar),
+            after: now,
+            calendar: calendar
+        )
+        summary.weatherRefreshDate = Self.nextOccurrence(
+            of: weatherRefreshDate,
+            weekdays: Self.shiftedWeekdays(weekdays, from: normalAlarmDate, to: weatherRefreshDate, calendar: calendar),
+            after: now,
+            calendar: calendar
+        )
+        summary.normalAlarmDate = Self.nextOccurrence(
+            of: normalAlarmDate,
+            weekdays: weekdays,
+            after: now,
+            calendar: calendar
+        )
+        return summary
+    }
+
+    /// A ring that sits on an earlier day than the normal alarm (rain lead time
+    /// crossing midnight) rings on every selected weekday shifted by that delta.
+    private static func shiftedWeekdays(
+        _ weekdays: Set<Int>,
+        from reference: Date,
+        to date: Date,
+        calendar: Calendar
+    ) -> Set<Int> {
+        let dayShift = calendar.dateComponents(
+            [.day],
+            from: calendar.startOfDay(for: reference),
+            to: calendar.startOfDay(for: date)
+        ).day ?? 0
+        guard dayShift != 0 else {
+            return weekdays
+        }
+
+        return Set(weekdays.map { (($0 - 1 + dayShift) % 7 + 7) % 7 + 1 })
+    }
+
+    private static func nextOccurrence(
+        of date: Date,
+        weekdays: Set<Int>,
+        after now: Date,
+        calendar: Calendar
+    ) -> Date {
+        guard date < now else {
+            return date
+        }
+
+        let time = calendar.dateComponents([.hour, .minute, .second], from: date)
+        for dayOffset in 0...7 {
+            guard let day = calendar.date(byAdding: .day, value: dayOffset, to: calendar.startOfDay(for: now)),
+                  let candidate = calendar.date(
+                      bySettingHour: time.hour ?? 0,
+                      minute: time.minute ?? 0,
+                      second: time.second ?? 0,
+                      of: day
+                  ),
+                  candidate > now,
+                  weekdays.contains(calendar.component(.weekday, from: candidate)) else {
+                continue
+            }
+
+            return candidate
+        }
+
+        return date
+    }
 }

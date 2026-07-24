@@ -80,6 +80,7 @@
 "commute_mode_walking" = "Walking";
 "commute_mode_public_transit" = "Transit";
 "status_enter_settings" = "Enter your commute and alarm settings.";
+"status_alarm_scheduled" = "Smart alarm is scheduled and repeats weekly.";
 "status_required" = "Home, work, and lead time are required.";
 "status_permission_denied" = "Notification permission was not granted.";
 "status_schedule_failed" = "Could not schedule alarm: %@";

@@ -34,7 +34,11 @@ final class AlarmViewModel: ObservableObject {
     }
     @Published private(set) var routeWeatherSnapshot: RouteWeatherSnapshot?
     @Published private(set) var routePreview: RoutePreview?
-    @Published private(set) var scheduledAlarmSummary: ScheduledAlarmSummary?
+    @Published private(set) var scheduledAlarmSummary: ScheduledAlarmSummary? {
+        didSet {
+            saveScheduledAlarmSummary()
+        }
+    }
     @Published private(set) var statusMessage = String(localized: "status_enter_settings")
     @Published private(set) var routePreviewStatusMessage = String(localized: "route_preview_empty")
     @Published private(set) var routeWeatherStatusMessage = String(localized: "route_weather_empty")
@@ -53,6 +57,7 @@ final class AlarmViewModel: ObservableObject {
     private var weatherGeneration = 0
     private static let addressValidationTimeout: Duration = .seconds(4)
     private static let settingsStorageKey = "commuteAlarmSettings"
+    private static let scheduledSummaryStorageKey = "scheduledAlarmSummaryDisplay"
 
     init(
         routeWeatherService: RouteWeatherService = MockRouteWeatherService(),
@@ -65,6 +70,19 @@ final class AlarmViewModel: ObservableObject {
         self.routePreviewService = routePreviewService
         self.notificationScheduler = notificationScheduler
         self.settingsStorage = settingsStorage
+
+        // Restore state that survives relaunches, so a scheduled alarm and confirmed
+        // addresses do not look reset every time the app reopens.
+        if let confirmedHome = settings.confirmedHomeAddressInput {
+            suggestionSelectedInputs[.home] = confirmedHome
+        }
+        if let confirmedWork = settings.confirmedWorkAddressInput {
+            suggestionSelectedInputs[.work] = confirmedWork
+        }
+        if let storedSummary = Self.loadScheduledAlarmSummary(from: settingsStorage) {
+            scheduledAlarmSummary = storedSummary.rollingForward(selectedWeekdays: settings.selectedWeekdays)
+            statusMessage = String(localized: "status_alarm_scheduled")
+        }
     }
 
     var canSchedule: Bool {
@@ -156,7 +174,7 @@ final class AlarmViewModel: ObservableObject {
             return
         }
 
-        suggestionSelectedInputs[field] = actualAddress
+        setSuggestionSelectedInput(actualAddress, for: field)
         switch field {
         case .home:
             settings.homeAddress = actualAddress
@@ -172,7 +190,7 @@ final class AlarmViewModel: ObservableObject {
     func clearAddressState(_ field: CommuteAddressField) {
         invalidAddressFields.remove(field)
         suggestedAddressMatches.removeValue(forKey: field)
-        suggestionSelectedInputs.removeValue(forKey: field)
+        setSuggestionSelectedInput(nil, for: field)
         switch field {
         case .home:
             settings.homeResolvedLocation = nil
@@ -183,7 +201,7 @@ final class AlarmViewModel: ObservableObject {
 
     func setAddressFromSuggestion(_ address: String, location: ResolvedMapLocation?, field: CommuteAddressField) {
         let trimmedAddress = address.trimmingCharacters(in: .whitespacesAndNewlines)
-        suggestionSelectedInputs[field] = trimmedAddress
+        setSuggestionSelectedInput(trimmedAddress, for: field)
 
         switch field {
         case .home:
@@ -375,9 +393,10 @@ final class AlarmViewModel: ObservableObject {
         location: ResolvedMapLocation
     ) {
         let trimmedInput = input.trimmingCharacters(in: .whitespacesAndNewlines)
+        // An input the user already picked from suggestions or explicitly confirmed
+        // (persisted across relaunches) needs no re-confirmation banner.
         let wasSelectedFromSuggestions = suggestionSelectedInputs[field] == trimmedInput
-        let shouldShowActualAddress = location.resolution == .suggested || !wasSelectedFromSuggestions
-        guard shouldShowActualAddress else {
+        guard !wasSelectedFromSuggestions else {
             suggestedAddressMatches.removeValue(forKey: field)
             return
         }
@@ -400,7 +419,22 @@ final class AlarmViewModel: ObservableObject {
 
         suggestedAddressMatches.removeValue(forKey: field)
         if suggestionSelectedInputs[field] != trimmedInput {
+            setSuggestionSelectedInput(nil, for: field)
+        }
+    }
+
+    private func setSuggestionSelectedInput(_ value: String?, for field: CommuteAddressField) {
+        if let value {
+            suggestionSelectedInputs[field] = value
+        } else {
             suggestionSelectedInputs.removeValue(forKey: field)
+        }
+
+        switch field {
+        case .home:
+            settings.confirmedHomeAddressInput = value
+        case .work:
+            settings.confirmedWorkAddressInput = value
         }
     }
 
@@ -495,6 +529,27 @@ final class AlarmViewModel: ObservableObject {
         }
 
         settingsStorage.set(data, forKey: Self.settingsStorageKey)
+    }
+
+    private func saveScheduledAlarmSummary() {
+        guard let summary = scheduledAlarmSummary else {
+            settingsStorage.removeObject(forKey: Self.scheduledSummaryStorageKey)
+            return
+        }
+
+        guard let data = try? JSONEncoder().encode(summary) else {
+            return
+        }
+
+        settingsStorage.set(data, forKey: Self.scheduledSummaryStorageKey)
+    }
+
+    private static func loadScheduledAlarmSummary(from storage: UserDefaults) -> ScheduledAlarmSummary? {
+        guard let data = storage.data(forKey: scheduledSummaryStorageKey) else {
+            return nil
+        }
+
+        return try? JSONDecoder().decode(ScheduledAlarmSummary.self, from: data)
     }
 
     private static func loadSettings(from storage: UserDefaults) -> CommuteAlarmSettings? {
