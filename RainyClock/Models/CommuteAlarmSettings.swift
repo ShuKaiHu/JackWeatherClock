@@ -172,6 +172,38 @@ struct RouteWeatherSegment: Identifiable, Equatable {
     var precipitationProbability: Double
 }
 
+/// Snapshot of every setting the scheduling flow reads. Comparing the stored
+/// snapshot against the live settings tells whether the scheduled alarm still
+/// matches what the user currently has configured.
+struct AlarmScheduleFingerprint: Codable, Equatable {
+    var homeAddress: String
+    var workAddress: String
+    var commuteMode: CommuteAlarmSettings.CommuteMode
+    var alarmHour: Int
+    var alarmMinute: Int
+    var selectedWeekdays: Set<Int>
+    var rainLeadTimeMinutes: Int
+    var rainProbabilityThreshold: Double
+    var alarmSoundRawValue: String
+}
+
+extension CommuteAlarmSettings {
+    func scheduleFingerprint(calendar: Calendar = .current) -> AlarmScheduleFingerprint {
+        let time = calendar.dateComponents([.hour, .minute], from: alarmTime)
+        return AlarmScheduleFingerprint(
+            homeAddress: homeAddress.trimmingCharacters(in: .whitespacesAndNewlines),
+            workAddress: workAddress.trimmingCharacters(in: .whitespacesAndNewlines),
+            commuteMode: commuteMode,
+            alarmHour: time.hour ?? 7,
+            alarmMinute: time.minute ?? 30,
+            selectedWeekdays: selectedWeekdays,
+            rainLeadTimeMinutes: rainLeadTimeMinutes,
+            rainProbabilityThreshold: rainProbabilityThreshold,
+            alarmSoundRawValue: alarmSound.rawValue
+        )
+    }
+}
+
 struct ScheduledAlarmSummary: Codable, Equatable {
     var normalAlarmDate: Date
     var scheduledAlarmDate: Date

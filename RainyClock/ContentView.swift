@@ -546,6 +546,11 @@ private struct AlarmTabView: View {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("scheduled_result")
                                 .font(.headline)
+                            if viewModel.isScheduleStale {
+                                Label(String(localized: "schedule_stale_notice"), systemImage: "exclamationmark.triangle.fill")
+                                    .font(.footnote.weight(.semibold))
+                                    .foregroundStyle(.orange)
+                            }
                             MetricRow(title: String(localized: "normal_alarm"), value: summary.normalAlarmDate.formatted(date: .omitted, time: .shortened))
                             MetricRow(title: String(localized: "scheduled_alarm"), value: summary.scheduledAlarmDate.formatted(date: .abbreviated, time: .shortened))
                             MetricRow(title: String(localized: "weather_refresh"), value: summary.weatherRefreshDate.formatted(date: .abbreviated, time: .shortened))

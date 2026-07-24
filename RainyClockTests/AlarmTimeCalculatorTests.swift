@@ -216,6 +216,49 @@ final class AlarmTimeCalculatorTests: XCTestCase {
         XCTAssertEqual(rolled, summary)
     }
 
+    func testScheduleFingerprintIgnoresAlarmDateComponent() {
+        var settings = CommuteAlarmSettings()
+        settings.homeAddress = "台北車站"
+        settings.workAddress = "台北101"
+        settings.alarmTime = date(year: 2026, month: 7, day: 20, hour: 7, minute: 30)
+
+        var sameTimeOtherDay = settings
+        sameTimeOtherDay.alarmTime = date(year: 2026, month: 8, day: 3, hour: 7, minute: 30)
+
+        XCTAssertEqual(
+            settings.scheduleFingerprint(calendar: calendar),
+            sameTimeOtherDay.scheduleFingerprint(calendar: calendar)
+        )
+    }
+
+    func testScheduleFingerprintChangesWithScheduleRelevantSettings() {
+        var settings = CommuteAlarmSettings()
+        settings.homeAddress = "台北車站"
+        settings.workAddress = "台北101"
+        settings.alarmTime = date(year: 2026, month: 7, day: 20, hour: 7, minute: 30)
+        let baseline = settings.scheduleFingerprint(calendar: calendar)
+
+        var changedLeadTime = settings
+        changedLeadTime.rainLeadTimeMinutes += 5
+        XCTAssertNotEqual(changedLeadTime.scheduleFingerprint(calendar: calendar), baseline)
+
+        var changedAddress = settings
+        changedAddress.homeAddress = "板橋車站"
+        XCTAssertNotEqual(changedAddress.scheduleFingerprint(calendar: calendar), baseline)
+
+        var changedTime = settings
+        changedTime.alarmTime = date(year: 2026, month: 7, day: 20, hour: 8, minute: 0)
+        XCTAssertNotEqual(changedTime.scheduleFingerprint(calendar: calendar), baseline)
+
+        var changedWeekdays = settings
+        changedWeekdays.selectedWeekdays = [2, 3, 4]
+        XCTAssertNotEqual(changedWeekdays.scheduleFingerprint(calendar: calendar), baseline)
+
+        var changedSound = settings
+        changedSound.alarmSound = .morningBell
+        XCTAssertNotEqual(changedSound.scheduleFingerprint(calendar: calendar), baseline)
+    }
+
     private func date(year: Int, month: Int, day: Int, hour: Int, minute: Int) -> Date {
         calendar.date(from: DateComponents(
             timeZone: calendar.timeZone,

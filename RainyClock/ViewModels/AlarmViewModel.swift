@@ -30,6 +30,7 @@ final class AlarmViewModel: ObservableObject {
                 }
             }
             saveSettings()
+            updateScheduleStaleness()
         }
     }
     @Published private(set) var routeWeatherSnapshot: RouteWeatherSnapshot?
@@ -47,6 +48,9 @@ final class AlarmViewModel: ObservableObject {
     @Published private(set) var isRefreshingRouteWeather = false
     @Published private(set) var invalidAddressFields: Set<CommuteAddressField> = []
     @Published private(set) var suggestedAddressMatches: [CommuteAddressField: SuggestedAddressMatch] = [:]
+    /// True when schedule-relevant settings changed after the last successful
+    /// scheduling, so the registered alarm no longer matches the visible settings.
+    @Published private(set) var isScheduleStale = false
 
     private let routeWeatherService: RouteWeatherService
     private let routePreviewService: RoutePreviewService
@@ -55,9 +59,15 @@ final class AlarmViewModel: ObservableObject {
     private var suggestionSelectedInputs: [CommuteAddressField: String] = [:]
     private var previewGeneration = 0
     private var weatherGeneration = 0
+    private var scheduledFingerprint: AlarmScheduleFingerprint? {
+        didSet {
+            saveScheduledFingerprint()
+        }
+    }
     private static let addressValidationTimeout: Duration = .seconds(4)
     private static let settingsStorageKey = "commuteAlarmSettings"
     private static let scheduledSummaryStorageKey = "scheduledAlarmSummaryDisplay"
+    private static let scheduledFingerprintStorageKey = "scheduledAlarmFingerprint"
 
     init(
         routeWeatherService: RouteWeatherService = MockRouteWeatherService(),
@@ -82,6 +92,20 @@ final class AlarmViewModel: ObservableObject {
         if let storedSummary = Self.loadScheduledAlarmSummary(from: settingsStorage) {
             scheduledAlarmSummary = storedSummary.rollingForward(selectedWeekdays: settings.selectedWeekdays)
             statusMessage = String(localized: "status_alarm_scheduled")
+        }
+        scheduledFingerprint = Self.loadScheduledFingerprint(from: settingsStorage)
+        updateScheduleStaleness()
+    }
+
+    private func updateScheduleStaleness() {
+        guard scheduledAlarmSummary != nil, let scheduledFingerprint else {
+            isScheduleStale = false
+            return
+        }
+
+        let isStale = settings.scheduleFingerprint() != scheduledFingerprint
+        if isStale != isScheduleStale {
+            isScheduleStale = isStale
         }
     }
 
@@ -350,6 +374,8 @@ final class AlarmViewModel: ObservableObject {
                 title: String(localized: "notification_title"),
                 body: body
             )
+            scheduledFingerprint = settings.scheduleFingerprint()
+            isScheduleStale = false
 
             let checkedAt = snapshot.checkedAt.formatted(date: .omitted, time: .shortened)
             let forecastAt = snapshot.forecastAt.formatted(date: .abbreviated, time: .shortened)
@@ -550,6 +576,27 @@ final class AlarmViewModel: ObservableObject {
         }
 
         return try? JSONDecoder().decode(ScheduledAlarmSummary.self, from: data)
+    }
+
+    private func saveScheduledFingerprint() {
+        guard let fingerprint = scheduledFingerprint else {
+            settingsStorage.removeObject(forKey: Self.scheduledFingerprintStorageKey)
+            return
+        }
+
+        guard let data = try? JSONEncoder().encode(fingerprint) else {
+            return
+        }
+
+        settingsStorage.set(data, forKey: Self.scheduledFingerprintStorageKey)
+    }
+
+    private static func loadScheduledFingerprint(from storage: UserDefaults) -> AlarmScheduleFingerprint? {
+        guard let data = storage.data(forKey: scheduledFingerprintStorageKey) else {
+            return nil
+        }
+
+        return try? JSONDecoder().decode(AlarmScheduleFingerprint.self, from: data)
     }
 
     private static func loadSettings(from storage: UserDefaults) -> CommuteAlarmSettings? {
