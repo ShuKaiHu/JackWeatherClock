@@ -561,6 +561,11 @@ private struct AlarmTabView: View {
                             MetricRow(title: String(localized: "rain_threshold"), value: "\(Int(summary.rainProbabilityThreshold * 100))%")
                             MetricRow(title: String(localized: "route_max"), value: "\(Int(summary.maximumPrecipitationProbability * 100))%")
                             MetricRow(title: String(localized: "rain_adjustment"), value: rainAdjustmentText(for: summary))
+
+                            // This card surfaces WeatherKit-derived precipitation values,
+                            // so the Apple Weather attribution must appear here too.
+                            WeatherAttributionView()
+                                .padding(.top, 2)
                         }
                         .padding(18)
                         .background(Color.appCardBackground, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
