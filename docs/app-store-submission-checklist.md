@@ -71,6 +71,24 @@ The app serves one inline adaptive banner, forced non-personalized (`npa=1`).
 
 - Changes to the AdMob message take up to an hour to reach devices, so treat "the form did not appear" as a propagation question before treating it as a bug.
 
+### app-ads.txt
+
+AdMob reported "we can't verify Rainy Clock (iOS)" for two independent reasons: the App Store listing had **no marketing URL** (`itunes.apple.com/lookup` returned `sellerUrl: null`, so Google had no domain to crawl), and no `app-ads.txt` existed at any domain root.
+
+| Item | Value |
+| --- | --- |
+| Developer website domain | `shukaihu.github.io` |
+| app-ads.txt | `https://shukaihu.github.io/app-ads.txt` |
+| Hosting repo | [`ShuKaiHu/ShuKaiHu.github.io`](https://github.com/ShuKaiHu/ShuKaiHu.github.io) (public, Pages from `main` `/`) |
+| Line served | `google.com, pub-2920259088304022, DIRECT, f08c47fec0942fa0` |
+
+- The file **must** sit at the domain root. Google takes the domain from the store listing's developer website and discards the path, so `shukaihu.github.io/RainyClock/app-ads.txt` would never be read. GitHub Pages only serves the root from a repo named exactly `<user>.github.io`, which is why the developer site lives in its own repo instead of in `docs/` here.
+- `shukaihu.com` was deliberately **not** used. It is on Cloudflare with Google Workspace MX records and a dead origin (522); pointing it at Pages would have meant DNS surgery for no benefit, and the domain root would have had to host the publisher line.
+- **This repo must stay public.** Its Pages site at `shukaihu.github.io/RainyClock/` serves the support and privacy-policy URLs on the live App Store listing; GitHub Pages from a private repo requires GitHub Pro. Making it private would 404 those links.
+- Marketing URL to set in App Store Connect: `https://shukaihu.github.io/RainyClock/`. It is a version-level field, so if the live version's copy is locked it ships with the next submission. Support and privacy-policy URLs are unaffected and need no change.
+- One publisher line covers every app under `pub-2920259088304022`; future apps need no new file.
+- Google re-crawls store listings on its own schedule. Expect 24 hours to several days after the marketing URL goes live before "Check for updates" in AdMob passes.
+
 ## After Release
 
 - Watch App Analytics and Crashes (Xcode Organizer) for the first real-user data; note that Google SDK frames symbolicate poorly (missing dSYMs).
