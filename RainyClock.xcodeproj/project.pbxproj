@@ -19,6 +19,7 @@
 		0A10000A2C00000000000001 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 0A1000412C00000000000002 /* InfoPlist.strings */; };
 		0A10000B2C00000000000001 /* AlarmTimeCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1000462C00000000000002 /* AlarmTimeCalculatorTests.swift */; };
 		0A10000C2C00000000000001 /* MapKitRouteWeatherService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1000832C00000000000002 /* MapKitRouteWeatherService.swift */; };
+		0A1001002C00000000000009 /* ConsentManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1001012C00000000000009 /* ConsentManager.swift */; };
 		0A1000F02C00000000000007 /* MapItemResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1000F12C00000000000007 /* MapItemResolver.swift */; };
 		0A1000F22C00000000000008 /* GooglePlaceResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1000F32C00000000000008 /* GooglePlaceResolver.swift */; };
 		0A10000D2C00000000000001 /* WeatherSamplingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1000842C00000000000002 /* WeatherSamplingService.swift */; };
@@ -73,6 +74,7 @@
 		0A1000462C00000000000002 /* AlarmTimeCalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmTimeCalculatorTests.swift; sourceTree = "<group>"; };
 		0A1000472C00000000000002 /* RainyClockTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RainyClockTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0A1000832C00000000000002 /* MapKitRouteWeatherService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapKitRouteWeatherService.swift; sourceTree = "<group>"; };
+		0A1001012C00000000000009 /* ConsentManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsentManager.swift; sourceTree = "<group>"; };
 		0A1000F12C00000000000007 /* MapItemResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapItemResolver.swift; sourceTree = "<group>"; };
 		0A1000F32C00000000000008 /* GooglePlaceResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GooglePlaceResolver.swift; sourceTree = "<group>"; };
 		0A1000842C00000000000002 /* WeatherSamplingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherSamplingService.swift; sourceTree = "<group>"; };
@@ -180,6 +182,7 @@
 			isa = PBXGroup;
 			children = (
 				0A1000142C00000000000001 /* AlarmTimeCalculator.swift */,
+				0A1001012C00000000000009 /* ConsentManager.swift */,
 				0A1000F32C00000000000008 /* GooglePlaceResolver.swift */,
 				0A1000F12C00000000000007 /* MapItemResolver.swift */,
 				0A1000832C00000000000002 /* MapKitRouteWeatherService.swift */,
@@ -352,6 +355,7 @@
 				0A1000132C00000000000002 /* AppEnvironment.swift in Sources */,
 				0A10000C2C00000000000001 /* MapKitRouteWeatherService.swift in Sources */,
 				0A1000F22C00000000000008 /* GooglePlaceResolver.swift in Sources */,
+				0A1001002C00000000000009 /* ConsentManager.swift in Sources */,
 				0A1000F02C00000000000007 /* MapItemResolver.swift in Sources */,
 				0A10000D2C00000000000001 /* WeatherSamplingService.swift in Sources */,
 				0A1000E02C00000000000006 /* WeatherKitSamplingService.swift in Sources */,

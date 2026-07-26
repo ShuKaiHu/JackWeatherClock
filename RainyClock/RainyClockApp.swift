@@ -1,4 +1,3 @@
-import GoogleMobileAds
 import SwiftUI
 import UserNotifications
 
@@ -9,9 +8,6 @@ struct RainyClockApp: App {
     init() {
         UNUserNotificationCenter.current().delegate = NotificationPresentationDelegate.shared
         LocalNotificationScheduler.registerNotificationCategories()
-        if !AppEnvironment.isRunningTests {
-            MobileAds.shared.start()
-        }
     }
 
     var body: some Scene {

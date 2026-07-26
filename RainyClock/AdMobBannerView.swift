@@ -80,13 +80,3 @@ private struct AdMobBannerContainer: UIViewRepresentable {
         }
     }
 }
-
-private extension UIApplication {
-    var rainyClockRootViewController: UIViewController? {
-        connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .flatMap(\.windows)
-            .first { $0.isKeyWindow }?
-            .rootViewController
-    }
-}

@@ -9,6 +9,7 @@ struct ContentView: View {
     }
 
     @StateObject var viewModel: AlarmViewModel
+    @ObservedObject private var consentManager = ConsentManager.shared
     @State private var selectedTab: AppTab = .route
     var showsWeatherAttribution = false
 
@@ -29,6 +30,11 @@ struct ContentView: View {
         }
         .background(Color.appBackground.ignoresSafeArea())
         .preferredColorScheme(.dark)
+        // Runs once the view hierarchy exists: the consent form needs a view
+        // controller to present from, which is not available during app `init()`.
+        .task {
+            consentManager.requestConsentThenStartAds()
+        }
     }
 
     private var bottomControls: some View {
@@ -57,7 +63,9 @@ struct ContentView: View {
             .padding(.top, 12)
             .padding(.bottom, 22)
 
-            if !AppEnvironment.isRunningTests {
+            // Kept out of the hierarchy until UMP reports consent, so no ad request
+            // can precede it.
+            if !AppEnvironment.isRunningTests, consentManager.canRequestAds {
                 AdMobBannerView(adUnitID: AppEnvironment.adMobBannerAdUnitID)
                     .frame(maxWidth: .infinity)
                     .background(Color.appBackground)
@@ -439,6 +447,7 @@ private struct AlarmTabView: View {
     private let weekdayOrder = [1, 2, 3, 4, 5, 6, 7]
 
     @ObservedObject var viewModel: AlarmViewModel
+    @ObservedObject private var consentManager = ConsentManager.shared
     @State private var showsTimePicker = false
     @State private var audioPlayer: AVAudioPlayer?
     @State private var previewingSound: CommuteAlarmSettings.AlarmSound?
@@ -524,6 +533,20 @@ private struct AlarmTabView: View {
                             .buttonStyle(.plain)
                             .foregroundStyle(.cyan)
                             .accessibilityLabel(Text("preview_alarm_sound"))
+                        }
+
+                        // Only regulated regions require this entry point, so UMP
+                        // decides whether it appears at all.
+                        if consentManager.showsPrivacyOptions {
+                            HStack {
+                                Text("ad_privacy_options")
+                                Spacer()
+                                Button("ad_privacy_options_manage") {
+                                    consentManager.presentPrivacyOptions()
+                                }
+                                .buttonStyle(.plain)
+                                .foregroundStyle(.cyan)
+                            }
                         }
                     }
                     .padding(18)
