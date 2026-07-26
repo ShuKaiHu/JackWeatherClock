@@ -17,7 +17,7 @@
 - `1.5 (7)` — **Rejected** 2026-07-22, Guideline 5.1.2(i) (Privacy – Data Use and Sharing): the App Privacy label declared data used to track the user, but the app has no App Tracking Transparency prompt.
 - `1.6 (10)` — Resubmitted 2026-07-23 with the 5.1.2(i) fix below. **Rejected** 2026-07-24, Guideline 5.2.5 (Legal – Apple Sites and Services): WeatherKit data shown without the required Apple Weather attribution mark and legal link.
 - `1.6.1 (16)` — Submitted 2026-07-25 with the 5.2.5 fix (official Apple Weather mark + legal link in the Route tab weather section), a review note explaining WeatherKit usage, and a screen recording captured on a physical iPhone. **Approved 2026-07-26 and released to the App Store the same day.**
-- `1.6.2 (17)` — In development. Declares Google's `SKAdNetworkItems` list (50 identifiers) in `Info.plist`, which the shipped builds were missing.
+- `1.6.2 (17)` — In development. Declares Google's `SKAdNetworkItems` list (50 identifiers) in `Info.plist`, which the shipped builds were missing, and adds the UMP consent flow for EEA/UK/Swiss users.
 
 ## Rejection Resolution (5.2.5 — WeatherKit attribution)
 
@@ -63,7 +63,13 @@ The app serves one inline adaptive banner, forced non-personalized (`npa=1`).
 - **Link the app to its App Store listing in AdMob.** Google only reviews and approves an app once it is listed in a supported store and linked in the AdMob account; unlinked apps get limited ad serving, so revenue stays near zero until this is done. Do it now that `1.6.1 (16)` is live, then wait for AdMob's review.
 - Confirm the AdMob payments and tax profile is complete, otherwise earnings are withheld even past the payout threshold.
 - `SKAdNetworkItems` is declared as of `1.6.2 (17)` — see the AdMob third-party SKAdNetwork list and refresh it occasionally, as Google adds buyers.
-- Optional, Google policy rather than Apple: there is no UMP/CMP consent flow, and `MobileAds.shared.start()` is called unconditionally in `RainyClockApp.swift`. Google requires consent to be collected **before** SDK initialization for EEA, UK, and Switzerland users; `npa=1` does not exempt it. Only relevant if those territories stay enabled in the app's availability settings.
+- **EEA consent (UMP) is implemented as of `1.6.2 (17)`.** A GDPR "European regulations" message is published in AdMob (targeted at EEA/UK/Switzerland only, with the "Do not consent" option and close icon enabled, Google's default ad-partner list, and the GitHub Pages privacy policy URL). `ConsentManager` runs the flow and the Mobile Ads SDK only starts once `canRequestAds` is true. To rehearse the regulated-region path from a non-EEA simulator, launch a Debug build with `-forceEEAConsentGeography`:
+
+  ```bash
+  xcrun simctl launch booted com.shukaihu.RainyClock -forceEEAConsentGeography
+  ```
+
+- Changes to the AdMob message take up to an hour to reach devices, so treat "the form did not appear" as a propagation question before treating it as a bug.
 
 ## After Release
 
