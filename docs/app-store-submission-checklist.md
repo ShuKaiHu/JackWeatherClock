@@ -6,7 +6,7 @@
 | --- | --- |
 | App version | `1.6.2` (in development) |
 | Build number | `17` |
-| Review status | Not yet archived or submitted |
+| Review status | Submitted for review 2026-07-27, build `17` attached |
 | Last released | `1.6.1 (16)` — released to the App Store 2026-07-26 |
 | Bundle identifier | `com.shukaihu.RainyClock` |
 | Device family | iPhone only |
@@ -17,7 +17,7 @@
 - `1.5 (7)` — **Rejected** 2026-07-22, Guideline 5.1.2(i) (Privacy – Data Use and Sharing): the App Privacy label declared data used to track the user, but the app has no App Tracking Transparency prompt.
 - `1.6 (10)` — Resubmitted 2026-07-23 with the 5.1.2(i) fix below. **Rejected** 2026-07-24, Guideline 5.2.5 (Legal – Apple Sites and Services): WeatherKit data shown without the required Apple Weather attribution mark and legal link.
 - `1.6.1 (16)` — Submitted 2026-07-25 with the 5.2.5 fix (official Apple Weather mark + legal link in the Route tab weather section), a review note explaining WeatherKit usage, and a screen recording captured on a physical iPhone. **Approved 2026-07-26 and released to the App Store the same day.**
-- `1.6.2 (17)` — In development. Declares Google's `SKAdNetworkItems` list (50 identifiers) in `Info.plist`, which the shipped builds were missing, and adds the UMP consent flow for EEA/UK/Swiss users.
+- `1.6.2 (17)` — **Submitted 2026-07-27.** Declares Google's `SKAdNetworkItems` list (50 identifiers) in `Info.plist`, which the shipped builds were missing, and adds the UMP consent flow for EEA/UK/Swiss users. Also the first version to carry a marketing URL (`https://shukaihu.github.io/RainyClock/`), which is what unblocks AdMob's app-ads.txt verification — see below. Release notes are in `docs/appstore-metadata.md`.
 
 ## Rejection Resolution (5.2.5 — WeatherKit attribution)
 
@@ -85,9 +85,25 @@ AdMob reported "we can't verify Rainy Clock (iOS)" for two independent reasons: 
 - The file **must** sit at the domain root. Google takes the domain from the store listing's developer website and discards the path, so `shukaihu.github.io/RainyClock/app-ads.txt` would never be read. GitHub Pages only serves the root from a repo named exactly `<user>.github.io`, which is why the developer site lives in its own repo instead of in `docs/` here.
 - `shukaihu.com` was deliberately **not** used. It is on Cloudflare with Google Workspace MX records and a dead origin (522); pointing it at Pages would have meant DNS surgery for no benefit, and the domain root would have had to host the publisher line.
 - **This repo must stay public.** Its Pages site at `shukaihu.github.io/RainyClock/` serves the support and privacy-policy URLs on the live App Store listing; GitHub Pages from a private repo requires GitHub Pro. Making it private would 404 those links.
-- Marketing URL to set in App Store Connect: `https://shukaihu.github.io/RainyClock/`. It is a version-level field, so if the live version's copy is locked it ships with the next submission. Support and privacy-policy URLs are unaffected and need no change.
+- Marketing URL: `https://shukaihu.github.io/RainyClock/`, filled in on the `1.6.2` version page and submitted 2026-07-27. It is a version-level field, so it only reaches the public product page once that version is released — until then `itunes.apple.com/lookup` keeps returning `sellerUrl: null` and AdMob cannot pass. Support and privacy-policy URLs are unaffected and needed no change.
+
+  ```bash
+  curl -s "https://itunes.apple.com/lookup?id=6780500386" | grep -o '"sellerUrl":"[^"]*"'
+  ```
+
 - One publisher line covers every app under `pub-2920259088304022`; future apps need no new file.
 - Google re-crawls store listings on its own schedule. Expect 24 hours to several days after the marketing URL goes live before "Check for updates" in AdMob passes.
+
+## Archiving and Uploading
+
+```bash
+xcodebuild -project RainyClock.xcodeproj -scheme RainyClock -configuration Release \
+  -destination 'generic/platform=iOS' \
+  -archivePath ./build/RainyClock-<version>-<build>.xcarchive -allowProvisioningUpdates archive
+```
+
+- `xcodebuild -exportArchive` with `build/ExportOptions-AppStoreUpload.plist` uploads straight to App Store Connect, but it needs an Apple Account signed in under Xcode → Settings → Accounts. Without one it fails with `Failed to Use Accounts` / "Failed to find an account with App Store Connect access for team MQJ88U9NAJ", and the local keychain holds only Apple Development certificates — the Apple Distribution certificate is created during export.
+- The account grant lapsed after the Xcode 26.6 upgrade for `1.6.2 (17)`. The fallback that works without CLI credentials is `open -a Xcode build/<archive>.xcarchive`, then Distribute App → App Store Connect → Upload in Organizer, leaving **Manage Version and Build Number** unchecked so Xcode does not bump the build number.
 
 ## After Release
 

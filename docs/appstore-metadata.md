@@ -12,6 +12,9 @@
 | Copyright | 2026 Shu-Kai Hu | 2026 Shu-Kai Hu |
 | Support URL | `https://shukaihu.github.io/RainyClock/support.html` | `https://shukaihu.github.io/RainyClock/support.html` |
 | Privacy Policy URL | `https://shukaihu.github.io/RainyClock/privacy-policy.html` | `https://shukaihu.github.io/RainyClock/privacy-policy.html` |
+| Marketing URL | `https://shukaihu.github.io/RainyClock/` | `https://shukaihu.github.io/RainyClock/` |
+
+The marketing URL is what AdMob reads to locate `app-ads.txt`; it must stay on the `shukaihu.github.io` domain. See the app-ads.txt section of `docs/app-store-submission-checklist.md`.
 
 ## Promotional Text
 
@@ -69,6 +72,32 @@ rain alarm,weather alarm,commute alarm,smart alarm,rain,weather,alarm clock,comm
 
 雨天鬧鐘,天氣鬧鐘,通勤鬧鐘,智慧鬧鐘,降雨,天氣,鬧鐘,通勤
 
+## Version 1.6.2 (17) “What’s New”
+
+Submitted 2026-07-27. Nothing in this release is visible outside the EEA, the UK, and Switzerland; the notes say so rather than inventing user-facing changes.
+
+### English
+
+```
+This update focuses on advertising privacy:
+
+• In the European Economic Area, the UK, and Switzerland, a consent choice now appears before any ads load, and it can be changed at any time from "Ad privacy options" in Settings.
+• Updated the technical configuration used for ad measurement.
+
+Everywhere else the experience is unchanged — alarms, commute routes, and weather work exactly as before.
+```
+
+### 繁體中文
+
+```
+本次更新著重於廣告隱私規範：
+
+• 歐洲經濟區、英國與瑞士的使用者，開啟 App 時會先看到廣告用途的同意選項，之後可隨時在設定中的「廣告隱私設定」重新調整。
+• 更新廣告成效評估所需的技術設定。
+
+其他地區的使用體驗不變，鬧鐘、通勤路線與天氣功能維持原樣。
+```
+
 ## Version 1.3 “What’s New”
 
 ### English
@@ -94,6 +123,23 @@ Rainy Clock uses Apple Maps for route preview and Apple Weather / WeatherKit for
 ### 繁體中文
 
 雨天鬧鐘使用 Apple Maps 顯示路線預覽，並使用 Apple Weather / WeatherKit 檢查住家與公司附近天氣。鬧鐘排程只使用本機通知。App 底部有 Google AdMob 橫幅廣告。不需要登入。
+
+### Version-specific note prepared for 1.6.2 (17)
+
+The note carried over from the 5.1.2(i) resolution still described build `1.6 (10)` and said nothing about the new consent flow, so this replacement was prepared:
+
+```
+This app does not track users. The App Privacy information declares no data types as used
+for tracking, and ads are served via Google AdMob configured for non-personalized ads only
+(npa=1), with no AppTrackingTransparency prompt and no IDFA access.
+
+New in this build (1.6.2 / 17): a Google UMP consent flow runs before the Mobile Ads SDK is
+initialised for users in the EEA, the UK, and Switzerland; those users can revisit their
+choice via "Ad privacy options" in Settings. The Apple Weather attribution mark and legal
+link remain in the Route tab weather section, as reviewed in 1.6.1 (16).
+```
+
+The "Sign-in required" checkbox in App Review Information was also found checked with a demo account, even though the app has no login. It should be cleared.
 
 ## Privacy Nutrition Label Draft
 
