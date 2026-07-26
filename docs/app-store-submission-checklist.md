@@ -4,10 +4,10 @@
 
 | Item | Status |
 | --- | --- |
-| App version | `1.6` |
-| Build number | `10` |
-| Review status | Submitted for App Review (2026-07-23) — Processing → Waiting for Review |
-| Archive path | `build/RainyClock-1.6-10.xcarchive` |
+| App version | `1.6.1` |
+| Build number | `16` |
+| Review status | **Approved for distribution** 2026-07-26 (submission `96959c61`) |
+| Archive path | `build/RainyClock-1.6.1-16.xcarchive` |
 | Bundle identifier | `com.shukaihu.RainyClock` |
 | Device family | iPhone only |
 | Primary language | Traditional Chinese |
@@ -15,7 +15,14 @@
 ## Submission History
 
 - `1.5 (7)` — **Rejected** 2026-07-22, Guideline 5.1.2(i) (Privacy – Data Use and Sharing): the App Privacy label declared data used to track the user, but the app has no App Tracking Transparency prompt.
-- `1.6 (10)` — Resubmitted 2026-07-23 with the fix below.
+- `1.6 (10)` — Resubmitted 2026-07-23 with the 5.1.2(i) fix below. **Rejected** 2026-07-24, Guideline 5.2.5 (Legal – Apple Sites and Services): WeatherKit data shown without the required Apple Weather attribution mark and legal link.
+- `1.6.1 (16)` — Submitted 2026-07-25 with the 5.2.5 fix (official Apple Weather mark + legal link in the Route tab weather section), a review note explaining WeatherKit usage, and a screen recording captured on a physical iPhone. **Approved for distribution 2026-07-26.**
+
+## Rejection Resolution (5.2.5 — WeatherKit attribution)
+
+- `WeatherAttributionView` fetches `WeatherService.shared.attribution` and renders the official combined dark Apple Weather mark, linked to Apple's `legalPageURL`.
+- The mark sits outside the "forecast loaded" conditional so it is always visible in the Route tab weather section (the primary WeatherKit surface). Build 16 removed it from the Alarm tab by preference.
+- App Review note (English) described the WeatherKit usage and where the attribution appears; a screen recording from a physical iPhone was attached to the reply.
 
 ## Rejection Resolution (5.1.2(i))
 
@@ -45,8 +52,15 @@ Chosen approach: the app does **not** track. No ATT prompt is added.
 
 ## Still Required Before Public Release
 
-- Await App Review result for `1.6 (10)` (email notification, usually within 24h).
-- Release option is currently set to manual release after approval — release when ready.
+- **Release the approved version.** The version's release option is manual, so `1.6.1 (16)` stays in "Pending Developer Release" until the Release button is pressed in App Store Connect.
+- **Confirm the Paid Apps / Free Apps agreement is in effect** under Agreements, Tax, and Banking — the app cannot be distributed while a contract is pending.
+- After releasing, allow up to 24h for the App Store listing to appear, then check the product page and search results.
+
+## After Release
+
+- Watch App Analytics and Crashes (Xcode Organizer) for the first real-user data; note that Google SDK frames symbolicate poorly (missing dSYMs).
+- Optional, Google policy rather than Apple: `UserMessagingPlatform` is bundled but never called, so there is no EEA/GDPR consent flow. `npa=1` does not exempt it. Only needed if the app is distributed in the EEA.
+- Keep `docs/appstore-metadata.md` and the screenshots in sync with the next feature release.
 
 ## Known Review / QA Risks
 
