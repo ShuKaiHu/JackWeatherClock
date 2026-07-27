@@ -19,11 +19,7 @@
 		0A10000A2C00000000000001 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 0A1000412C00000000000002 /* InfoPlist.strings */; };
 		0A10000B2C00000000000001 /* AlarmTimeCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1000462C00000000000002 /* AlarmTimeCalculatorTests.swift */; };
 		0A10000C2C00000000000001 /* MapKitRouteWeatherService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1000832C00000000000002 /* MapKitRouteWeatherService.swift */; };
-		0A1001002C00000000000009 /* ConsentManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1001012C00000000000009 /* ConsentManager.swift */; };
-		0A1000F02C00000000000007 /* MapItemResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1000F12C00000000000007 /* MapItemResolver.swift */; };
-		0A1000F22C00000000000008 /* GooglePlaceResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1000F32C00000000000008 /* GooglePlaceResolver.swift */; };
 		0A10000D2C00000000000001 /* WeatherSamplingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1000842C00000000000002 /* WeatherSamplingService.swift */; };
-		0A1000E02C00000000000006 /* WeatherKitSamplingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1000E12C00000000000006 /* WeatherKitSamplingService.swift */; };
 		0A10000E2C00000000000001 /* RoutePolylineSampler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1000852C00000000000002 /* RoutePolylineSampler.swift */; };
 		0A10000F2C00000000000001 /* RoutePolylineSamplerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1000862C00000000000002 /* RoutePolylineSamplerTests.swift */; };
 		0A1000102C00000000000001 /* WeatherSampleMapperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1000872C00000000000002 /* WeatherSampleMapperTests.swift */; };
@@ -45,6 +41,19 @@
 		0A1000D92C00000000000005 /* EnergeticPulse.wav in Resources */ = {isa = PBXBuildFile; fileRef = 0A1000D82C00000000000005 /* EnergeticPulse.wav */; };
 		0A1000DB2C00000000000005 /* DeepResonance.wav in Resources */ = {isa = PBXBuildFile; fileRef = 0A1000DA2C00000000000005 /* DeepResonance.wav */; };
 		0A1000DD2C00000000000005 /* MinimalTap.wav in Resources */ = {isa = PBXBuildFile; fileRef = 0A1000DC2C00000000000005 /* MinimalTap.wav */; };
+		0A1000E02C00000000000006 /* WeatherKitSamplingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1000E12C00000000000006 /* WeatherKitSamplingService.swift */; };
+		0A1000F02C00000000000007 /* MapItemResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1000F12C00000000000007 /* MapItemResolver.swift */; };
+		0A1000F22C00000000000008 /* GooglePlaceResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1000F32C00000000000008 /* GooglePlaceResolver.swift */; };
+		0A1001002C00000000000009 /* ConsentManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1001012C00000000000009 /* ConsentManager.swift */; };
+		16908840039C92EF6FDD7931 /* CommuteAlarmMetadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4BB22C84DAA14A208462B12 /* CommuteAlarmMetadata.swift */; };
+		305482FE2E7CFA780A020BD2 /* RainyClockAlarmWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36DE7F14501F8A8F682E4478 /* RainyClockAlarmWidgetBundle.swift */; };
+		62E6937A638A6D55A89E4F77 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 38716E405CDB08148FEFEA93 /* Foundation.framework */; };
+		672140296105B2FF93129911 /* AlarmKitScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D92658ADF45F0EC2AD58E50 /* AlarmKitScheduler.swift */; };
+		754AECAC7E45A94AF3DEA98E /* CommuteAlarmMetadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4BB22C84DAA14A208462B12 /* CommuteAlarmMetadata.swift */; };
+		9ED317318119EF731F40E4FC /* RainyClockAlarmWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 4F27BC082A98163C47E456A4 /* RainyClockAlarmWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		CD94782468365102E82370FC /* CommuteAlarmLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C36A72344C85323EDB4B2B8 /* CommuteAlarmLiveActivity.swift */; };
+		D9AFFD3EDD2005FE2CE06FEC /* AlarmSchedulingSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDA82D02716704A4024FBA29 /* AlarmSchedulingSettingsTests.swift */; };
+		F7F9A507A2726D0344BDA3B7 /* AlarmViewModelSchedulingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39C8C3492E7E1E5211E865AC /* AlarmViewModelSchedulingTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -55,7 +64,28 @@
 			remoteGlobalIDString = 0A1000402C00000000000001;
 			remoteInfo = RainyClock;
 		};
+		98C80D1D0CB49E9785C237DD /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0A1000602C00000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9ADD771964D05F1586DCF167;
+			remoteInfo = RainyClockAlarmWidget;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		5F08CB49C4DF3F9005E3B415 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				9ED317318119EF731F40E4FC /* RainyClockAlarmWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		0A1000112C00000000000001 /* RainyClockApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RainyClockApp.swift; sourceTree = "<group>"; };
@@ -74,18 +104,13 @@
 		0A1000462C00000000000002 /* AlarmTimeCalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmTimeCalculatorTests.swift; sourceTree = "<group>"; };
 		0A1000472C00000000000002 /* RainyClockTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RainyClockTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0A1000832C00000000000002 /* MapKitRouteWeatherService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapKitRouteWeatherService.swift; sourceTree = "<group>"; };
-		0A1001012C00000000000009 /* ConsentManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsentManager.swift; sourceTree = "<group>"; };
-		0A1000F12C00000000000007 /* MapItemResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapItemResolver.swift; sourceTree = "<group>"; };
-		0A1000F32C00000000000008 /* GooglePlaceResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GooglePlaceResolver.swift; sourceTree = "<group>"; };
 		0A1000842C00000000000002 /* WeatherSamplingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherSamplingService.swift; sourceTree = "<group>"; };
-		0A1000E12C00000000000006 /* WeatherKitSamplingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherKitSamplingService.swift; sourceTree = "<group>"; };
 		0A1000852C00000000000002 /* RoutePolylineSampler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutePolylineSampler.swift; sourceTree = "<group>"; };
 		0A1000862C00000000000002 /* RoutePolylineSamplerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutePolylineSamplerTests.swift; sourceTree = "<group>"; };
 		0A1000872C00000000000002 /* WeatherSampleMapperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherSampleMapperTests.swift; sourceTree = "<group>"; };
 		0A1000902C00000000000002 /* AlarmTone.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = AlarmTone.wav; sourceTree = "<group>"; };
 		0A1000922C00000000000002 /* AppEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironment.swift; sourceTree = "<group>"; };
 		0A1000A02C00000000000003 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		0A1000E22C00000000000006 /* RainyClock.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RainyClock.entitlements; sourceTree = "<group>"; };
 		0A1000A22C00000000000003 /* WeatherAttributionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherAttributionView.swift; sourceTree = "<group>"; };
 		0A1000A62C00000000000003 /* RoutePreviewService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutePreviewService.swift; sourceTree = "<group>"; };
 		0A1000A72C00000000000003 /* RoutePreviewMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutePreviewMapView.swift; sourceTree = "<group>"; };
@@ -100,6 +125,19 @@
 		0A1000D82C00000000000005 /* EnergeticPulse.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = EnergeticPulse.wav; sourceTree = "<group>"; };
 		0A1000DA2C00000000000005 /* DeepResonance.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = DeepResonance.wav; sourceTree = "<group>"; };
 		0A1000DC2C00000000000005 /* MinimalTap.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = MinimalTap.wav; sourceTree = "<group>"; };
+		0A1000E12C00000000000006 /* WeatherKitSamplingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherKitSamplingService.swift; sourceTree = "<group>"; };
+		0A1000F12C00000000000007 /* MapItemResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapItemResolver.swift; sourceTree = "<group>"; };
+		0A1000F32C00000000000008 /* GooglePlaceResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GooglePlaceResolver.swift; sourceTree = "<group>"; };
+		0A1001012C00000000000009 /* ConsentManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsentManager.swift; sourceTree = "<group>"; };
+		1C36A72344C85323EDB4B2B8 /* CommuteAlarmLiveActivity.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CommuteAlarmLiveActivity.swift; sourceTree = "<group>"; };
+		36DE7F14501F8A8F682E4478 /* RainyClockAlarmWidgetBundle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RainyClockAlarmWidgetBundle.swift; sourceTree = "<group>"; };
+		38716E405CDB08148FEFEA93 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		39C8C3492E7E1E5211E865AC /* AlarmViewModelSchedulingTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AlarmViewModelSchedulingTests.swift; sourceTree = "<group>"; };
+		4133FF63012A434AB5C610F5 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		4F27BC082A98163C47E456A4 /* RainyClockAlarmWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RainyClockAlarmWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		7D92658ADF45F0EC2AD58E50 /* AlarmKitScheduler.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AlarmKitScheduler.swift; sourceTree = "<group>"; };
+		F4BB22C84DAA14A208462B12 /* CommuteAlarmMetadata.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CommuteAlarmMetadata.swift; sourceTree = "<group>"; };
+		FDA82D02716704A4024FBA29 /* AlarmSchedulingSettingsTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AlarmSchedulingSettingsTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -118,6 +156,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		6199DD1A5968EF234E0E4B81 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				62E6937A638A6D55A89E4F77 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -127,6 +173,8 @@
 				0A1000312C00000000000001 /* RainyClock */,
 				0A1000482C00000000000002 /* RainyClockTests */,
 				0A1000322C00000000000001 /* Products */,
+				79EF084AD975C5D57A359236 /* Frameworks */,
+				A8078FEEC36018A4DF86603D /* RainyClockAlarmWidget */,
 			);
 			sourceTree = "<group>";
 		};
@@ -166,6 +214,7 @@
 			children = (
 				0A1000192C00000000000001 /* RainyClock.app */,
 				0A1000472C00000000000002 /* RainyClockTests.xctest */,
+				4F27BC082A98163C47E456A4 /* RainyClockAlarmWidget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -174,6 +223,7 @@
 			isa = PBXGroup;
 			children = (
 				0A1000132C00000000000001 /* CommuteAlarmSettings.swift */,
+				F4BB22C84DAA14A208462B12 /* CommuteAlarmMetadata.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -192,6 +242,7 @@
 				0A1000162C00000000000001 /* RouteWeatherService.swift */,
 				0A1000842C00000000000002 /* WeatherSamplingService.swift */,
 				0A1000E12C00000000000006 /* WeatherKitSamplingService.swift */,
+				7D92658ADF45F0EC2AD58E50 /* AlarmKitScheduler.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -210,8 +261,37 @@
 				0A1000462C00000000000002 /* AlarmTimeCalculatorTests.swift */,
 				0A1000862C00000000000002 /* RoutePolylineSamplerTests.swift */,
 				0A1000872C00000000000002 /* WeatherSampleMapperTests.swift */,
+				FDA82D02716704A4024FBA29 /* AlarmSchedulingSettingsTests.swift */,
+				39C8C3492E7E1E5211E865AC /* AlarmViewModelSchedulingTests.swift */,
 			);
 			path = RainyClockTests;
+			sourceTree = "<group>";
+		};
+		23133716D89CE4D5F837314F /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				38716E405CDB08148FEFEA93 /* Foundation.framework */,
+			);
+			name = iOS;
+			sourceTree = "<group>";
+		};
+		79EF084AD975C5D57A359236 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				23133716D89CE4D5F837314F /* iOS */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		A8078FEEC36018A4DF86603D /* RainyClockAlarmWidget */ = {
+			isa = PBXGroup;
+			children = (
+				36DE7F14501F8A8F682E4478 /* RainyClockAlarmWidgetBundle.swift */,
+				1C36A72344C85323EDB4B2B8 /* CommuteAlarmLiveActivity.swift */,
+				4133FF63012A434AB5C610F5 /* Info.plist */,
+			);
+			name = RainyClockAlarmWidget;
+			path = RainyClockAlarmWidget;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -224,10 +304,12 @@
 				0A1000502C00000000000001 /* Sources */,
 				0A1000202C00000000000001 /* Frameworks */,
 				0A1000512C00000000000001 /* Resources */,
+				5F08CB49C4DF3F9005E3B415 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				2FFE1C8781EE6691A237EECA /* PBXTargetDependency */,
 			);
 			name = RainyClock;
 			packageProductDependencies = (
@@ -254,6 +336,23 @@
 			productName = RainyClockTests;
 			productReference = 0A1000472C00000000000002 /* RainyClockTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		9ADD771964D05F1586DCF167 /* RainyClockAlarmWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6A6B9B5BF5D8522BDEAF696A /* Build configuration list for PBXNativeTarget "RainyClockAlarmWidget" */;
+			buildPhases = (
+				ADF08C903B8E12A8A4D4CB87 /* Sources */,
+				6199DD1A5968EF234E0E4B81 /* Frameworks */,
+				71A6259A3977F08B190724AA /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = RainyClockAlarmWidget;
+			productName = RainyClockAlarmWidget;
+			productReference = 4F27BC082A98163C47E456A4 /* RainyClockAlarmWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -284,16 +383,17 @@
 			);
 			mainGroup = 0A1000302C00000000000001;
 			minimizedProjectReferenceProxies = 1;
-			preferredProjectObjectVersion = 77;
-			productRefGroup = 0A1000322C00000000000001 /* Products */;
-			projectDirPath = "";
 			packageReferences = (
 				0A1000C22C00000000000004 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */,
 			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 0A1000322C00000000000001 /* Products */;
+			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				0A1000402C00000000000001 /* RainyClock */,
 				0A1000492C00000000000002 /* RainyClockTests */,
+				9ADD771964D05F1586DCF167 /* RainyClockAlarmWidget */,
 			);
 		};
 /* End PBXProject section */
@@ -328,6 +428,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		71A6259A3977F08B190724AA /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -338,6 +445,8 @@
 				0A10000B2C00000000000001 /* AlarmTimeCalculatorTests.swift in Sources */,
 				0A10000F2C00000000000001 /* RoutePolylineSamplerTests.swift in Sources */,
 				0A1000102C00000000000001 /* WeatherSampleMapperTests.swift in Sources */,
+				D9AFFD3EDD2005FE2CE06FEC /* AlarmSchedulingSettingsTests.swift in Sources */,
+				F7F9A507A2726D0344BDA3B7 /* AlarmViewModelSchedulingTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -364,6 +473,18 @@
 				0A1000A52C00000000000003 /* RoutePreviewMapView.swift in Sources */,
 				0A1000A32C00000000000003 /* WeatherAttributionView.swift in Sources */,
 				0A1000C12C00000000000004 /* AdMobBannerView.swift in Sources */,
+				16908840039C92EF6FDD7931 /* CommuteAlarmMetadata.swift in Sources */,
+				672140296105B2FF93129911 /* AlarmKitScheduler.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		ADF08C903B8E12A8A4D4CB87 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				305482FE2E7CFA780A020BD2 /* RainyClockAlarmWidgetBundle.swift in Sources */,
+				CD94782468365102E82370FC /* CommuteAlarmLiveActivity.swift in Sources */,
+				754AECAC7E45A94AF3DEA98E /* CommuteAlarmMetadata.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -374,6 +495,12 @@
 			isa = PBXTargetDependency;
 			target = 0A1000402C00000000000001 /* RainyClock */;
 			targetProxy = 0A10004E2C00000000000002 /* PBXContainerItemProxy */;
+		};
+		2FFE1C8781EE6691A237EECA /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = RainyClockAlarmWidget;
+			target = 9ADD771964D05F1586DCF167 /* RainyClockAlarmWidget */;
+			targetProxy = 98C80D1D0CB49E9785C237DD /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -523,7 +650,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = RainyClock/RainyClock.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 17;
+				CURRENT_PROJECT_VERSION = 18;
 				DEVELOPMENT_TEAM = MQJ88U9NAJ;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = RainyClock/Info.plist;
@@ -532,7 +659,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.6.2;
+				MARKETING_VERSION = 1.6.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.shukaihu.RainyClock;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -551,7 +678,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = RainyClock/RainyClock.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 17;
+				CURRENT_PROJECT_VERSION = 18;
 				DEVELOPMENT_TEAM = MQJ88U9NAJ;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = RainyClock/Info.plist;
@@ -560,7 +687,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.6.2;
+				MARKETING_VERSION = 1.6.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.shukaihu.RainyClock;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -577,11 +704,11 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 17;
+				CURRENT_PROJECT_VERSION = 18;
 				DEVELOPMENT_TEAM = MQJ88U9NAJ;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.6.2;
+				MARKETING_VERSION = 1.6.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.shukaihu.RainyClockTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -598,11 +725,11 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 17;
+				CURRENT_PROJECT_VERSION = 18;
 				DEVELOPMENT_TEAM = MQJ88U9NAJ;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.6.2;
+				MARKETING_VERSION = 1.6.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.shukaihu.RainyClockTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -611,6 +738,69 @@
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = 1;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RainyClock.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/RainyClock";
+			};
+			name = Release;
+		};
+		340FE7ACB99ECF7A09E9D219 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 18;
+				DEVELOPMENT_TEAM = MQJ88U9NAJ;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = RainyClockAlarmWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Rainy Clock Alarm";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.6.3;
+				PRODUCT_BUNDLE_IDENTIFIER = com.shukaihu.RainyClock.AlarmWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		6DD77525E7A77156FA34726E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 18;
+				DEVELOPMENT_TEAM = MQJ88U9NAJ;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = RainyClockAlarmWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Rainy Clock Alarm";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.6.3;
+				PRODUCT_BUNDLE_IDENTIFIER = com.shukaihu.RainyClock.AlarmWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
 		};
@@ -644,6 +834,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		6A6B9B5BF5D8522BDEAF696A /* Build configuration list for PBXNativeTarget "RainyClockAlarmWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6DD77525E7A77156FA34726E /* Release */,
+				340FE7ACB99ECF7A09E9D219 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
@@ -664,6 +863,6 @@
 			productName = GoogleMobileAds;
 		};
 /* End XCSwiftPackageProductDependency section */
-};
+	};
 	rootObject = 0A1000602C00000000000001 /* Project object */;
 }

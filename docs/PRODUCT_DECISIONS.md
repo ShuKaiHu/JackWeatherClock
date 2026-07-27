@@ -33,7 +33,14 @@ Google Places fallback can be added later, but should only run when Apple addres
 
 ### Alarm Strategy
 
-Local notifications are scheduled through `UNUserNotificationCenter`. iOS does not allow third-party apps to fully replicate the built-in Clock app’s full-screen alarm behavior.
+Scheduling is split by system version behind the `NotificationScheduling` protocol, with `SystemAlarmScheduler` picking the path:
+
+- **iOS 26+ — AlarmKit (`AlarmKitScheduler`).** As of `1.6.3`, the alarm overrides silent mode and Focus, presents the system full-screen alert, and offers a native snooze through `Alarm.CountdownDuration.postAlert`. Snooze can be switched off, and its interval is user-selectable from 1–15 minutes. The sound picker also gains a "System Default Alarm" entry, which maps to `AlertConfiguration.AlertSound.default` — the only Apple tone reachable from a third-party app, since the Clock app's tone list lives in the private ToneLibrary with no public API. It is offered on iOS 26+ only; the notification path has no equivalent. Because the alarm can enter the countdown state, AlarmKit requires a widget extension — `RainyClockAlarmWidget` renders the snooze Live Activity, and without it the system may drop alarms entirely. Needs `NSAlarmKitUsageDescription` and a one-time user authorization; no special Apple entitlement.
+- **iOS 17–25 — local notifications (`LocalNotificationScheduler`).** Still silenced by the ring/silent switch, which no `UNUserNotificationCenter` API can bypass. It has no snooze button, so the snooze setting drives the follow-up ring interval instead — the same "how long until it rings again" number, without the tap — and turning snooze off means the alarm rings exactly once. Critical Alerts would pierce silent mode here, but Apple grants that entitlement only to medical/safety apps.
+
+**Deliberate behaviour change in `1.6.3` (iOS 26 only):** the pre-26 path fires follow-up notifications at the snooze interval, up to 10 times, whether or not the user reacts. AlarmKit instead alerts once and snoozes only when the user taps the button, matching Apple's Clock app. Layering backup notifications on top would restore the "keeps nagging" behaviour but re-introduce the two-mechanism bookkeeping AlarmKit exists to remove, so the system behaviour was accepted — a full-screen alert that pierces silent mode is far harder to sleep through than a banner.
+
+**Scheduled-alarm sync contract (since `1.6.3`):** the registered alarm always matches the visible settings. Parameter edits (weekdays, time, rain lead time, rain threshold, sound, snooze, commute mode) auto-refresh the alarm after a short debounce — no button press needed. Address edits instead *remove* the alarm outright: an alarm for a route the user has not confirmed should never ring, so the schedule button is the only way to re-arm it. The status line under the button is colour-coded — green (armed, in sync), orange (armed, syncing or stale), grey (nothing armed). The amber stale notice remains as a fallback for a failed auto-refresh.
 
 The intended product behavior is to refresh weather at the configured lead-time point. For example, if the normal alarm is 7:30 and the rain lead time is 30 minutes, the app checks the selected route/weather at 7:00. If the threshold is exceeded, the early alarm fires; otherwise, the normal alarm remains.
 
@@ -76,7 +83,14 @@ Google Places fallback 可在未來加入，但只應在 Apple 地址解析失�
 
 ### 鬧鐘策略
 
-本機通知透過 `UNUserNotificationCenter` 排程。iOS 不允許第三方 App 完全複製系統時鐘 App 的全螢幕鬧鐘行為。
+排程依系統版本分成兩條路徑，都藏在 `NotificationScheduling` protocol 後面，由 `SystemAlarmScheduler` 選擇：
+
+- **iOS 26 以上 — AlarmKit（`AlarmKitScheduler`）。** 自 `1.6.3` 起，鬧鐘會穿透靜音與專注模式，顯示系統全螢幕警示，並透過 `Alarm.CountdownDuration.postAlert` 提供原生賴床；賴床可關閉，間隔可在 1–15 分鐘之間選擇。鬧鈴清單也多了「系統預設鬧鈴」，對應 `AlertConfiguration.AlertSound.default` —— 這是第三方 App 唯一拿得到的 Apple 音色，時鐘 App 那整份鈴聲清單住在私有的 ToneLibrary，沒有公開 API。此選項僅在 iOS 26 以上出現，通知路徑沒有對等物。因為鬧鐘會進入 countdown 狀態，AlarmKit 要求必須有 widget extension —— `RainyClockAlarmWidget` 負責畫賴床 Live Activity，沒有它系統可能直接放棄鬧鐘。需要 `NSAlarmKitUsageDescription` 與一次性使用者授權，不需要向 Apple 申請特殊 entitlement。
+- **iOS 17–25 — 本機通知（`LocalNotificationScheduler`）。** 靜音下仍然不會有聲音；`UNUserNotificationCenter` 沒有任何 API 能繞過靜音開關。這條路徑沒有賴床按鈕，所以賴床設定改為控制補發響鈴的間隔 —— 同樣是「隔多久再響一次」，只是不需要使用者按；關閉賴床就代表鬧鐘只響一次。Critical Alerts 能穿透靜音，但 Apple 只發給醫療／安全類 App。
+
+**`1.6.3` 刻意的行為改變（僅 iOS 26）：** 舊路徑不管使用者有沒有反應，都會依賴床間隔補發、最多 10 次。AlarmKit 改成響一次，只有使用者按賴床才會再響，與 Apple 時鐘 App 一致。若在上面再疊備援通知，可以保留「不理也會再吵」的行為，但會把 AlarmKit 本來就要消除的雙機制同步複雜度搬回來，所以選擇接受系統行為 —— 穿透靜音的全螢幕警示本來就比橫幅通知難忽略得多。
+
+**排程鬧鐘同步約定（自 `1.6.3` 起）：** 已註冊的鬧鐘永遠與畫面上的設定一致。參數調整（星期、時間、雨天提前時間、降雨門檻、鬧鈴、賴床、通勤方式）會在短暫 debounce 後自動重新排程，不需要按按鈕。地址調整則直接**移除**鬧鐘：使用者尚未確認的路線不該有鬧鐘替它響，所以只有排程按鈕能重新啟用。按鈕下方的狀態列以顏色區分 —— 綠色（已設定且同步）、橘色（已設定但同步中或不一致）、灰色（沒有鬧鐘）。琥珀色的「設定已變更」提示保留作為自動更新失敗時的後備。
 
 預期產品行為是在使用者設定的提前時間點刷新天氣。例如平常鬧鐘是 7:30、雨天提前時間是 30 分鐘，App 應在 7:00 檢查路線與天氣。如果超過門檻，提早鬧鐘響起；否則保留正常鬧鐘。
 

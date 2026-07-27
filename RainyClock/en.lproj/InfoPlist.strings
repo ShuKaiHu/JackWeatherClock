@@ -1,1 +1,2 @@
 "CFBundleDisplayName" = "Rainy Clock";
+"NSAlarmKitUsageDescription" = "Rainy Clock schedules your commute alarm so it can wake you even when your iPhone is on silent or in a Focus mode.";

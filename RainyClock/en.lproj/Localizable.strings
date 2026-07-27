@@ -52,8 +52,11 @@
 "alarm_sound_energetic_pulse" = "Energetic Pulse";
 "alarm_sound_deep_resonance" = "Deep Resonance";
 "alarm_sound_minimal_tap" = "Minimal Tap";
-"alarm_sound_system_default" = "System Default";
+"alarm_sound_system_default" = "System Default Alarm";
 "preview_alarm_sound" = "Preview alarm sound";
+"snooze" = "Snooze";
+"snooze_duration" = "Snooze duration";
+"snooze_duration_value" = "%d min";
 "stop_alarm" = "Stop";
 "ad_loading" = "Loading ad";
 "ad_view_details" = "View details";
@@ -81,9 +84,12 @@
 "commute_mode_public_transit" = "Transit";
 "status_enter_settings" = "Enter your commute and alarm settings.";
 "status_alarm_scheduled" = "Smart alarm is scheduled and repeats weekly.";
-"schedule_stale_notice" = "Settings changed — tap Schedule Smart Alarm to apply them. The previous alarm keeps ringing until then.";
+"alarmkit_reschedule_notice" = "This alarm was set up before the update, so it still stays quiet on silent. Tap Schedule Smart Alarm once to switch it over.";
+"schedule_stale_notice" = "Settings changed — updating the alarm. If this notice stays, tap Schedule Smart Alarm to apply them.";
+"status_alarm_removed_address_changed" = "Address changed, so the alarm was removed. Tap Schedule Smart Alarm to set it up for the new route.";
 "status_required" = "Home, work, and lead time are required.";
 "status_permission_denied" = "Notification permission was not granted.";
+"status_alarm_permission_denied" = "Alarm permission was not granted. Turn it on in Settings › Rainy Clock, then schedule again.";
 "status_schedule_failed" = "Could not schedule alarm: %@";
 "status_adjusted" = "Rain threshold exceeded. Alarm adjusted.";
 "status_normal" = "Rain threshold not exceeded. Alarm scheduled.";
@@ -92,6 +98,10 @@
 "notification_title" = "Rainy Clock";
 "notification_body_adjusted" = "Rain probability is above your threshold, so the alarm was moved earlier.";
 "notification_body_normal" = "Rain probability is below your threshold, so the normal alarm time was used.";
+"alarm_alert_title_normal" = "Time to get up";
+"alarm_alert_title_adjusted" = "Rain ahead — up early today";
+"alarm_snooze_button" = "Snooze";
+"alarm_snoozing_title" = "Snoozing";
 "segment_home_area" = "Home area";
 "segment_office_area" = "Office area";
 "segment_route_placeholder" = "Commute";

@@ -52,8 +52,11 @@
 "alarm_sound_energetic_pulse" = "活力節奏";
 "alarm_sound_deep_resonance" = "低頻共鳴";
 "alarm_sound_minimal_tap" = "極簡敲擊";
-"alarm_sound_system_default" = "系統預設";
+"alarm_sound_system_default" = "系統預設鬧鈴";
 "preview_alarm_sound" = "試聽鬧鈴";
+"snooze" = "賴床";
+"snooze_duration" = "賴床間隔";
+"snooze_duration_value" = "%d 分鐘";
 "stop_alarm" = "停止";
 "ad_loading" = "廣告載入中";
 "ad_view_details" = "查看詳情";
@@ -81,9 +84,12 @@
 "commute_mode_public_transit" = "大眾交通";
 "status_enter_settings" = "請輸入通勤與鬧鐘設定。";
 "status_alarm_scheduled" = "智慧鬧鐘已排程，將每週重複響鈴。";
-"schedule_stale_notice" = "設定已變更，請按「排定智慧鬧鐘」以套用；套用前仍依原排程響鈴。";
+"alarmkit_reschedule_notice" = "這個鬧鐘是更新前設定的，靜音時仍然不會響。按一次「排程智慧鬧鐘」即可切換。";
+"schedule_stale_notice" = "設定已變更，鬧鐘更新中；若此提示持續顯示，請按「排程智慧鬧鐘」。";
+"status_alarm_removed_address_changed" = "地址已變更，原有鬧鐘已移除。請按「排程智慧鬧鐘」為新路線重新設定。";
 "status_required" = "需要填入住家、公司與提前時間。";
 "status_permission_denied" = "尚未授權通知權限。";
+"status_alarm_permission_denied" = "尚未授權鬧鐘權限。請到「設定 › 雨天鬧鐘」開啟後再排程一次。";
 "status_schedule_failed" = "無法排程鬧鐘：%@";
 "status_adjusted" = "已超過降雨門檻，鬧鐘已提前。";
 "status_normal" = "未超過降雨門檻，已排程正常鬧鐘。";
@@ -92,6 +98,10 @@
 "notification_title" = "雨天鬧鐘";
 "notification_body_adjusted" = "降雨機率高於你的門檻，因此鬧鐘已提前。";
 "notification_body_normal" = "降雨機率低於你的門檻，因此使用正常鬧鐘時間。";
+"alarm_alert_title_normal" = "該起床了";
+"alarm_alert_title_adjusted" = "今天有雨，提前叫你起床";
+"alarm_snooze_button" = "再睡一下";
+"alarm_snoozing_title" = "賴床中";
 "segment_home_area" = "住家附近";
 "segment_office_area" = "公司附近";
 "segment_route_placeholder" = "通勤途中";

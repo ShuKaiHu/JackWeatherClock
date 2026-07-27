@@ -1,5 +1,7 @@
 # Rainy Clock App Store Metadata
 
+> **The English copy below is not live.** As of `1.6.2 (17)` the App Store listing has only the Traditional Chinese localization, so every storefront — including the US — serves the Chinese description, keywords, and release notes. `itunes.apple.com/lookup?id=6780500386&country=us` returns the Chinese text; the `languageCodesISO2A: ['EN','ZH']` it also returns describes the app binary, not the listing. Adding English in App Store Connect (App Store → the version → language selector → add English) is a metadata-only change and does not need a new build.
+
 ## App Information
 
 | Field | English | 繁體中文 |
@@ -30,37 +32,43 @@ Rainy Clock checks your commute weather and helps schedule an earlier alarm when
 
 ### English
 
-Rainy Clock is a simple commute alarm for rainy mornings.
+Rainy Clock is a smart alarm app built for commuters.
 
-Set your home and work addresses, choose a commute mode, then set your normal alarm time. Rainy Clock previews your route, checks Apple Weather for your home and office areas around the alarm check time, and schedules a local notification alarm earlier when the rain chance exceeds your threshold.
+Set your home and work addresses, choose a commute mode, then set your normal alarm time. Rainy Clock previews your commute route and checks Apple Weather around your home and office. When the rain chance exceeds your threshold, it moves your alarm earlier — so rainy mornings never catch you off guard.
 
 Key features:
-- Route setup with Apple Maps preview
-- Home and office weather checks powered by Apple Weather
-- Adjustable rain lead time from 1 to 60 minutes
-- Adjustable rain probability threshold
+- Alarm breaks through Silent mode and Focus with a full-screen alert (iOS 26 and later)
+- Snooze you can turn on or off, with a 1–15 minute interval and a countdown on the Lock Screen and in the Dynamic Island (iOS 26 and later)
+- Home and work address setup with Apple Maps route preview
+- Weather checks powered by Apple Weather
+- Adjustable rain lead time and rain probability threshold
 - Weekday alarm selection
-- Built-in alarm sounds with preview
-- Local notifications for scheduled alarms
+- Built-in alarm sounds with preview, plus the system default alarm tone on iOS 26 and later
+- Any settings change syncs to the scheduled alarm automatically
+
+On iOS 17–25, alarms are scheduled as local notifications and still follow the silent switch.
 
 Rainy Clock does not require an account and does not run its own backend server.
 
 ### 繁體中文
 
-雨天鬧鐘是一個為雨天通勤設計的簡單鬧鐘。
+雨天鬧鐘是一款為通勤族設計的智慧鬧鐘 App。
 
-設定住家與工作地址、選擇通勤方式，再設定平常的鬧鐘時間。雨天鬧鐘會預覽通勤路線，並在鬧鐘判斷時間附近透過 Apple Weather 檢查住家與公司附近的天氣；如果降雨機率超過你設定的門檻，就會提前安排本機通知鬧鐘。
+設定住家與工作地址、選擇通勤方式，再設定平常的鬧鐘時間。雨天鬧鐘會預覽你的通勤路線，並透過 Apple Weather 檢查住家與公司附近的天氣。如果降雨機率超過你設定的門檻，App 會自動把鬧鐘提前，讓雨天早晨更從容。
 
 主要功能：
-- 使用 Apple Maps 預覽通勤路線
-- 透過 Apple Weather 檢查住家與公司附近天氣
-- 雨天提前時間可在 1 到 60 分鐘間調整
-- 可調整降雨機率門檻
-- 可選擇每週哪些天響鈴
-- 內建多種鬧鈴音效並支援試聽
-- 使用本機通知排程鬧鐘
+・鬧鐘穿透靜音與專注模式，以全螢幕提示響鈴（iOS 26 以上）
+・賴床功能可開關，間隔 1 到 15 分鐘自由選擇，倒數會顯示在鎖定畫面與動態島（iOS 26 以上）
+・設定住家與工作地址，使用 Apple Maps 預覽通勤路線
+・透過 Apple Weather 檢查天氣
+・可調整雨天提前時間與降雨機率門檻
+・可選擇鬧鐘響鈴的星期
+・內建多種鬧鈴音效並支援試聽，iOS 26 以上還可選擇系統預設鬧鈴
+・調整任何設定後，已排程的鬧鐘會自動同步更新
 
-雨天鬧鐘不需要註冊帳號，也沒有自建後端伺服器。
+iOS 17–25 以本機通知排程鬧鐘，響鈴仍會受靜音開關影響。
+
+雨天鬧鐘不需要註冊帳號，也不會建立自己的後端伺服器。
 
 ## Keywords
 
@@ -71,6 +79,36 @@ rain alarm,weather alarm,commute alarm,smart alarm,rain,weather,alarm clock,comm
 ### 繁體中文
 
 雨天鬧鐘,天氣鬧鐘,通勤鬧鐘,智慧鬧鐘,降雨,天氣,鬧鐘,通勤
+
+## Version 1.6.3 (18) “What’s New”
+
+### English
+
+```
+Your alarm now rings even on silent.
+
+• On iOS 26 and later, the alarm uses Apple's new alarm system: it breaks through Silent mode and Focus with a full-screen alert, just like the built-in Clock app.
+• New Snooze options: turn snooze on or off and pick an interval from 1 to 15 minutes. While snoozing, a countdown appears on the Lock Screen and in the Dynamic Island.
+• New "System Default Alarm" ringtone option (iOS 26 and later).
+• Changing the alarm time, weekdays, rain settings, sound, or snooze now updates the scheduled alarm automatically — no need to press the button again. Changing an address removes the alarm so you can confirm the new route first.
+• The status message now clearly shows in color whether an alarm is currently set.
+
+On iOS 17–25, alarms still follow the silent switch; the snooze interval controls how often the alarm re-rings until you stop it.
+```
+
+### 繁體中文
+
+```
+鬧鐘現在連靜音時也會響。
+
+• 在 iOS 26 以上，鬧鐘改用 Apple 全新的系統鬧鐘機制：如同內建時鐘 App，以全螢幕提示穿透靜音與專注模式。
+• 新增賴床選項：可開關賴床並選擇 1 到 15 分鐘的間隔；賴床倒數會顯示在鎖定畫面與動態島。
+• 新增「系統預設鬧鈴」鈴聲選項（iOS 26 以上）。
+• 調整鬧鐘時間、星期、雨天設定、鈴聲或賴床後，已排程的鬧鐘會自動同步更新，不需再按一次按鈕；變更地址則會先移除鬧鐘，確認新路線後再重新排程。
+• 按鈕下方的狀態訊息改以顏色清楚顯示目前是否已設定鬧鐘。
+
+iOS 17–25 的鬧鐘仍受靜音開關影響；賴床間隔會決定鬧鐘在停止前重複響鈴的頻率。
+```
 
 ## Version 1.6.2 (17) “What’s New”
 

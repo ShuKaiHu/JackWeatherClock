@@ -22,6 +22,11 @@ struct RainyClockApp: App {
                 return
             }
 
+            // Runs on every system, not just pre-26: an install that upgraded to
+            // iOS 26 before rescheduling still carries notification alarms, and
+            // skipping this would strand any that are sitting on a fallback
+            // trigger. Once AlarmKit takes over there is no stored plan left and
+            // this is a no-op.
             Task {
                 await LocalNotificationScheduler().rearmAlarmsIfNeeded()
             }

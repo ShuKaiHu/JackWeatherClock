@@ -1,6 +1,16 @@
 import Foundation
 
 enum AlarmTimeCalculator {
+    /// Moves a `Calendar` weekday (1 = Sunday ... 7 = Saturday) by whole days,
+    /// wrapping around the week in either direction.
+    ///
+    /// Both schedulers and the scheduled-alarm summary need this: a rain lead time
+    /// that crosses midnight puts the ring on the previous day, so every selected
+    /// weekday shifts with it.
+    static func shiftedWeekday(_ weekday: Int, byDays dayShift: Int) -> Int {
+        ((weekday - 1 + dayShift) % 7 + 7) % 7 + 1
+    }
+
     static func nextAlarmDate(
         alarmTime: Date,
         leadTimeMinutes: Int,

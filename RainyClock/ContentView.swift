@@ -516,7 +516,7 @@ private struct AlarmTabView: View {
                             Spacer()
                             Menu {
                                 Picker("alarm_sound", selection: $viewModel.settings.alarmSound) {
-                                    ForEach(CommuteAlarmSettings.AlarmSound.allCases) { sound in
+                                    ForEach(CommuteAlarmSettings.AlarmSound.selectableCases) { sound in
                                         Text(sound.displayName).tag(sound)
                                     }
                                 }
@@ -524,15 +524,41 @@ private struct AlarmTabView: View {
                                 Text(viewModel.settings.alarmSound.displayName)
                                     .foregroundStyle(.secondary)
                             }
-                            Button {
-                                toggleSelectedSoundPreview()
-                            } label: {
-                                Image(systemName: isPreviewingSelectedSound ? "stop.circle.fill" : "play.circle.fill")
-                                    .font(.title3)
+                            // The system alarm tone lives in iOS, not in the app
+                            // bundle, so there is nothing to play here.
+                            if !viewModel.settings.alarmSound.usesSystemAlarmTone {
+                                Button {
+                                    toggleSelectedSoundPreview()
+                                } label: {
+                                    Image(systemName: isPreviewingSelectedSound ? "stop.circle.fill" : "play.circle.fill")
+                                        .font(.title3)
+                                }
+                                .buttonStyle(.plain)
+                                .foregroundStyle(.cyan)
+                                .accessibilityLabel(Text("preview_alarm_sound"))
                             }
-                            .buttonStyle(.plain)
-                            .foregroundStyle(.cyan)
-                            .accessibilityLabel(Text("preview_alarm_sound"))
+                        }
+
+                        Toggle(isOn: $viewModel.settings.isSnoozeEnabled) {
+                            Text("snooze")
+                        }
+                        .tint(.cyan)
+
+                        if viewModel.settings.isSnoozeEnabled {
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    Text("snooze_duration")
+                                    Spacer()
+                                    Text(String.localizedStringWithFormat(String(localized: "snooze_duration_value"), viewModel.settings.snoozeDurationMinutes))
+                                        .foregroundStyle(.secondary)
+                                }
+
+                                Slider(
+                                    value: snoozeDurationSliderValue,
+                                    in: Double(CommuteAlarmSettings.snoozeDurationRange.lowerBound)...Double(CommuteAlarmSettings.snoozeDurationRange.upperBound),
+                                    step: 1
+                                )
+                            }
                         }
 
                         // Only regulated regions require this entry point, so UMP
@@ -566,8 +592,15 @@ private struct AlarmTabView: View {
                     .tint(.cyan)
                     .disabled(!viewModel.canSchedule || viewModel.isScheduling)
 
-                    Text(viewModel.statusMessage)
-                        .foregroundStyle(.secondary)
+                    // Colour answers "is an alarm actually armed right now?" at a
+                    // glance: green = armed and matching the settings above,
+                    // orange = armed but syncing/stale, grey = nothing armed.
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        Image(systemName: scheduleStatusIcon)
+                        Text(viewModel.statusMessage)
+                    }
+                    .font(.subheadline.weight(viewModel.hasScheduledAlarm ? .semibold : .regular))
+                    .foregroundStyle(scheduleStatusColor)
 
                     if let summary = viewModel.scheduledAlarmSummary {
                         VStack(alignment: .leading, spacing: 12) {
@@ -575,6 +608,11 @@ private struct AlarmTabView: View {
                                 .font(.headline)
                             if viewModel.isScheduleStale {
                                 Label(String(localized: "schedule_stale_notice"), systemImage: "exclamationmark.triangle.fill")
+                                    .font(.footnote.weight(.semibold))
+                                    .foregroundStyle(.orange)
+                            }
+                            if viewModel.requiresAlarmKitReschedule {
+                                Label(String(localized: "alarmkit_reschedule_notice"), systemImage: "bell.badge.fill")
                                     .font(.footnote.weight(.semibold))
                                     .foregroundStyle(.orange)
                             }
@@ -638,6 +676,31 @@ private struct AlarmTabView: View {
             Double(min(max(viewModel.settings.rainLeadTimeMinutes, 1), 60))
         } set: { newValue in
             viewModel.settings.rainLeadTimeMinutes = min(max(Int(newValue.rounded()), 1), 60)
+        }
+    }
+
+    private var scheduleStatusIcon: String {
+        guard viewModel.hasScheduledAlarm else {
+            return "minus.circle"
+        }
+
+        return viewModel.isScheduleStale ? "exclamationmark.triangle.fill" : "checkmark.circle.fill"
+    }
+
+    private var scheduleStatusColor: Color {
+        guard viewModel.hasScheduledAlarm else {
+            return .secondary
+        }
+
+        return viewModel.isScheduleStale ? .orange : .green
+    }
+
+    private var snoozeDurationSliderValue: Binding<Double> {
+        let range = CommuteAlarmSettings.snoozeDurationRange
+        return Binding {
+            Double(min(max(viewModel.settings.snoozeDurationMinutes, range.lowerBound), range.upperBound))
+        } set: { newValue in
+            viewModel.settings.snoozeDurationMinutes = min(max(Int(newValue.rounded()), range.lowerBound), range.upperBound)
         }
     }
 

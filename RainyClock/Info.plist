@@ -17,9 +17,9 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.6.2</string>
+	<string>1.6.3</string>
 	<key>CFBundleVersion</key>
-	<string>17</string>
+	<string>18</string>
 	<key>GADApplicationIdentifier</key>
 	<string>ca-app-pub-2920259088304022~6773413597</string>
 	<key>GooglePlacesAPIKey</key>
@@ -28,6 +28,10 @@
 	<false/>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.utilities</string>
+	<key>NSAlarmKitUsageDescription</key>
+	<string>Rainy Clock schedules your commute alarm so it can wake you even when your iPhone is on silent or in a Focus mode.</string>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
 	<key>SKAdNetworkItems</key>
 	<array>
 		<dict>

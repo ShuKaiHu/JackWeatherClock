@@ -31,6 +31,7 @@ final class AlarmViewModel: ObservableObject {
             }
             saveSettings()
             updateScheduleStaleness()
+            reconcileScheduledAlarmWithSettings()
         }
     }
     @Published private(set) var routeWeatherSnapshot: RouteWeatherSnapshot?
@@ -51,6 +52,9 @@ final class AlarmViewModel: ObservableObject {
     /// True when schedule-relevant settings changed after the last successful
     /// scheduling, so the registered alarm no longer matches the visible settings.
     @Published private(set) var isScheduleStale = false
+    /// True on iOS 26 when the alarm still runs on the pre-26 notification path,
+    /// which cannot pierce silent mode. Rescheduling once hands it to AlarmKit.
+    @Published private(set) var requiresAlarmKitReschedule = false
 
     private let routeWeatherService: RouteWeatherService
     private let routePreviewService: RoutePreviewService
@@ -64,6 +68,8 @@ final class AlarmViewModel: ObservableObject {
             saveScheduledFingerprint()
         }
     }
+    private var autoRefreshTask: Task<Void, Never>?
+    private let autoRefreshDebounce: Duration
     private static let addressValidationTimeout: Duration = .seconds(4)
     private static let settingsStorageKey = "commuteAlarmSettings"
     private static let scheduledSummaryStorageKey = "scheduledAlarmSummaryDisplay"
@@ -72,9 +78,11 @@ final class AlarmViewModel: ObservableObject {
     init(
         routeWeatherService: RouteWeatherService = MockRouteWeatherService(),
         routePreviewService: RoutePreviewService = MapKitRoutePreviewService(),
-        notificationScheduler: NotificationScheduling = LocalNotificationScheduler(),
-        settingsStorage: UserDefaults = .standard
+        notificationScheduler: NotificationScheduling = SystemAlarmScheduler(),
+        settingsStorage: UserDefaults = .standard,
+        autoRefreshDebounce: Duration = .seconds(1.5)
     ) {
+        self.autoRefreshDebounce = autoRefreshDebounce
         self.settings = Self.loadSettings(from: settingsStorage) ?? CommuteAlarmSettings()
         self.routeWeatherService = routeWeatherService
         self.routePreviewService = routePreviewService
@@ -95,6 +103,23 @@ final class AlarmViewModel: ObservableObject {
         }
         scheduledFingerprint = Self.loadScheduledFingerprint(from: settingsStorage)
         updateScheduleStaleness()
+        updateAlarmKitRescheduleNotice()
+    }
+
+    /// An install that upgraded to iOS 26 keeps ringing through the old notification
+    /// alarms until the user reschedules once — correct (no gap), but it silently
+    /// misses the whole point of this release, so say so.
+    func updateAlarmKitRescheduleNotice() {
+        guard #available(iOS 26.0, *) else {
+            requiresAlarmKitReschedule = false
+            return
+        }
+
+        let needsReschedule = LocalNotificationScheduler.hasScheduledAlarmPlan
+            && AlarmKitScheduler.scheduledAlarmIdentifiers().isEmpty
+        if needsReschedule != requiresAlarmKitReschedule {
+            requiresAlarmKitReschedule = needsReschedule
+        }
     }
 
     private func updateScheduleStaleness() {
@@ -107,6 +132,75 @@ final class AlarmViewModel: ObservableObject {
         if isStale != isScheduleStale {
             isScheduleStale = isStale
         }
+    }
+
+    var hasScheduledAlarm: Bool {
+        scheduledAlarmSummary != nil
+    }
+
+    /// Keeps the registered alarm in lockstep with the visible settings. Parameter
+    /// changes (weekdays, time, lead time, threshold, sound, snooze) re-schedule
+    /// automatically after a short debounce; address changes instead drop the alarm
+    /// entirely, because an alarm for a route the user has not confirmed yet should
+    /// never ring — they re-arm it with the schedule button.
+    private func reconcileScheduledAlarmWithSettings() {
+        guard scheduledAlarmSummary != nil, let scheduledFingerprint else {
+            return
+        }
+
+        let current = settings.scheduleFingerprint()
+        guard current != scheduledFingerprint else {
+            // Settings changed and changed back before the debounce fired.
+            autoRefreshTask?.cancel()
+            return
+        }
+
+        if current.homeAddress != scheduledFingerprint.homeAddress
+            || current.workAddress != scheduledFingerprint.workAddress {
+            autoRefreshTask?.cancel()
+            Task {
+                await removeScheduledAlarm()
+            }
+        } else {
+            scheduleAutoRefresh()
+        }
+    }
+
+    /// Debounced so slider drags coalesce into one weather fetch + re-registration.
+    private func scheduleAutoRefresh() {
+        autoRefreshTask?.cancel()
+        let debounce = autoRefreshDebounce
+        autoRefreshTask = Task { [weak self] in
+            try? await Task.sleep(for: debounce)
+            guard !Task.isCancelled, let self else {
+                return
+            }
+
+            guard !self.isScheduling else {
+                // A manual run is in flight; re-debounce and reconcile after it.
+                self.scheduleAutoRefresh()
+                return
+            }
+            guard self.canSchedule else {
+                return
+            }
+
+            // Detach before running: evaluate cancels `autoRefreshTask` on entry
+            // (to absorb queued debounces), and cancelling this task mid-flight
+            // would abort its own weather fetch with a CancellationError.
+            self.autoRefreshTask = nil
+            await self.evaluateRouteAndScheduleAlarm()
+        }
+    }
+
+    private func removeScheduledAlarm() async {
+        autoRefreshTask?.cancel()
+        await notificationScheduler.cancelScheduledAlarms()
+        scheduledAlarmSummary = nil
+        scheduledFingerprint = nil
+        isScheduleStale = false
+        statusMessage = String(localized: "status_alarm_removed_address_changed")
+        updateAlarmKitRescheduleNotice()
     }
 
     var canSchedule: Bool {
@@ -261,7 +355,7 @@ final class AlarmViewModel: ObservableObject {
                 to: settings.workAddress,
                 workLocation: settings.workResolvedLocation,
                 mode: settings.commuteMode,
-                around: nextWeatherCheckDate(now: now)
+                around: nextWeatherCheckDate(for: settings, now: now)
             )
             // A newer refresh (or a clear) supersedes this in-flight result.
             guard generation == weatherGeneration else {
@@ -316,12 +410,26 @@ final class AlarmViewModel: ObservableObject {
         }
 
         isScheduling = true
+        // This run IS the refresh; a queued debounce would only duplicate it.
+        autoRefreshTask?.cancel()
         defer { isScheduling = false }
+
+        // Freeze the settings for the whole flow: the user can keep moving sliders
+        // while the weather fetch is in flight, and the registered alarm must match
+        // ONE consistent set of values — the fingerprint saved below. Drift that
+        // happens mid-flight is caught by reconcile at the end.
+        let settingsSnapshot = settings
 
         do {
             let authorized = try await notificationScheduler.requestAuthorization()
             guard authorized else {
-                statusMessage = String(localized: "status_permission_denied")
+                // iOS 26 asks for alarm permission, not notification permission, and
+                // the system only prompts once — point at Settings either way.
+                statusMessage = if #available(iOS 26.0, *) {
+                    String(localized: "status_alarm_permission_denied")
+                } else {
+                    String(localized: "status_permission_denied")
+                }
                 return
             }
 
@@ -331,13 +439,13 @@ final class AlarmViewModel: ObservableObject {
             let weatherFetchGeneration = weatherGeneration
             isRefreshingRouteWeather = false
             let now = Date()
-            let weatherCheckDate = nextWeatherCheckDate(now: now)
+            let weatherCheckDate = nextWeatherCheckDate(for: settingsSnapshot, now: now)
             let snapshot = try await routeWeatherService.fetchRouteWeather(
-                from: settings.homeAddress,
-                homeLocation: settings.homeResolvedLocation,
-                to: settings.workAddress,
-                workLocation: settings.workResolvedLocation,
-                mode: settings.commuteMode,
+                from: settingsSnapshot.homeAddress,
+                homeLocation: settingsSnapshot.homeResolvedLocation,
+                to: settingsSnapshot.workAddress,
+                workLocation: settingsSnapshot.workResolvedLocation,
+                mode: settingsSnapshot.commuteMode,
                 around: weatherCheckDate
             )
             if weatherFetchGeneration == weatherGeneration {
@@ -350,14 +458,14 @@ final class AlarmViewModel: ObservableObject {
                 )
             }
 
-            let exceedsThreshold = snapshot.exceedsRainThreshold(settings.rainProbabilityThreshold)
+            let exceedsThreshold = snapshot.exceedsRainThreshold(settingsSnapshot.rainProbabilityThreshold)
             let summary = AlarmTimeCalculator.nextAlarmDateForWeatherCheck(
-                alarmTime: settings.alarmTime,
-                leadTimeMinutes: settings.rainLeadTimeMinutes,
+                alarmTime: settingsSnapshot.alarmTime,
+                leadTimeMinutes: settingsSnapshot.rainLeadTimeMinutes,
                 shouldApplyLeadTime: exceedsThreshold,
-                rainProbabilityThreshold: settings.rainProbabilityThreshold,
+                rainProbabilityThreshold: settingsSnapshot.rainProbabilityThreshold,
                 maximumPrecipitationProbability: snapshot.maximumPrecipitationProbability,
-                selectedWeekdays: settings.selectedWeekdays,
+                selectedWeekdays: settingsSnapshot.selectedWeekdays,
                 now: now
             )
             scheduledAlarmSummary = summary
@@ -369,13 +477,17 @@ final class AlarmViewModel: ObservableObject {
             try await notificationScheduler.scheduleAlarm(
                 at: summary.scheduledAlarmDate,
                 normalAlarmDate: summary.normalAlarmDate,
-                weekdays: settings.selectedWeekdays,
-                sound: settings.alarmSound,
+                weekdays: settingsSnapshot.selectedWeekdays,
+                sound: settingsSnapshot.alarmSound,
+                snoozeMinutes: settingsSnapshot.effectiveSnoozeMinutes,
                 title: String(localized: "notification_title"),
                 body: body
             )
-            scheduledFingerprint = settings.scheduleFingerprint()
-            isScheduleStale = false
+            // The fingerprint describes what was actually registered — the frozen
+            // snapshot — never the live settings, which may have moved on.
+            scheduledFingerprint = settingsSnapshot.scheduleFingerprint()
+            updateScheduleStaleness()
+            updateAlarmKitRescheduleNotice()
 
             let checkedAt = snapshot.checkedAt.formatted(date: .omitted, time: .shortened)
             let forecastAt = snapshot.forecastAt.formatted(date: .abbreviated, time: .shortened)
@@ -388,6 +500,10 @@ final class AlarmViewModel: ObservableObject {
                 Self.userFacingMessage(for: error)
             )
         }
+
+        // Settings that drifted while this run was in flight get their own pass —
+        // auto-refresh for parameter drift, removal for address drift.
+        reconcileScheduledAlarmWithSettings()
     }
 
     private static func userFacingMessage(for error: Error) -> String {
@@ -537,7 +653,7 @@ final class AlarmViewModel: ObservableObject {
         }
     }
 
-    private func nextWeatherCheckDate(now: Date = Date()) -> Date {
+    private func nextWeatherCheckDate(for settings: CommuteAlarmSettings, now: Date = Date()) -> Date {
         AlarmTimeCalculator.nextAlarmDateForWeatherCheck(
             alarmTime: settings.alarmTime,
             leadTimeMinutes: settings.rainLeadTimeMinutes,

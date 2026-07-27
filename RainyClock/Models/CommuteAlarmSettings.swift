@@ -53,6 +53,23 @@ struct CommuteAlarmSettings: Codable, Equatable {
             ]
         }
 
+        /// What the sound picker offers. The system alarm tone only appears on
+        /// iOS 26+, where AlarmKit's `.default` resolves to it; the notification
+        /// fallback has no way to reach the same tone.
+        static var selectableCases: [AlarmSound] {
+            if #available(iOS 26.0, *) {
+                allCases + [.systemDefault]
+            } else {
+                allCases
+            }
+        }
+
+        /// True when the system picks the tone, so there is no bundled file to
+        /// preview and nothing for the app to name.
+        var usesSystemAlarmTone: Bool {
+            self == .systemDefault
+        }
+
         var id: String { rawValue }
 
         var displayName: String {
@@ -122,6 +139,10 @@ struct CommuteAlarmSettings: Codable, Equatable {
     var rainProbabilityThreshold: Double = 0.5
     var selectedWeekdays: Set<Int> = Self.allWeekdays
     var alarmSound: AlarmSound = .rainyClock
+    var isSnoozeEnabled: Bool = true
+    var snoozeDurationMinutes: Int = 5
+
+    static let snoozeDurationRange = 1...15
 
     init() {}
 
@@ -140,8 +161,18 @@ struct CommuteAlarmSettings: Codable, Equatable {
         rainLeadTimeMinutes = try values.decodeIfPresent(Int.self, forKey: .rainLeadTimeMinutes) ?? 30
         rainProbabilityThreshold = try values.decodeIfPresent(Double.self, forKey: .rainProbabilityThreshold) ?? 0.5
         selectedWeekdays = try values.decodeIfPresent(Set<Int>.self, forKey: .selectedWeekdays) ?? Self.allWeekdays
+        // A stored sound the running system cannot offer (the system alarm tone on
+        // iOS 17–25) falls back rather than silently ringing something else.
         let decodedAlarmSound = try values.decodeIfPresent(AlarmSound.self, forKey: .alarmSound) ?? .rainyClock
-        alarmSound = decodedAlarmSound == .systemDefault ? .rainyClock : decodedAlarmSound
+        alarmSound = AlarmSound.selectableCases.contains(decodedAlarmSound) ? decodedAlarmSound : .rainyClock
+        isSnoozeEnabled = try values.decodeIfPresent(Bool.self, forKey: .isSnoozeEnabled) ?? true
+        let decodedSnoozeDuration = try values.decodeIfPresent(Int.self, forKey: .snoozeDurationMinutes) ?? 5
+        snoozeDurationMinutes = min(max(decodedSnoozeDuration, Self.snoozeDurationRange.lowerBound), Self.snoozeDurationRange.upperBound)
+    }
+
+    /// The snooze interval to schedule with, or nil when the user turned snooze off.
+    var effectiveSnoozeMinutes: Int? {
+        isSnoozeEnabled ? snoozeDurationMinutes : nil
     }
 }
 
@@ -185,6 +216,31 @@ struct AlarmScheduleFingerprint: Codable, Equatable {
     var rainLeadTimeMinutes: Int
     var rainProbabilityThreshold: Double
     var alarmSoundRawValue: String
+    var isSnoozeEnabled: Bool
+    var snoozeDurationMinutes: Int
+}
+
+extension AlarmScheduleFingerprint {
+    /// A fingerprint stored before 1.6.3 has no snooze fields. Filling them with
+    /// what that build effectively did — snooze on, 5-minute follow-ups — keeps the
+    /// comparison equal for anyone who has not touched the new settings. Letting the
+    /// decode fail instead would silently disable the "settings changed, reschedule"
+    /// notice for every upgraded install, which is the more dangerous failure: the
+    /// user edits the alarm time, sees no warning, and gets woken at the old one.
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        homeAddress = try values.decode(String.self, forKey: .homeAddress)
+        workAddress = try values.decode(String.self, forKey: .workAddress)
+        commuteMode = try values.decode(CommuteAlarmSettings.CommuteMode.self, forKey: .commuteMode)
+        alarmHour = try values.decode(Int.self, forKey: .alarmHour)
+        alarmMinute = try values.decode(Int.self, forKey: .alarmMinute)
+        selectedWeekdays = try values.decode(Set<Int>.self, forKey: .selectedWeekdays)
+        rainLeadTimeMinutes = try values.decode(Int.self, forKey: .rainLeadTimeMinutes)
+        rainProbabilityThreshold = try values.decode(Double.self, forKey: .rainProbabilityThreshold)
+        alarmSoundRawValue = try values.decode(String.self, forKey: .alarmSoundRawValue)
+        isSnoozeEnabled = try values.decodeIfPresent(Bool.self, forKey: .isSnoozeEnabled) ?? true
+        snoozeDurationMinutes = try values.decodeIfPresent(Int.self, forKey: .snoozeDurationMinutes) ?? 5
+    }
 }
 
 extension CommuteAlarmSettings {
@@ -199,7 +255,9 @@ extension CommuteAlarmSettings {
             selectedWeekdays: selectedWeekdays,
             rainLeadTimeMinutes: rainLeadTimeMinutes,
             rainProbabilityThreshold: rainProbabilityThreshold,
-            alarmSoundRawValue: alarmSound.rawValue
+            alarmSoundRawValue: alarmSound.rawValue,
+            isSnoozeEnabled: isSnoozeEnabled,
+            snoozeDurationMinutes: snoozeDurationMinutes
         )
     }
 }
@@ -262,7 +320,7 @@ extension ScheduledAlarmSummary {
             return weekdays
         }
 
-        return Set(weekdays.map { (($0 - 1 + dayShift) % 7 + 7) % 7 + 1 })
+        return Set(weekdays.map { AlarmTimeCalculator.shiftedWeekday($0, byDays: dayShift) })
     }
 
     private static func nextOccurrence(

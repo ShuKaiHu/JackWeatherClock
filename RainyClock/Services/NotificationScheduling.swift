@@ -9,9 +9,72 @@ protocol NotificationScheduling: Sendable {
         normalAlarmDate: Date,
         weekdays: Set<Int>,
         sound: CommuteAlarmSettings.AlarmSound,
+        /// Minutes before the alarm rings again, or nil when the user turned
+        /// snooze off. On iOS 26 this is AlarmKit's snooze; on older systems it is
+        /// the follow-up ring interval, which is the same "how long until it nags
+        /// again" number without the tap.
+        snoozeMinutes: Int?,
         title: String,
         body: String
     ) async throws
+    /// Removes every alarm this scheduler owns without arming a replacement. Used
+    /// when an address change invalidates the scheduled route.
+    func cancelScheduledAlarms() async
+}
+
+/// Routes scheduling to AlarmKit where it exists and to local notifications
+/// everywhere else. AlarmKit alarms override silent mode and Focus; the
+/// notification fallback cannot, and stays the behaviour on iOS 17–25.
+struct SystemAlarmScheduler: NotificationScheduling {
+    func requestAuthorization() async throws -> Bool {
+        if #available(iOS 26.0, *) {
+            return try await AlarmKitScheduler().requestAuthorization()
+        }
+
+        return try await LocalNotificationScheduler().requestAuthorization()
+    }
+
+    func scheduleAlarm(
+        at date: Date,
+        normalAlarmDate: Date,
+        weekdays: Set<Int>,
+        sound: CommuteAlarmSettings.AlarmSound,
+        snoozeMinutes: Int?,
+        title: String,
+        body: String
+    ) async throws {
+        if #available(iOS 26.0, *) {
+            try await AlarmKitScheduler().scheduleAlarm(
+                at: date,
+                normalAlarmDate: normalAlarmDate,
+                weekdays: weekdays,
+                sound: sound,
+                snoozeMinutes: snoozeMinutes,
+                title: title,
+                body: body
+            )
+            return
+        }
+
+        try await LocalNotificationScheduler().scheduleAlarm(
+            at: date,
+            normalAlarmDate: normalAlarmDate,
+            weekdays: weekdays,
+            sound: sound,
+            snoozeMinutes: snoozeMinutes,
+            title: title,
+            body: body
+        )
+    }
+
+    func cancelScheduledAlarms() async {
+        // Both paths, not either: an install that upgraded to iOS 26 without
+        // rescheduling still owns notification alarms alongside AlarmKit's.
+        if #available(iOS 26.0, *) {
+            await AlarmKitScheduler().cancelScheduledAlarms()
+        }
+        await LocalNotificationScheduler().cancelScheduledAlarms()
+    }
 }
 
 /// Serializes every pending-notification mutation: schedule/acknowledge/re-arm run to
@@ -35,7 +98,8 @@ struct LocalNotificationScheduler: NotificationScheduling {
     static let categoryIdentifier = "RAINY_CLOCK_ALARM"
     static let stopActionIdentifier = "RAINY_CLOCK_STOP"
     private static let identifierPrefix = "commute-rain-alarm"
-    private static let followUpIntervalSeconds = 5 * 60
+    /// Used for plans stored before the interval became configurable in 1.6.3.
+    private static let legacyFollowUpIntervalMinutes = 5
     private static let maximumFollowUpCount = 10
     private static let pendingNotificationLimit = 64
     private static let storedPlanKey = "scheduledAlarmPlan"
@@ -64,11 +128,34 @@ struct LocalNotificationScheduler: NotificationScheduling {
         try await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])
     }
 
+    func cancelScheduledAlarms() async {
+        await Self.cancelScheduledAlarms()
+    }
+
+    /// True while this install is still relying on notification alarms. On iOS 26
+    /// that means the user upgraded without rescheduling, so AlarmKit has not taken
+    /// over yet and the alarm still cannot pierce silent mode.
+    static var hasScheduledAlarmPlan: Bool {
+        UserDefaults.standard.data(forKey: storedPlanKey) != nil
+    }
+
+    /// Drops every armed alarm notification and the bookkeeping behind it. Used when
+    /// AlarmKit takes over on iOS 26, so an upgraded install cannot ring twice.
+    static func cancelScheduledAlarms() async {
+        try? await registrationQueue.run {
+            let center = UNUserNotificationCenter.current()
+            await removeAllPendingAlarmRequests(center: center)
+            UserDefaults.standard.removeObject(forKey: storedPlanKey)
+            clearRearmFlag()
+        }
+    }
+
     func scheduleAlarm(
         at date: Date,
         normalAlarmDate: Date,
         weekdays: Set<Int>,
         sound: CommuteAlarmSettings.AlarmSound,
+        snoozeMinutes: Int?,
         title: String,
         body: String
     ) async throws {
@@ -79,6 +166,7 @@ struct LocalNotificationScheduler: NotificationScheduling {
             normalAlarmDate: normalAlarmDate,
             weekdays: selectedWeekdays,
             soundRawValue: sound.rawValue,
+            followUpIntervalMinutes: snoozeMinutes ?? 0,
             title: title,
             body: body
         )
@@ -114,7 +202,7 @@ struct LocalNotificationScheduler: NotificationScheduling {
                 return
             }
 
-            let window = Self.followUpWindow(weekdayCount: plan.weekdays.count)
+            let window = Self.followUpWindow(for: plan)
             let windowEnd = deliveredAt.addingTimeInterval(window)
             guard windowEnd > Date() else {
                 return
@@ -158,7 +246,7 @@ struct LocalNotificationScheduler: NotificationScheduling {
             to: calendar.startOfDay(for: plan.ringDate)
         ).day ?? 0
         let timeComponents = calendar.dateComponents([.hour, .minute, .second], from: plan.ringDate)
-        let offsets = ringOffsets(weekdayCount: plan.weekdays.count)
+        let offsets = ringOffsets(for: plan)
         var silencedTrigger = false
 
         for weekday in plan.weekdays.sorted() {
@@ -230,17 +318,24 @@ struct LocalNotificationScheduler: NotificationScheduling {
         center.removePendingNotificationRequests(withIdentifiers: identifiers)
     }
 
-    /// The main ring plus follow-ups every 5 minutes until acknowledged. iOS keeps at
-    /// most 64 pending notification requests per app, so the follow-up count shrinks
-    /// when many weekdays are selected (all 7 days -> 8 follow-ups instead of 10).
-    private static func ringOffsets(weekdayCount: Int) -> [Int] {
-        let perWeekdayLimit = max(2, pendingNotificationLimit / max(1, weekdayCount))
+    /// The main ring plus follow-ups at the user's snooze interval until acknowledged
+    /// — this path cannot offer a real snooze button, so it re-rings on its own. iOS
+    /// keeps at most 64 pending notification requests per app, so the follow-up count
+    /// shrinks when many weekdays are selected (all 7 days -> 8 follow-ups instead of
+    /// 10). With snooze off the alarm rings exactly once.
+    private static func ringOffsets(for plan: StoredAlarmPlan) -> [Int] {
+        let intervalMinutes = plan.followUpIntervalMinutes ?? legacyFollowUpIntervalMinutes
+        guard intervalMinutes > 0 else {
+            return [0]
+        }
+
+        let perWeekdayLimit = max(2, pendingNotificationLimit / max(1, plan.weekdays.count))
         let followUpCount = min(maximumFollowUpCount, perWeekdayLimit - 1)
-        return [0] + (1...followUpCount).map { $0 * followUpIntervalSeconds }
+        return [0] + (1...followUpCount).map { $0 * intervalMinutes * 60 }
     }
 
-    private static func followUpWindow(weekdayCount: Int) -> TimeInterval {
-        TimeInterval((ringOffsets(weekdayCount: weekdayCount).last ?? 0) + 60)
+    private static func followUpWindow(for plan: StoredAlarmPlan) -> TimeInterval {
+        TimeInterval((ringOffsets(for: plan).last ?? 0) + 60)
     }
 
     private static func notificationSound(for sound: CommuteAlarmSettings.AlarmSound) -> UNNotificationSound {
@@ -277,7 +372,7 @@ struct LocalNotificationScheduler: NotificationScheduling {
         let totalSeconds = hour * 60 * 60 + minute * 60 + second + offset
         let dayOffset = totalSeconds / secondsPerDay
         let secondsInDay = totalSeconds % secondsPerDay
-        let normalizedWeekday = ((weekday - 1 + dayShift + dayOffset) % 7 + 7) % 7 + 1
+        let normalizedWeekday = AlarmTimeCalculator.shiftedWeekday(weekday, byDays: dayShift + dayOffset)
 
         var components = DateComponents()
         components.weekday = normalizedWeekday
@@ -293,6 +388,9 @@ struct LocalNotificationScheduler: NotificationScheduling {
         var normalAlarmDate: Date
         var weekdays: Set<Int>
         var soundRawValue: String
+        /// Minutes between follow-up rings; `0` means the user turned snooze off.
+        /// Absent in plans stored before 1.6.3, which used a fixed 5-minute interval.
+        var followUpIntervalMinutes: Int?
         var title: String
         var body: String
     }
