@@ -1,12 +1,14 @@
 # Rainy Clock App Store Submission Checklist
 
+Ongoing state and the backlog live in `docs/STATUS.md`; this file is the submission reference.
+
 ## Current Build
 
 | Item | Status |
 | --- | --- |
-| App version | `1.6.3` (in development) |
-| Build number | `18` |
-| Review status | `1.6.3 (18)` uploaded via Organizer and submitted for review 2026-07-27 |
+| App version | `1.6.4` (in development) |
+| Build number | `19` |
+| Review status | `1.6.3 (18)` uploaded via Organizer and submitted for review 2026-07-27, awaiting verdict |
 | Last released | `1.6.2 (17)` — released to the App Store 2026-07-27 |
 | Bundle identifier | `com.shukaihu.RainyClock` |
 | Extension bundle identifier | `com.shukaihu.RainyClock.AlarmWidget` (added in `1.6.3`) |
@@ -18,6 +20,7 @@
 - `1.5 (7)` — **Rejected** 2026-07-22, Guideline 5.1.2(i) (Privacy – Data Use and Sharing): the App Privacy label declared data used to track the user, but the app has no App Tracking Transparency prompt.
 - `1.6 (10)` — Resubmitted 2026-07-23 with the 5.1.2(i) fix below. **Rejected** 2026-07-24, Guideline 5.2.5 (Legal – Apple Sites and Services): WeatherKit data shown without the required Apple Weather attribution mark and legal link.
 - `1.6.1 (16)` — Submitted 2026-07-25 with the 5.2.5 fix (official Apple Weather mark + legal link in the Route tab weather section), a review note explaining WeatherKit usage, and a screen recording captured on a physical iPhone. **Approved 2026-07-26 and released to the App Store the same day.**
+- `1.6.4 (19)` — In development. Debug builds now request Google's test banner unit instead of the production one; see the AdMob section.
 - `1.6.3 (18)` — **Submitted 2026-07-27.** Adopts AlarmKit on iOS 26+ (alarm pierces silent mode and Focus), adds snooze on/off with a 1–15 minute interval, the system default alarm tone, automatic re-scheduling when settings change (address changes instead remove the alarm), and the colour-coded status line. First build to ship the `RainyClockAlarmWidget` extension. Release notes and updated description are in `docs/appstore-metadata.md`.
 - `1.6.2 (17)` — Submitted 2026-07-27. **Approved and released the same day.** Declares Google's `SKAdNetworkItems` list (50 identifiers) in `Info.plist`, which the shipped builds were missing, and adds the UMP consent flow for EEA/UK/Swiss users. Also the first version to carry a marketing URL (`https://shukaihu.github.io/RainyClock/`), which is what unblocks AdMob's app-ads.txt verification — see below. Release notes are in `docs/appstore-metadata.md`.
 
@@ -112,7 +115,35 @@ AdMob reported "we can't verify Rainy Clock (iOS)" for two independent reasons: 
   ```
 
 - One publisher line covers every app under `pub-2920259088304022`; future apps need no new file.
-- Google re-crawls store listings on its own schedule. Expect 24 hours to several days after the marketing URL goes live before "Check for updates" in AdMob passes.
+- Google re-crawls store listings on its own schedule. Expect 24 hours to several days after the marketing URL goes live before "Check for updates" in AdMob passes — though in practice it passed within hours.
+
+### Debug builds use a test ad unit (`1.6.4`)
+
+`AppEnvironment.adMobBannerAdUnitID` returns Google's test banner unit
+(`ca-app-pub-3940256099942544/2934735716`) under `#if DEBUG` and the production unit otherwise.
+Google requires test ads during development; requesting production ads from simulators counts
+as invalid traffic and enough of it puts the AdMob account at risk. Before this change every
+run from Xcode hit the production unit.
+
+### Reading the AdMob report when no ads appear
+
+A banner that fails to load renders at height 0 with opacity 0 (`AdMobBannerView`), so "no ad
+on screen" and "ad failed" look identical. Do not diagnose by launching the app repeatedly —
+read the report:
+
+| Requests | Impressions | Meaning |
+| --- | --- | --- |
+| > 0 | 0 | Integration works; Google has no ad to return. Wait. |
+| 0 | 0 | Something is broken in the app or the SDK never started. |
+
+Observed 2026-07-28: 168 requests, 0 impressions, 0.00% match rate. Confirmed to be the first
+row, not a fault — swapping in the test ad unit produced a banner immediately, and the log
+showed the UMP call to `fundingchoicesmessages.google.com/a/consent` followed by ad requests to
+`googleads.g.doubleclick.net/mads/gma`. Nearly all of those requests came from simulators, and
+AdMob does not serve production ads to simulators.
+
+The 使用者指標 / user metrics panel in AdMob shows zeros because the app integrates no Firebase
+or Google Analytics SDK. It is not a signal about real usage; App Store Connect's 分析 tab is.
 
 ## Archiving and Uploading
 
