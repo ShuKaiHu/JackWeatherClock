@@ -14,13 +14,15 @@ Last updated: 2026-07-28.
 
 | | Version | State |
 | --- | --- | --- |
-| Live on the App Store | `1.6.2 (17)` | Released 2026-07-27 |
-| In review | `1.6.3 (18)` | Uploaded via Xcode Organizer, submitted 2026-07-27 — **awaiting Apple's verdict** |
+| Live on the App Store | `1.6.3 (18)` | Approved and released 2026-07-28 |
 | In development | `1.6.4 (19)` | Version bumped, one change landed (see below) |
 
 `1.6.3` is the AlarmKit release: alarms pierce silent mode and Focus on iOS 26+, snooze with
-a 1–15 minute interval, and the first shipped `RainyClockAlarmWidget` extension. If it is
-rejected, the likely surfaces are AlarmKit permissions or the new extension, not the ad stack.
+a 1–15 minute interval, and the first shipped `RainyClockAlarmWidget` extension. It cleared
+review on the first attempt, so AlarmKit's `NSAlarmKitUsageDescription` prompt and the new
+widget extension are both proven acceptable to App Review — nothing extra was asked for.
+
+Nothing is in review right now.
 
 ## Monetization: unblocked, waiting on traffic
 

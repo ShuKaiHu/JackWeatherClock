@@ -8,8 +8,8 @@ Ongoing state and the backlog live in `docs/STATUS.md`; this file is the submiss
 | --- | --- |
 | App version | `1.6.4` (in development) |
 | Build number | `19` |
-| Review status | `1.6.3 (18)` uploaded via Organizer and submitted for review 2026-07-27, awaiting verdict |
-| Last released | `1.6.2 (17)` — released to the App Store 2026-07-27 |
+| Review status | Nothing in review; `1.6.4 (19)` in development |
+| Last released | `1.6.3 (18)` — released to the App Store 2026-07-28 |
 | Bundle identifier | `com.shukaihu.RainyClock` |
 | Extension bundle identifier | `com.shukaihu.RainyClock.AlarmWidget` (added in `1.6.3`) |
 | Device family | iPhone only |
@@ -21,7 +21,7 @@ Ongoing state and the backlog live in `docs/STATUS.md`; this file is the submiss
 - `1.6 (10)` — Resubmitted 2026-07-23 with the 5.1.2(i) fix below. **Rejected** 2026-07-24, Guideline 5.2.5 (Legal – Apple Sites and Services): WeatherKit data shown without the required Apple Weather attribution mark and legal link.
 - `1.6.1 (16)` — Submitted 2026-07-25 with the 5.2.5 fix (official Apple Weather mark + legal link in the Route tab weather section), a review note explaining WeatherKit usage, and a screen recording captured on a physical iPhone. **Approved 2026-07-26 and released to the App Store the same day.**
 - `1.6.4 (19)` — In development. Debug builds now request Google's test banner unit instead of the production one; see the AdMob section.
-- `1.6.3 (18)` — **Submitted 2026-07-27.** Adopts AlarmKit on iOS 26+ (alarm pierces silent mode and Focus), adds snooze on/off with a 1–15 minute interval, the system default alarm tone, automatic re-scheduling when settings change (address changes instead remove the alarm), and the colour-coded status line. First build to ship the `RainyClockAlarmWidget` extension. Release notes and updated description are in `docs/appstore-metadata.md`.
+- `1.6.3 (18)` — Submitted 2026-07-27. **Approved and released 2026-07-28, first attempt.** AlarmKit's usage-description prompt and the new widget extension raised no review questions. Adopts AlarmKit on iOS 26+ (alarm pierces silent mode and Focus), adds snooze on/off with a 1–15 minute interval, the system default alarm tone, automatic re-scheduling when settings change (address changes instead remove the alarm), and the colour-coded status line. First build to ship the `RainyClockAlarmWidget` extension. Release notes and updated description are in `docs/appstore-metadata.md`.
 - `1.6.2 (17)` — Submitted 2026-07-27. **Approved and released the same day.** Declares Google's `SKAdNetworkItems` list (50 identifiers) in `Info.plist`, which the shipped builds were missing, and adds the UMP consent flow for EEA/UK/Swiss users. Also the first version to carry a marketing URL (`https://shukaihu.github.io/RainyClock/`), which is what unblocks AdMob's app-ads.txt verification — see below. Release notes are in `docs/appstore-metadata.md`.
 
 ## AlarmKit Setup (`1.6.3`)
