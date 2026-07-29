@@ -460,17 +460,24 @@ private struct AlarmTabView: View {
                     VStack(alignment: .leading, spacing: 20) {
                         HStack(spacing: 12) {
                             ForEach(weekdayOrder, id: \.self) { weekday in
+                                let isSelected = viewModel.settings.selectedWeekdays.contains(weekday)
                                 Button {
                                     toggleWeekday(weekday)
                                 } label: {
                                     Text(label(for: weekday))
-                                        .font(.title3.weight(.semibold))
+                                        .font(.callout.weight(.semibold))
                                         .lineLimit(1)
                                         .minimumScaleFactor(0.72)
+                                        .foregroundStyle(isSelected ? .white : Color.white.opacity(0.45))
                                         .frame(maxWidth: .infinity)
-                                        .foregroundStyle(viewModel.settings.selectedWeekdays.contains(weekday) ? .white : Color.white.opacity(0.28))
+                                        .frame(height: 44)
+                                        .background(
+                                            Circle()
+                                                .fill(isSelected ? Color.accentColor : Color.appCardBackground)
+                                        )
                                 }
                                 .buttonStyle(.plain)
+                                .animation(.easeOut(duration: 0.15), value: isSelected)
                             }
                         }
 
@@ -534,7 +541,7 @@ private struct AlarmTabView: View {
                                         .font(.title3)
                                 }
                                 .buttonStyle(.plain)
-                                .foregroundStyle(.cyan)
+                                .foregroundStyle(Color.accentColor)
                                 .accessibilityLabel(Text("preview_alarm_sound"))
                             }
                         }
@@ -542,7 +549,7 @@ private struct AlarmTabView: View {
                         Toggle(isOn: $viewModel.settings.isSnoozeEnabled) {
                             Text("snooze")
                         }
-                        .tint(.cyan)
+                        .tint(Color.accentColor)
 
                         if viewModel.settings.isSnoozeEnabled {
                             VStack(alignment: .leading, spacing: 8) {
@@ -571,7 +578,7 @@ private struct AlarmTabView: View {
                                     consentManager.presentPrivacyOptions()
                                 }
                                 .buttonStyle(.plain)
-                                .foregroundStyle(.cyan)
+                                .foregroundStyle(Color.accentColor)
                             }
                         }
                     }
@@ -589,7 +596,7 @@ private struct AlarmTabView: View {
                         .padding(.vertical, 6)
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(.cyan)
+                    .tint(Color.accentColor)
                     .disabled(!viewModel.canSchedule || viewModel.isScheduling)
 
                     // Colour answers "is an alarm actually armed right now?" at a
@@ -822,8 +829,8 @@ private struct RouteModePicker: View {
                         .padding(.vertical, 10)
                 }
                 .buttonStyle(.plain)
-                .foregroundStyle(selection == mode ? .black : .white)
-                .background(selection == mode ? Color.cyan : Color.appFieldBackground)
+                .foregroundStyle(.white)
+                .background(selection == mode ? Color.accentColor : Color.appFieldBackground)
                 .clipShape(Capsule())
             }
         }

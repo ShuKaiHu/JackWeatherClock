@@ -8,7 +8,7 @@ file is the index and the "where were we?".
 - Store copy, release notes, review notes → `docs/appstore-metadata.md`
 - Product reasoning and rejected alternatives → `docs/PRODUCT_DECISIONS.md`
 
-Last updated: 2026-07-28.
+Last updated: 2026-07-29.
 
 ## Where things stand
 
@@ -57,8 +57,13 @@ under 分析 / Analytics.
 - [x] Debug builds use Google's test banner unit (`ca-app-pub-3940256099942544/2934735716`)
       via `#if DEBUG` in `RainyClock/AppEnvironment.swift`, so development traffic never hits
       the production unit again.
-- [ ] Decide what else ships in this version before submitting — right now it is a one-change
-      release and could reasonably wait for something user-facing.
+- [x] Alarm-tab weekday selector redesigned: selected days are filled blue circles with white
+      text, unselected days plain dim text (no visible chip). All interface accents unified on
+      the system blue — the cyan tints on the sound-preview button, Snooze toggle, Schedule
+      button, ad-privacy button, and the Route tab's transport-mode chips are gone. Weather
+      condition colors (yellow/cyan/blue on forecast icons) intentionally kept as-is.
+- [ ] Decide what else ships in this version before submitting — the UI polish above makes
+      this a reasonable user-facing release already.
 
 ## Backlog
 
