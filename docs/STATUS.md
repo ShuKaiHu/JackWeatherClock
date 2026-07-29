@@ -62,8 +62,15 @@ under 分析 / Analytics.
       the system blue — the cyan tints on the sound-preview button, Snooze toggle, Schedule
       button, ad-privacy button, and the Route tab's transport-mode chips are gone. Weather
       condition colors (yellow/cyan/blue on forecast icons) intentionally kept as-is.
-- [ ] Decide what else ships in this version before submitting — the UI polish above makes
-      this a reasonable user-facing release already.
+- [x] Build 19 uploaded to App Store Connect 2026-07-29 (CLI export failed with the usual
+      `Failed to Use Accounts`; Organizer upload worked, two known Google-SDK dSYM warnings).
+- [x] English (U.S.) localization added to the listing — store name `Rainy Clock: Rain Alarm`
+      ("Rainy Clock" and "RainyClock" are taken by other accounts). Done via the iris API from
+      the browser session because the ASC UI hides the name-conflict error; details in
+      `docs/appstore-metadata.md`.
+- [x] New store screenshots uploaded by hand (source images in `pics/20260729/`).
+- [ ] Submit 1.6.4 for review (release notes and build are attached; user finishing the
+      review-note field).
 
 ## Backlog
 

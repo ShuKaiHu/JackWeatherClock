@@ -1,13 +1,13 @@
 # Rainy Clock App Store Metadata
 
-> **The English copy below is not live.** As of `1.6.2 (17)` the App Store listing has only the Traditional Chinese localization, so every storefront — including the US — serves the Chinese description, keywords, and release notes. `itunes.apple.com/lookup?id=6780500386&country=us` returns the Chinese text; the `languageCodesISO2A: ['EN','ZH']` it also returns describes the app binary, not the listing. Adding English in App Store Connect (App Store → the version → language selector → add English) is a metadata-only change and does not need a new build.
+> **English (U.S.) was added with the `1.6.4 (19)` submission** and goes live when that version is released. Two gotchas discovered while adding it on 2026-07-29: (1) the English app names "Rainy Clock" and "RainyClock" are **taken by other accounts**, so the English listing name is `Rainy Clock: Rain Alarm`; (2) App Store Connect's version page has a UI bug — when adding a localization fails (e.g. because of the name conflict), the 儲存 button just shows a red error icon with no message and retries a doomed create forever. The real error is only visible on the `POST /iris/v1/appStoreVersionLocalizations` response (409). The workaround that worked: create the `appInfoLocalizations` record (name + subtitle) via the iris API from the logged-in browser session, then PATCH the auto-created `appStoreVersionLocalizations` with the copy below.
 
 ## App Information
 
 | Field | English | 繁體中文 |
 | --- | --- | --- |
-| App Name | Rainy Clock | 雨天鬧鐘 |
-| Subtitle | Rain-aware commute alarm | 通勤雨天智慧鬧鐘 |
+| App Name | Rainy Clock: Rain Alarm | Rainy Clock |
+| Subtitle | Rain-aware commute alarm | 雨天鬧鐘 |
 | Category | Weather | 天氣 |
 | Secondary Category | Utilities | 工具程式 |
 | Price | Free | 免費 |
@@ -79,6 +79,26 @@ rain alarm,weather alarm,commute alarm,smart alarm,rain,weather,alarm clock,comm
 ### 繁體中文
 
 雨天鬧鐘,天氣鬧鐘,通勤鬧鐘,智慧鬧鐘,降雨,天氣,鬧鐘,通勤
+
+## Version 1.6.4 (19) “What’s New”
+
+### English
+
+```
+Interface refresh:
+
+• The weekday selector on the Alarm tab now uses round buttons — the days your alarm will ring are clearly highlighted with a blue circle, visible at a glance.
+• One consistent blue across the whole app: the sound preview, snooze switch, schedule button, and transport mode selector now share the same accent color.
+```
+
+### 繁體中文
+
+```
+介面更新：
+
+• 鬧鐘頁的星期選擇改為圓形按鈕——鬧鐘會響的日子以藍色圓底清楚標示，一眼就能看出來。
+• 統一整個 App 的介面色彩：鈴聲試聽、賴床開關、排程按鈕與交通方式選擇現在使用同一個藍色。
+```
 
 ## Version 1.6.3 (18) “What’s New”
 
