@@ -16,7 +16,7 @@ Last updated: 2026-08-02.
 | --- | --- | --- |
 | Live on the App Store | `1.6.3 (18)` | Approved and released 2026-07-28 |
 | Rejected | `1.6.4 (19)` | Rejected 2026-08-01 on 5.1.2(i) and 2.1(a) |
-| **In review** | `1.6.5 (20)` | Submitted 2026-08-02 with the ATT fix and the widget reply |
+| **In development** | `1.6.5 (21)` | Build 20 was invalidated (ITMS-91064); 21 is archived and waiting to upload |
 
 `1.6.3` is the AlarmKit release: alarms pierce silent mode and Focus on iOS 26+, snooze with
 a 1–15 minute interval, and the first shipped `RainyClockAlarmWidget` extension. It cleared
@@ -96,8 +96,16 @@ places (`Info.plist` → `1.6.5 (20)`, project file → `MARKETING_VERSION 1.6.5
       `1.6.5 (20)`, ATT string present, `NSPrivacyTracking = true`.
 - [x] Build 20 uploaded, the rejected `1.6.4` version renamed to `1.6.5` with the build
       attached, release notes and review note pasted, the rejection message answered in
-      Resolution Center, and the whole thing **submitted 2026-08-02**. Copy used is in
+      Resolution Center, and the whole thing submitted 2026-08-02. Copy used is in
       `docs/appstore-metadata.md`.
+- [x] **Build 20 was then invalidated by ITMS-91064** — `NSPrivacyTracking = true` with an
+      empty `NSPrivacyTrackingDomains` is not a valid combination, and filling the list would
+      have blocked AdMob's endpoint for everyone who declines the prompt. Manifest reverted to
+      `false`, `build/RainyClock-1.6.5-21.xcarchive` built and verified. Details in
+      `docs/app-store-submission-checklist.md`.
+- [ ] Upload build 21, attach it to the 1.6.5 version, and resubmit. The release notes, review
+      note and Resolution Center reply are already in place from the build-20 attempt — only
+      the build changes.
 - [ ] Wait for the verdict. If 2.1(a) comes back a second time, the appeal did not land and
       the options narrow to shipping a real Home Screen widget (iPhone only — still invisible
       on an iPad reviewer's device) or adding full iPad support.

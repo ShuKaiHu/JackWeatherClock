@@ -7,8 +7,8 @@ Ongoing state and the backlog live in `docs/STATUS.md`; this file is the submiss
 | Item | Status |
 | --- | --- |
 | App version | `1.6.5` (in development) |
-| Build number | `20` |
-| Review status | `1.6.5 (20)` submitted 2026-08-02, waiting for review |
+| Build number | `21` (build `20` was invalidated — ITMS-91064) |
+| Review status | `1.6.5 (21)` ready to upload and resubmit |
 | Last released | `1.6.3 (18)` — released to the App Store 2026-07-28 |
 | Bundle identifier | `com.shukaihu.RainyClock` |
 | Extension bundle identifier | `com.shukaihu.RainyClock.AlarmWidget` (added in `1.6.3`) |
@@ -25,7 +25,8 @@ Ongoing state and the backlog live in `docs/STATUS.md`; this file is the submiss
   - **2.1(a)** — "We were unable to add Widgets at the Home Screen." Not a defect; answered in the reply, see the 2.1(a) section below.
   Apple offered to approve the build as a bug-fix submission if asked; we declined and fixed both instead.
   Content of the build: Debug builds request Google's test banner unit instead of the production one, the weekday selector was redesigned as circle chips, and accents were unified on the system blue.
-- `1.6.5 (20)` — **Submitted 2026-08-02.** Adds App Tracking Transparency (5.1.2(i) fix), with the 2.1(a) finding answered by reply rather than by code. App Privacy in App Store Connect was changed the same day to declare tracking. Because `1.6.4` never shipped, this submission also carries its interface changes, its release notes, and the English (U.S.) localization — the shared-app-info changes App Store Connect listed in the submission dialog were that localization, which is expected.
+- `1.6.5 (21)` — Rebuilt 2026-08-02 with `NSPrivacyTracking` back to `false`, which is what build 20 tripped over. Same code otherwise.
+- `1.6.5 (20)` — **Submitted 2026-08-02 and invalidated the same day (ITMS-91064)** before review ever saw it. Adds App Tracking Transparency (5.1.2(i) fix), with the 2.1(a) finding answered by reply rather than by code. App Privacy in App Store Connect was changed the same day to declare tracking. Because `1.6.4` never shipped, this submission also carries its interface changes, its release notes, and the English (U.S.) localization — the shared-app-info changes App Store Connect listed in the submission dialog were that localization, which is expected.
 - `1.6.3 (18)` — Submitted 2026-07-27. **Approved and released 2026-07-28, first attempt.** AlarmKit's usage-description prompt and the new widget extension raised no review questions. Adopts AlarmKit on iOS 26+ (alarm pierces silent mode and Focus), adds snooze on/off with a 1–15 minute interval, the system default alarm tone, automatic re-scheduling when settings change (address changes instead remove the alarm), and the colour-coded status line. First build to ship the `RainyClockAlarmWidget` extension. Release notes and updated description are in `docs/appstore-metadata.md`.
 - `1.6.2 (17)` — Submitted 2026-07-27. **Approved and released the same day.** Declares Google's `SKAdNetworkItems` list (50 identifiers) in `Info.plist`, which the shipped builds were missing, and adds the UMP consent flow for EEA/UK/Swiss users. Also the first version to carry a marketing URL (`https://shukaihu.github.io/RainyClock/`), which is what unblocks AdMob's app-ads.txt verification — see below. Release notes are in `docs/appstore-metadata.md`.
 
@@ -83,10 +84,22 @@ for is real.
 - `AdMobBannerView` sends `npa=1` unless ATT was granted, so declining changes nothing about
   how the app behaves; the banner is still built only after `canRequestAds`.
 - `NSUserTrackingUsageDescription` in `Info.plist` and both `InfoPlist.strings`.
-- `RainyClock/PrivacyInfo.xcprivacy` now declares `NSPrivacyTracking = true`.
-  `NSPrivacyTrackingDomains` is deliberately left **empty**: the system blocks connections to
-  any domain listed there when ATT is not granted, Google's own SDK manifests list none, and a
-  guessed entry would break ad serving outright.
+- `RainyClock/PrivacyInfo.xcprivacy` keeps `NSPrivacyTracking = false` with an empty
+  `NSPrivacyTrackingDomains`. **Do not set it to true** — see the trap below.
+- **The privacy-manifest trap that killed build 20.** Setting `NSPrivacyTracking = true` while
+  `NSPrivacyTrackingDomains` stays empty invalidates the binary at submission time:
+
+  > ITMS-91064: Invalid tracking information — NSPrivacyTracking must be true if
+  > NSPrivacyTrackingDomains isn't empty.
+
+  The wording states one direction; the validator enforces both. The two keys must agree.
+  Filling the list is **not** the fix: iOS blocks connections to every listed domain when ATT
+  is not granted, and AdMob serves personalized and non-personalized ads from the same
+  endpoint (`googleads.g.doubleclick.net`), so listing it would leave every user who declines
+  the prompt — most of them — with no ads at all. Google publishes no domain list for
+  publishers and its own SDK manifests declare `Tracking = false` for every data type, which
+  is the same posture. So the app manifest stays `false` + empty; the ATT prompt and the App
+  Store Connect privacy label are what disclose tracking, and those are what App Review reads.
 - **Manual step, App Store Connect (Account Holder/Admin):** App Privacy must be changed to
   declare tracking — Identifiers → Device ID, plus advertising/usage data, checked as "Used to
   Track You". This reverses the `1.5` fix, which is correct now that the prompt exists.
