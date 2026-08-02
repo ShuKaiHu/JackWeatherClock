@@ -6,9 +6,9 @@ Ongoing state and the backlog live in `docs/STATUS.md`; this file is the submiss
 
 | Item | Status |
 | --- | --- |
-| App version | `1.6.4` (in development) |
-| Build number | `19` |
-| Review status | Nothing in review; `1.6.4 (19)` in development |
+| App version | `1.6.5` (in development) |
+| Build number | `20` |
+| Review status | `1.6.4 (19)` rejected 2026-08-01; `1.6.5 (20)` carries the fixes |
 | Last released | `1.6.3 (18)` — released to the App Store 2026-07-28 |
 | Bundle identifier | `com.shukaihu.RainyClock` |
 | Extension bundle identifier | `com.shukaihu.RainyClock.AlarmWidget` (added in `1.6.3`) |
@@ -20,7 +20,12 @@ Ongoing state and the backlog live in `docs/STATUS.md`; this file is the submiss
 - `1.5 (7)` — **Rejected** 2026-07-22, Guideline 5.1.2(i) (Privacy – Data Use and Sharing): the App Privacy label declared data used to track the user, but the app has no App Tracking Transparency prompt.
 - `1.6 (10)` — Resubmitted 2026-07-23 with the 5.1.2(i) fix below. **Rejected** 2026-07-24, Guideline 5.2.5 (Legal – Apple Sites and Services): WeatherKit data shown without the required Apple Weather attribution mark and legal link.
 - `1.6.1 (16)` — Submitted 2026-07-25 with the 5.2.5 fix (official Apple Weather mark + legal link in the Route tab weather section), a review note explaining WeatherKit usage, and a screen recording captured on a physical iPhone. **Approved 2026-07-26 and released to the App Store the same day.**
-- `1.6.4 (19)` — In development. Debug builds now request Google's test banner unit instead of the production one; see the AdMob section.
+- `1.6.4 (19)` — Submitted 2026-07-29. **Rejected 2026-08-01** on two guidelines (submission ID `102b5c98-1537-472f-a998-cb8de5f68cff`, reviewed on an iPad Air 11-inch M3 running iPadOS 26.6):
+  - **5.1.2(i)** — the UMP GDPR prompt tells users the app personalizes advertising, but there is no ATT prompt. Fixed in `1.6.5`; see the 5.1.2(i) section below.
+  - **2.1(a)** — "We were unable to add Widgets at the Home Screen." Not a defect; answered in the reply, see the 2.1(a) section below.
+  Apple offered to approve the build as a bug-fix submission if asked; we declined and fixed both instead.
+  Content of the build: Debug builds request Google's test banner unit instead of the production one, the weekday selector was redesigned as circle chips, and accents were unified on the system blue.
+- `1.6.5 (20)` — In development. Adds App Tracking Transparency and answers the widget question.
 - `1.6.3 (18)` — Submitted 2026-07-27. **Approved and released 2026-07-28, first attempt.** AlarmKit's usage-description prompt and the new widget extension raised no review questions. Adopts AlarmKit on iOS 26+ (alarm pierces silent mode and Focus), adds snooze on/off with a 1–15 minute interval, the system default alarm tone, automatic re-scheduling when settings change (address changes instead remove the alarm), and the colour-coded status line. First build to ship the `RainyClockAlarmWidget` extension. Release notes and updated description are in `docs/appstore-metadata.md`.
 - `1.6.2 (17)` — Submitted 2026-07-27. **Approved and released the same day.** Declares Google's `SKAdNetworkItems` list (50 identifiers) in `Info.plist`, which the shipped builds were missing, and adds the UMP consent flow for EEA/UK/Swiss users. Also the first version to carry a marketing URL (`https://shukaihu.github.io/RainyClock/`), which is what unblocks AdMob's app-ads.txt verification — see below. Release notes are in `docs/appstore-metadata.md`.
 
@@ -49,12 +54,63 @@ The alarm rings through silent mode and Focus on iOS 26+ via AlarmKit. Points th
 
 ## Rejection Resolution (5.1.2(i))
 
-Chosen approach: the app does **not** track. No ATT prompt is added.
+Rejected twice on this guideline, from opposite directions. Read both halves before touching
+anything in this area — the two states each look correct in isolation.
 
-- App Privacy in App Store Connect corrected: every data type has "Used to Track You" **unchecked**. Data collection (advertising data, coarse location, product interaction, crash/performance data, device ID) is declared as collected for non-personalized ad serving and diagnostics only, not tracking.
-- Ads are served via Google AdMob configured for **non-personalized ads only** (`npa=1` in `RainyClock/AdMobBannerView.swift`); the app never accesses the IDFA.
-- `RainyClock/PrivacyInfo.xcprivacy` declares `NSPrivacyTracking = false`.
-- App Review note (English) added to the version's 備註 field explaining the above.
+### `1.5 (7)`: label said tracking, app had no ATT
+
+Chosen approach then: the app does **not** track. No ATT prompt.
+
+- App Privacy in App Store Connect corrected: every data type had "Used to Track You" **unchecked**.
+- Ads forced to non-personalized (`npa=1`), IDFA never accessed, `NSPrivacyTracking = false`.
+
+### `1.6.4 (19)`: the UMP prompt says the app personalizes ads
+
+That resolution held until App Review read the **AdMob-hosted GDPR message** itself. Its copy
+("Personalised advertising and content, advertising and content measurement, audience research
+and services development") reads as a declaration of tracking regardless of what the app then
+does with the consent, and no ATT prompt backed it. The app's own behaviour was never the
+problem — `npa=1` was hardcoded — the message and the code disagreed.
+
+Approach taken in `1.6.5 (20)`: **implement ATT and use it**, so the consent the message asks
+for is real.
+
+- `ConsentManager.requestTrackingAuthorizationIfNeeded()` runs the ATT prompt *after* the UMP
+  form resolves (Google's documented ordering) and everywhere, not only in regulated regions.
+  A launch that has not reached the foreground defers — the system denies a request made while
+  the app is inactive **without showing the prompt**, permanently — and `RainyClockApp` retries
+  from the `scenePhase` handler.
+- `AdMobBannerView` sends `npa=1` unless ATT was granted, so declining changes nothing about
+  how the app behaves; the banner is still built only after `canRequestAds`.
+- `NSUserTrackingUsageDescription` in `Info.plist` and both `InfoPlist.strings`.
+- `RainyClock/PrivacyInfo.xcprivacy` now declares `NSPrivacyTracking = true`.
+  `NSPrivacyTrackingDomains` is deliberately left **empty**: the system blocks connections to
+  any domain listed there when ATT is not granted, Google's own SDK manifests list none, and a
+  guessed entry would break ad serving outright.
+- **Manual step, App Store Connect (Account Holder/Admin):** App Privacy must be changed to
+  declare tracking — Identifiers → Device ID, plus advertising/usage data, checked as "Used to
+  Track You". This reverses the `1.5` fix, which is correct now that the prompt exists.
+- **Manual step, review note:** state where the ATT prompt appears — first launch, immediately
+  after the ad-consent dialog, on the Route tab.
+- Alternative left on the table: trim the personalization purposes out of the AdMob GDPR
+  message and keep the no-tracking posture. Worth checking in AdMob → Privacy & messaging;
+  if the purposes can be removed, ATT could be withdrawn again in a later version.
+
+## Rejection Resolution (2.1(a) — "unable to add Widgets")
+
+Answered by reply, not by code. Two independent reasons the reviewer could not add one:
+
+- **The app ships no Home Screen widget.** `RainyClockAlarmWidgetBundle` contains only
+  `CommuteAlarmLiveActivity`, an `ActivityConfiguration`. The extension exists solely because
+  AlarmKit requires one for alarms that enter the countdown state. Nothing is offered in the
+  widget gallery, and no store metadata or screenshot has ever promised a widget.
+- **The review device was an iPad.** The app is iPhone-only (`TARGETED_DEVICE_FAMILY = 1`), so
+  on iPadOS it runs in iPhone compatibility mode, which does not offer third-party widgets at
+  all. Adding a Home Screen widget would not have changed the outcome on that device.
+
+Reply asks for re-review on an iPhone running iOS 26. If App Review pushes back a second time,
+the options are a real Home Screen widget (iPhone only — still invisible on iPad) or full iPad
+support, which is a much larger change.
 
 ## Completed
 
@@ -62,7 +118,7 @@ Chosen approach: the app does **not** track. No ATT prompt is added.
 - App icon is included in the Xcode asset catalog.
 - GitHub Pages support and privacy pages exist under `docs/`.
 - Weather source is Apple Weather / WeatherKit; route preview uses Apple Maps.
-- Bottom ad uses Google AdMob banner placement, forced non-personalized (`npa=1`).
+- Bottom ad uses Google AdMob banner placement; non-personalized (`npa=1`) unless the user grants ATT.
 - Local notification alarm scheduling implemented for iOS 17–25, incl. 5-minute follow-up rings (max 10, capped to iOS's 64-pending limit) that stop when the alarm is acknowledged while the weekly schedule stays armed. On iOS 26+ AlarmKit replaces this path entirely (see AlarmKit Setup); scheduling through AlarmKit also clears any notification requests an upgraded install still has armed, so it cannot ring twice.
 - Public-transit commute mode shows home/work pins plus `calculateETA` travel time and distance (MapKit cannot route transit geometry).
 - Taiwan address validation generalized (postal-romanization table + dynamic Han→Latin transliteration, house-number and wrong-city guards).

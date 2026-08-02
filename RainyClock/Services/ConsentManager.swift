@@ -1,13 +1,19 @@
+import AppTrackingTransparency
 import GoogleMobileAds
 import UIKit
 import UserMessagingPlatform
 
-/// Drives Google's User Messaging Platform (UMP) consent flow.
+/// Drives Google's User Messaging Platform (UMP) consent flow and, behind it,
+/// Apple's App Tracking Transparency prompt.
 ///
 /// Google requires consent to be collected from users in the EEA, the UK and
 /// Switzerland *before* the Mobile Ads SDK is initialised, so ad loading waits
 /// until `ConsentInformation` reports that ads may be requested. Users outside
 /// those regions are never shown a form and reach `canRequestAds` immediately.
+///
+/// ATT comes after the UMP form, per Google's documented ordering, and applies
+/// everywhere rather than only in regulated regions. Ads stay non-personalized
+/// until it is granted — see `AdMobBannerView`.
 ///
 /// The published GDPR message also promises users an in-app way to change or
 /// withdraw their choice; `presentPrivacyOptions()` is that entry point.
@@ -23,8 +29,13 @@ final class ConsentManager: ObservableObject {
     /// Only regulated regions require the entry point, so it stays hidden elsewhere.
     @Published private(set) var showsPrivacyOptions = false
 
+    /// Whether the user allowed tracking through the ATT prompt. Personalized ad
+    /// requests are gated on this; everyone else gets `npa=1`.
+    @Published private(set) var isTrackingAuthorized = false
+
     private var hasRequestedConsent = false
     private var hasStartedMobileAds = false
+    private var hasFinishedConsentFlow = false
 
     private init() {}
 
@@ -55,6 +66,16 @@ final class ConsentManager: ObservableObject {
         }
     }
 
+    /// Retries a tracking prompt that was skipped because the app was not active
+    /// when the consent flow finished. A no-op in every other case.
+    func requestTrackingAuthorizationIfDeferred() async {
+        guard hasFinishedConsentFlow else {
+            return
+        }
+
+        await requestTrackingAuthorizationIfNeeded()
+    }
+
     private func presentConsentFormIfRequired(updateError: Error?) async {
         // A failed refresh leaves the previous session's choice in place, so fall
         // through to `canRequestAds` either way rather than giving up on ads.
@@ -62,7 +83,32 @@ final class ConsentManager: ObservableObject {
             try? await ConsentForm.loadAndPresentIfRequired(from: viewController)
         }
 
+        hasFinishedConsentFlow = true
+        await requestTrackingAuthorizationIfNeeded()
         refreshConsentState()
+    }
+
+    /// Asks for tracking authorization, which Apple requires before any data may be
+    /// used to track the user across apps — the ad SDK's device identifier included.
+    ///
+    /// The system denies a request made while the app is not active *without showing
+    /// the prompt*, and the decision is then permanent, so a launch that has not
+    /// reached the foreground defers to `requestTrackingAuthorizationIfDeferred()`.
+    private func requestTrackingAuthorizationIfNeeded() async {
+        guard !AppEnvironment.isRunningTests else {
+            return
+        }
+
+        guard ATTrackingManager.trackingAuthorizationStatus == .notDetermined else {
+            isTrackingAuthorized = ATTrackingManager.trackingAuthorizationStatus == .authorized
+            return
+        }
+
+        guard UIApplication.shared.applicationState == .active else {
+            return
+        }
+
+        isTrackingAuthorized = await ATTrackingManager.requestTrackingAuthorization() == .authorized
     }
 
     private func refreshConsentState() {

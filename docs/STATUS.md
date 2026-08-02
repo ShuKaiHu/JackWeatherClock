@@ -8,21 +8,40 @@ file is the index and the "where were we?".
 - Store copy, release notes, review notes → `docs/appstore-metadata.md`
 - Product reasoning and rejected alternatives → `docs/PRODUCT_DECISIONS.md`
 
-Last updated: 2026-07-29.
+Last updated: 2026-08-02.
 
 ## Where things stand
 
 | | Version | State |
 | --- | --- | --- |
 | Live on the App Store | `1.6.3 (18)` | Approved and released 2026-07-28 |
-| In development | `1.6.4 (19)` | Version bumped, one change landed (see below) |
+| Rejected | `1.6.4 (19)` | Rejected 2026-08-01 on 5.1.2(i) and 2.1(a) |
+| In development | `1.6.5 (20)` | ATT implemented; needs an upload and a reply to App Review |
 
 `1.6.3` is the AlarmKit release: alarms pierce silent mode and Focus on iOS 26+, snooze with
 a 1–15 minute interval, and the first shipped `RainyClockAlarmWidget` extension. It cleared
 review on the first attempt, so AlarmKit's `NSAlarmKitUsageDescription` prompt and the new
 widget extension are both proven acceptable to App Review — nothing extra was asked for.
 
-Nothing is in review right now.
+Nothing is in review right now. Apple offered to approve `1.6.4` as a bug-fix submission if
+asked; we chose to fix both findings and resubmit as `1.6.5` instead.
+
+## The 1.6.4 rejection
+
+Reviewed on an **iPad Air 11-inch (M3), iPadOS 26.6** — worth remembering, it explains the
+second finding entirely.
+
+**5.1.2(i) — tracking without ATT.** The AdMob-hosted GDPR message asks for consent to
+"personalised advertising and content"; App Review reads that as a declaration that the app
+tracks, and there was no ATT prompt behind it. The app itself never used that consent —
+`npa=1` was hardcoded since the `1.5 (7)` rejection — so the message and the code disagreed.
+Fixed by implementing ATT and actually honouring it. Full reasoning, and the manual App Store
+Connect steps this creates, are in `docs/app-store-submission-checklist.md`.
+
+**2.1(a) — "unable to add Widgets at the Home Screen."** Not a defect, answered by reply. The
+app ships no Home Screen widget at all: the widget extension holds only the AlarmKit Live
+Activity, which is why it exists. And on an iPad the app runs in iPhone compatibility mode,
+where iOS offers no third-party widgets whatever the app contains.
 
 ## Monetization: unblocked, waiting on traffic
 
@@ -52,7 +71,35 @@ The 使用者指標 / user metrics panel in AdMob reads all zeros because the ap
 or Google Analytics SDK. It is not a signal. Real download numbers are in App Store Connect
 under 分析 / Analytics.
 
-## 1.6.4 — in development
+## 1.6.5 — in development
+
+Everything `1.6.4` contained, plus the rejection fixes. Version numbers already bumped in both
+places (`Info.plist` → `1.6.5 (20)`, project file → `MARKETING_VERSION 1.6.5` /
+`CURRENT_PROJECT_VERSION 20`).
+
+- [x] ATT prompt implemented in `ConsentManager`, fired after the UMP form, honoured by
+      `AdMobBannerView` (personalized request only when granted). `NSUserTrackingUsageDescription`
+      added in `Info.plist` and both `InfoPlist.strings`; `PrivacyInfo.xcprivacy` now declares
+      `NSPrivacyTracking = true`. Builds clean, tests pass.
+- [x] Verified on an iPhone 17 simulator 2026-08-02: the prompt appears on first launch right
+      after the consent flow, granting writes `kTCCServiceUserTracking = 2` to the simulator's
+      TCC database, and the banner then loads through the personalized (no `npa`) request.
+      Worth re-checking after any change to the launch sequence — a prompt requested while the
+      app is inactive is silently denied forever.
+- [x] App Privacy in App Store Connect changed to declare tracking 2026-08-02: Device ID,
+      Advertising Data, Product Interaction and Coarse Location answer "yes" to the tracking
+      question; crash and performance data stay "no". This was the manual half of the 5.1.2(i)
+      fix — the code change alone does not resolve the rejection.
+- [x] `build/RainyClock-1.6.5-20.xcarchive` created and verified: app and extension both at
+      `1.6.5 (20)`, ATT string present, `NSPrivacyTracking = true`.
+- [ ] Upload build 20 from Organizer, rename the rejected `1.6.4` version in App Store Connect
+      to `1.6.5`, attach the build, paste the 1.6.5 release notes and review note, reply to the
+      rejection message, and submit. Draft copy is in `docs/appstore-metadata.md`.
+- [ ] Optional, no longer blocking: check whether AdMob → Privacy & messaging lets the GDPR
+      message drop its personalization purposes. Only worth acting on if the no-tracking
+      posture is wanted back — it would mean reversing the privacy label a second time.
+
+## 1.6.4 — rejected 2026-08-01
 
 - [x] Debug builds use Google's test banner unit (`ca-app-pub-3940256099942544/2934735716`)
       via `#if DEBUG` in `RainyClock/AppEnvironment.swift`, so development traffic never hits
@@ -69,8 +116,8 @@ under 分析 / Analytics.
       the browser session because the ASC UI hides the name-conflict error; details in
       `docs/appstore-metadata.md`.
 - [x] New store screenshots uploaded by hand (source images in `pics/20260729/`).
-- [ ] Submit 1.6.4 for review (release notes and build are attached; user finishing the
-      review-note field).
+- [x] Submitted 2026-07-29 and rejected 2026-08-01; the store metadata and screenshots uploaded
+      for it stay valid for 1.6.5.
 
 ## Backlog
 

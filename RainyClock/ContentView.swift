@@ -66,7 +66,10 @@ struct ContentView: View {
             // Kept out of the hierarchy until UMP reports consent, so no ad request
             // can precede it.
             if !AppEnvironment.isRunningTests, consentManager.canRequestAds {
-                AdMobBannerView(adUnitID: AppEnvironment.adMobBannerAdUnitID)
+                AdMobBannerView(
+                    adUnitID: AppEnvironment.adMobBannerAdUnitID,
+                    allowsPersonalizedAds: consentManager.isTrackingAuthorized
+                )
                     .frame(maxWidth: .infinity)
                     .background(Color.appBackground)
             }

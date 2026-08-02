@@ -80,7 +80,34 @@ rain alarm,weather alarm,commute alarm,smart alarm,rain,weather,alarm clock,comm
 
 雨天鬧鐘,天氣鬧鐘,通勤鬧鐘,智慧鬧鐘,降雨,天氣,鬧鐘,通勤
 
+## Version 1.6.5 (20) “What’s New”
+
+`1.6.4` was rejected before release, so these notes carry its interface changes as well — from
+a user's point of view `1.6.5` is the version where both land.
+
+### English
+
+```
+Interface refresh, plus a say over your ads:
+
+• The weekday selector on the Alarm tab now uses round buttons — the days your alarm will ring are clearly highlighted with a blue circle, visible at a glance.
+• One consistent blue across the whole app: the sound preview, snooze switch, schedule button, and transport mode selector now share the same accent color.
+• You are now asked whether ads may be matched to your interests. Decline and the app works exactly the same — you just see less relevant ads.
+```
+
+### 繁體中文
+
+```
+介面更新，並讓你決定廣告要不要個人化：
+
+• 鬧鐘頁的星期選擇改為圓形按鈕——鬧鐘會響的日子以藍色圓底清楚標示，一眼就能看出來。
+• 統一整個 App 的介面色彩：鈴聲試聽、賴床開關、排程按鈕與交通方式選擇現在使用同一個藍色。
+• 新增詢問是否允許廣告依你的興趣呈現。選擇不允許也不影響任何功能，只是看到的廣告關聯性較低。
+```
+
 ## Version 1.6.4 (19) “What’s New”
+
+Rejected before release; superseded by the 1.6.5 notes above.
 
 ### English
 
@@ -199,6 +226,53 @@ link remain in the Route tab weather section, as reviewed in 1.6.1 (16).
 
 The "Sign-in required" checkbox in App Review Information was also found checked with a demo account, even though the app has no login. It should be cleared.
 
+### Version-specific note prepared for 1.6.5 (20)
+
+Replaces the 1.6.2 note above, which said the app does not track — no longer true. Paste into
+the version's 備註 / Notes field:
+
+```
+This build adds App Tracking Transparency.
+
+Where the prompt appears: launch the app, the ad-consent dialog appears first, and the ATT
+permission request follows immediately after it on the Route tab (the first screen). No other
+step is required — there is no login and no configuration to enter. The prompt is requested in
+every region, not only in the EEA. If it does not appear, please check that "Allow Apps to
+Request to Track" is enabled in Settings > Privacy & Security > Tracking.
+
+Ads are requested as non-personalized (npa=1) unless the user grants tracking permission, and
+the App Privacy information has been updated to declare data used to track.
+
+Regarding "unable to add Widgets at the Home Screen" (2.1(a)): Rainy Clock is an iPhone-only
+app and does not provide a Home Screen widget. The widget extension it ships contains only the
+alarm's Live Activity, which AlarmKit requires in order to show the snooze countdown on the
+Lock Screen and in the Dynamic Island (iPhone, iOS 26 and later). On iPad the app runs in
+iPhone compatibility mode, where iOS does not offer third-party widgets at all. We kindly ask
+that this be reviewed on an iPhone running iOS 26.
+```
+
+### Reply to send in App Store Connect for the 1.6.4 (19) rejection
+
+```
+Thank you for the review.
+
+Guideline 5.1.2(i): resolved in build 1.6.5 (20), which implements App Tracking Transparency.
+The permission request is presented on first launch, immediately after the ad-consent dialog,
+on the app's first screen (the Route tab), in every region. Until permission is granted, ad
+requests are sent as non-personalized. The app privacy information in App Store Connect has
+been updated to disclose data used to track.
+
+Guideline 2.1(a): we believe this is not a defect in the app. Rainy Clock is an iPhone-only
+app (target device family: iPhone) and has never offered a Home Screen widget, in its
+description, its screenshots, or its binary. The bundled widget extension contains only an
+ActivityConfiguration: AlarmKit requires a widget extension in order to display the alarm's
+snooze countdown as a Live Activity on the Lock Screen and in the Dynamic Island on iPhone
+with iOS 26 or later. It provides nothing that can be added to the Home Screen. In addition,
+the review was performed on an iPad Air 11-inch (M3), where the app runs in iPhone
+compatibility mode; iPadOS does not offer third-party Home Screen widgets for apps running in
+that mode. We kindly ask that this functionality be reviewed on an iPhone running iOS 26.
+```
+
 ## Privacy Nutrition Label Draft
 
 Final answers should be verified in App Store Connect before submission.
@@ -212,7 +286,7 @@ Final answers should be verified in App Store Connect before submission.
 | Backend server | None |
 | Third-party SDKs | Google Mobile Ads SDK, Google User Messaging Platform |
 | Advertising | Google AdMob banner ads |
-| Tracking | Confirm based on final AdMob/UMP consent and IDFA configuration before submission |
+| Tracking | Yes, from `1.6.5 (20)`: ATT is implemented, so Device ID and advertising/usage data must be checked as "Used to Track You" |
 
 ## Screenshots Still Needed
 

@@ -4,6 +4,9 @@ import UIKit
 
 struct AdMobBannerView: View {
     let adUnitID: String
+    /// Mirrors the ATT decision. The banner is only built once `ConsentManager`
+    /// has settled both prompts, so this is never read before it is known.
+    let allowsPersonalizedAds: Bool
     @State private var isLoaded = false
 
     var body: some View {
@@ -17,6 +20,7 @@ struct AdMobBannerView: View {
                 AdMobBannerContainer(
                     adUnitID: adUnitID,
                     adSize: adSize,
+                    allowsPersonalizedAds: allowsPersonalizedAds,
                     isLoaded: $isLoaded
                 )
                     .frame(width: size.width, height: size.height)
@@ -33,6 +37,7 @@ struct AdMobBannerView: View {
 private struct AdMobBannerContainer: UIViewRepresentable {
     let adUnitID: String
     let adSize: AdSize
+    let allowsPersonalizedAds: Bool
     @Binding var isLoaded: Bool
 
     func makeUIView(context: Context) -> BannerView {
@@ -40,14 +45,18 @@ private struct AdMobBannerContainer: UIViewRepresentable {
         banner.adUnitID = adUnitID
         banner.delegate = context.coordinator
         banner.rootViewController = UIApplication.shared.rainyClockRootViewController
-        banner.load(Self.nonPersonalizedRequest())
+        banner.load(Self.request(allowsPersonalizedAds: allowsPersonalizedAds))
         return banner
     }
 
-    // The app declares no tracking and never asks for ATT authorization,
-    // so ads must stay non-personalized.
-    private static func nonPersonalizedRequest() -> Request {
+    // Personalization is allowed only where the user granted ATT; everyone who
+    // declined, or who was never asked, gets `npa=1`.
+    private static func request(allowsPersonalizedAds: Bool) -> Request {
         let request = Request()
+        guard !allowsPersonalizedAds else {
+            return request
+        }
+
         let extras = Extras()
         extras.additionalParameters = ["npa": "1"]
         request.register(extras)
