@@ -26,8 +26,6 @@
 "route_preview_locations_only_message" = "Found home and work locations, but no route is available for the selected travel mode.";
 "route_preview_center" = "Center route";
 "alarm" = "Alarm";
-"alarm_am" = "AM";
-"alarm_pm" = "PM";
 "done" = "Done";
 "normal_alarm" = "Normal alarm";
 "repeat_days" = "Repeat";
@@ -123,3 +121,6 @@
 "error_route_not_found" = "Could not find a route for this commute.";
 "ad_privacy_options" = "Ad privacy options";
 "ad_privacy_options_manage" = "Manage";
+"ad_privacy_options_failed_title" = "Could not open ad privacy options";
+"ad_privacy_options_failed_body" = "The options are still loading. Please try again in a moment.";
+"ok_button" = "OK";

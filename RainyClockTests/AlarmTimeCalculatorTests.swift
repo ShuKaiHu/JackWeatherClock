@@ -10,100 +10,26 @@ final class AlarmTimeCalculatorTests: XCTestCase {
         calendar.timeZone = TimeZone(secondsFromGMT: 0)!
     }
 
-    func testNormalAlarmUsesTodayWhenTimeIsStillAhead() {
-        let now = date(year: 2026, month: 5, day: 17, hour: 6, minute: 45)
-        let alarmTime = date(year: 2026, month: 5, day: 17, hour: 7, minute: 30)
-
-        let summary = AlarmTimeCalculator.nextAlarmDate(
-            alarmTime: alarmTime,
-            leadTimeMinutes: 30,
-            shouldApplyLeadTime: false,
-            rainProbabilityThreshold: 0.5,
-            maximumPrecipitationProbability: 0.2,
-            now: now,
-            calendar: calendar
-        )
-
-        XCTAssertEqual(summary.normalAlarmDate, date(year: 2026, month: 5, day: 17, hour: 7, minute: 30))
-        XCTAssertEqual(summary.scheduledAlarmDate, summary.normalAlarmDate)
-        XCTAssertEqual(summary.weatherRefreshDate, date(year: 2026, month: 5, day: 17, hour: 7, minute: 0))
-        XCTAssertEqual(summary.leadTimeMinutes, 0)
-    }
-
-    func testNormalAlarmRollsToTomorrowWhenTimeAlreadyPassed() {
-        let now = date(year: 2026, month: 5, day: 17, hour: 8, minute: 0)
-        let alarmTime = date(year: 2026, month: 5, day: 17, hour: 7, minute: 30)
-
-        let summary = AlarmTimeCalculator.nextAlarmDate(
-            alarmTime: alarmTime,
-            leadTimeMinutes: 30,
-            shouldApplyLeadTime: false,
-            rainProbabilityThreshold: 0.5,
-            maximumPrecipitationProbability: 0.2,
-            now: now,
-            calendar: calendar
-        )
-
-        XCTAssertEqual(summary.normalAlarmDate, date(year: 2026, month: 5, day: 18, hour: 7, minute: 30))
-        XCTAssertEqual(summary.scheduledAlarmDate, summary.normalAlarmDate)
-        XCTAssertEqual(summary.weatherRefreshDate, date(year: 2026, month: 5, day: 18, hour: 7, minute: 0))
-    }
-
-    func testNormalAlarmSkipsUnselectedWeekdays() {
-        let now = date(year: 2026, month: 5, day: 17, hour: 6, minute: 45)
-        let alarmTime = date(year: 2026, month: 5, day: 17, hour: 7, minute: 30)
-
-        let summary = AlarmTimeCalculator.nextAlarmDate(
-            alarmTime: alarmTime,
-            leadTimeMinutes: 30,
-            shouldApplyLeadTime: false,
-            rainProbabilityThreshold: 0.5,
-            maximumPrecipitationProbability: 0.2,
-            selectedWeekdays: [2],
-            now: now,
-            calendar: calendar
-        )
-
-        XCTAssertEqual(summary.normalAlarmDate, date(year: 2026, month: 5, day: 18, hour: 7, minute: 30))
-        XCTAssertEqual(summary.scheduledAlarmDate, summary.normalAlarmDate)
-    }
-
-    func testRainLeadTimeMovesScheduledAlarmEarlier() {
-        let now = date(year: 2026, month: 5, day: 17, hour: 6, minute: 0)
-        let alarmTime = date(year: 2026, month: 5, day: 17, hour: 7, minute: 30)
-
-        let summary = AlarmTimeCalculator.nextAlarmDate(
-            alarmTime: alarmTime,
-            leadTimeMinutes: 30,
-            shouldApplyLeadTime: true,
-            rainProbabilityThreshold: 0.5,
-            maximumPrecipitationProbability: 0.8,
-            now: now,
-            calendar: calendar
-        )
-
-        XCTAssertEqual(summary.normalAlarmDate, date(year: 2026, month: 5, day: 17, hour: 7, minute: 30))
-        XCTAssertEqual(summary.scheduledAlarmDate, date(year: 2026, month: 5, day: 17, hour: 7, minute: 0))
-        XCTAssertEqual(summary.weatherRefreshDate, summary.scheduledAlarmDate)
-        XCTAssertEqual(summary.leadTimeMinutes, 30)
-    }
-
-    func testRainLeadTimeDoesNotScheduleInThePast() {
+    /// Kept from the five tests that used to guard the unshipped `nextAlarmDate`:
+    /// the invariant is real, it just belongs to the entry point the app calls.
+    func testTheShippedCalculatorNeverSchedulesAnAlarmInThePast() {
         let now = date(year: 2026, month: 5, day: 17, hour: 7, minute: 15)
         let alarmTime = date(year: 2026, month: 5, day: 17, hour: 7, minute: 30)
 
-        let summary = AlarmTimeCalculator.nextAlarmDate(
-            alarmTime: alarmTime,
-            leadTimeMinutes: 30,
-            shouldApplyLeadTime: true,
-            rainProbabilityThreshold: 0.5,
-            maximumPrecipitationProbability: 0.8,
-            now: now,
-            calendar: calendar
-        )
+        for shouldApplyLeadTime in [true, false] {
+            let summary = AlarmTimeCalculator.nextAlarmDateForWeatherCheck(
+                alarmTime: alarmTime,
+                leadTimeMinutes: 30,
+                shouldApplyLeadTime: shouldApplyLeadTime,
+                rainProbabilityThreshold: 0.5,
+                maximumPrecipitationProbability: 0.8,
+                now: now,
+                calendar: calendar
+            )
 
-        XCTAssertEqual(summary.weatherRefreshDate, date(year: 2026, month: 5, day: 17, hour: 7, minute: 0))
-        XCTAssertEqual(summary.scheduledAlarmDate, now)
+            XCTAssertGreaterThan(summary.scheduledAlarmDate, now)
+            XCTAssertGreaterThan(summary.weatherRefreshDate, now)
+        }
     }
 
     func testWeatherCheckUsesTodayWhenLeadTimeIsStillAhead() {

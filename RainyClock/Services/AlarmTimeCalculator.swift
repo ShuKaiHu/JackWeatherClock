@@ -11,42 +11,6 @@ enum AlarmTimeCalculator {
         ((weekday - 1 + dayShift) % 7 + 7) % 7 + 1
     }
 
-    static func nextAlarmDate(
-        alarmTime: Date,
-        leadTimeMinutes: Int,
-        shouldApplyLeadTime: Bool,
-        rainProbabilityThreshold: Double,
-        maximumPrecipitationProbability: Double,
-        selectedWeekdays: Set<Int> = CommuteAlarmSettings.allWeekdays,
-        now: Date = Date(),
-        calendar: Calendar = .current
-    ) -> ScheduledAlarmSummary {
-        let timeComponents = calendar.dateComponents([.hour, .minute], from: alarmTime)
-        let selectedWeekdays = selectedWeekdays.isEmpty ? CommuteAlarmSettings.allWeekdays : selectedWeekdays
-        let normalAlarmDate = nextDate(
-            hour: timeComponents.hour ?? 7,
-            minute: timeComponents.minute ?? 30,
-            selectedWeekdays: selectedWeekdays,
-            after: now,
-            calendar: calendar
-        )
-
-        let leadTimeDate = calendar.date(byAdding: .minute, value: -leadTimeMinutes, to: normalAlarmDate) ?? normalAlarmDate
-        let scheduledAlarmDate = shouldApplyLeadTime
-            ? max(leadTimeDate, now)
-            : normalAlarmDate
-
-        return ScheduledAlarmSummary(
-            normalAlarmDate: normalAlarmDate,
-            scheduledAlarmDate: scheduledAlarmDate,
-            weatherRefreshDate: leadTimeDate,
-            exceedsRainThreshold: shouldApplyLeadTime,
-            leadTimeMinutes: shouldApplyLeadTime ? leadTimeMinutes : 0,
-            rainProbabilityThreshold: rainProbabilityThreshold,
-            maximumPrecipitationProbability: maximumPrecipitationProbability
-        )
-    }
-
     static func nextAlarmDateForWeatherCheck(
         alarmTime: Date,
         leadTimeMinutes: Int,

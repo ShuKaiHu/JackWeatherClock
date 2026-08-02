@@ -205,6 +205,18 @@ whenever the request does not fill. If 2.1(a) comes back a second time, the appe
 
 Ordered by value, not urgency. None of these block a release.
 
+0. **Handle the users whose background refresh can never run.** *(Raised 2026-08-03, approach
+   not decided.)* `BackgroundWeatherRefresh` is what makes each morning's alarm reflect that
+   morning's forecast, and it silently does nothing when **Background App Refresh is switched
+   off** (Settings › General) or the phone is in **Low Power Mode**. Those users keep whatever
+   decision the last foreground run made and have no way to know. The app can detect both —
+   `UIApplication.shared.backgroundRefreshStatus` and `ProcessInfo.processInfo.isLowPowerModeEnabled`,
+   the latter with `NSProcessInfoPowerStateDidChange` — so the open question is what to *do*
+   with that, not how to know. Sketches, none chosen: a notice on the Alarm tab with a
+   deep link to Settings via `UIApplication.openSettingsURLString`; a local notification the
+   evening before a scheduled day asking the user to open the app once; or state it plainly in
+   the UI and accept it. Whatever is chosen must not nag people who never see rain anyway.
+
 1. **Add the English App Store localization.** The listing has only Traditional Chinese, so
    every storefront including the US serves Chinese description, keywords, and release notes.
    The English copy is already written in `docs/appstore-metadata.md` and has never been used.

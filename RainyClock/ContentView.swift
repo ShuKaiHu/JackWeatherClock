@@ -45,6 +45,9 @@ struct ContentView: View {
                 return
             }
 
+            // A launch that failed the consent update (no network, typically) left
+            // the latch open; this is the retry.
+            consentManager.requestConsentThenStartAds()
             Task {
                 await viewModel.refreshScheduledAlarmIfWeatherIsStale()
             }
@@ -601,6 +604,16 @@ private struct AlarmTabView: View {
                                 .buttonStyle(.plain)
                                 .foregroundStyle(Color.accentColor)
                             }
+                            // UMP loads the form lazily, so an early tap is a
+                            // documented no-op. Say so instead of looking broken.
+                            .alert(
+                                Text("ad_privacy_options_failed_title"),
+                                isPresented: $consentManager.privacyOptionsFailed
+                            ) {
+                                Button("ok_button", role: .cancel) {}
+                            } message: {
+                                Text("ad_privacy_options_failed_body")
+                            }
                         }
                     }
                     .padding(18)
@@ -763,19 +776,13 @@ private struct AlarmTabView: View {
         return String.localizedStringWithFormat(String(localized: "minutes_earlier"), summary.leadTimeMinutes)
     }
 
+    /// The only hand-built time formatter in the app used to live here: it forced a
+    /// 12-hour clock, so with 24-Hour Time on the headline read "7:00 PM" above a
+    /// picker set to 19:00, and it chose the Chinese word order from the *device*
+    /// language, which put "AM" in front of the English strings for a Simplified
+    /// Chinese device. `.dateTime` answers both questions from the resolved locale.
     private func timeText(for date: Date) -> String {
-        let components = Calendar.current.dateComponents([.hour, .minute], from: date)
-        let hour = components.hour ?? 0
-        let minute = components.minute ?? 0
-        let period = hour < 12 ? String(localized: "alarm_am") : String(localized: "alarm_pm")
-        let displayHour = hour % 12 == 0 ? 12 : hour % 12
-        let time = "\(displayHour):\(String(format: "%02d", minute))"
-
-        if Locale.current.language.languageCode?.identifier.hasPrefix("zh") == true {
-            return "\(period)\(time)"
-        }
-
-        return "\(time) \(period)"
+        date.formatted(.dateTime.hour().minute())
     }
 
     private var isPreviewingSelectedSound: Bool {
@@ -799,6 +806,13 @@ private struct AlarmTabView: View {
               let player = try? AVAudioPlayer(contentsOf: url) else {
             return
         }
+
+        // Without a category the session defaults to `.soloAmbient`, which obeys the
+        // ring/silent switch — so in an app whose whole premise is piercing silent
+        // mode, the preview button flipped to "stop" and played nothing.
+        let session = AVAudioSession.sharedInstance()
+        try? session.setCategory(.playback, options: [.duckOthers])
+        try? session.setActive(true)
 
         audioPlayer = player
         previewingSound = sound
@@ -829,6 +843,8 @@ private struct AlarmTabView: View {
         audioPlayer?.stop()
         audioPlayer = nil
         previewingSound = nil
+        // Hand audio back rather than leaving other apps ducked after a 20s clip.
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 }
 

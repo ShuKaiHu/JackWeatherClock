@@ -26,8 +26,6 @@
 "route_preview_locations_only_message" = "已找到住家與公司位置，但目前無法取得此交通方式的路線。";
 "route_preview_center" = "置中";
 "alarm" = "鬧鐘";
-"alarm_am" = "上午";
-"alarm_pm" = "下午";
 "done" = "完成";
 "normal_alarm" = "平常鬧鐘";
 "repeat_days" = "重複";
@@ -123,3 +121,6 @@
 "error_route_not_found" = "找不到這段通勤路線。";
 "ad_privacy_options" = "廣告隱私設定";
 "ad_privacy_options_manage" = "管理";
+"ad_privacy_options_failed_title" = "無法開啟廣告隱私設定";
+"ad_privacy_options_failed_body" = "設定選項仍在載入中，請稍候再試一次。";
+"ok_button" = "好";

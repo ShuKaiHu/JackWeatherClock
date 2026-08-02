@@ -38,6 +38,10 @@ final class ConsentManager: ObservableObject {
     /// a new answer — a late ATT grant, or a consent choice the user just revised.
     @Published private(set) var adConfigurationRevision = 0
 
+    /// Set when reopening the consent form failed, so the UI can say so instead of
+    /// leaving a button that appears to do nothing.
+    @Published var privacyOptionsFailed = false
+
     private var hasRequestedConsent = false
     private var hasStartedMobileAds = false
     private var hasFinishedConsentFlow = false
@@ -54,6 +58,13 @@ final class ConsentManager: ObservableObject {
 
         ConsentInformation.shared.requestConsentInfoUpdate(with: Self.requestParameters()) { [weak self] error in
             Task { @MainActor in
+                // Release the latch on failure. A cold start with no network used to
+                // burn the app's only attempt — no ads and no privacy-options entry
+                // point for the rest of that launch — because the sole caller runs
+                // once. Now the next foreground can try again.
+                if error != nil {
+                    self?.hasRequestedConsent = false
+                }
                 await self?.presentConsentFormIfRequired(updateError: error)
             }
         }
@@ -66,7 +77,16 @@ final class ConsentManager: ObservableObject {
         }
 
         Task {
-            try? await ConsentForm.presentPrivacyOptionsForm(from: viewController)
+            do {
+                try await ConsentForm.presentPrivacyOptionsForm(from: viewController)
+                privacyOptionsFailed = false
+            } catch {
+                // The form is loaded lazily, so a tap that lands before it is ready
+                // fails immediately while the SDK retries in the background. Saying
+                // nothing made the button look dead; the caller shows an alert.
+                privacyOptionsFailed = true
+            }
+
             refreshConsentState()
             // The form can change purposes or vendors without moving `canRequestAds`,
             // and the published GDPR message promises the choice takes effect. Rebuild
