@@ -263,7 +263,40 @@ iPhone compatibility mode, where iOS does not offer third-party widgets at all. 
 that this be reviewed on an iPhone running iOS 26.
 ```
 
-### Reply to send in App Store Connect for the 1.6.4 (19) rejection
+### Follow-up reply sent for build 23 — CURRENT
+
+The reply below named build 20, which ITMS-91064 invalidated before review saw it. This
+follow-up is what points App Review at the build that actually exists, and covers the two
+things that changed since: the corrected privacy policy and the new background modes.
+
+```
+Follow-up to our previous reply.
+
+The build referenced there, 1.6.5 (20), was invalidated during upload processing
+(ITMS-91064) before it reached review, so it no longer exists. The build now attached to
+this version is 1.6.5 (23). It contains the same App Tracking Transparency implementation
+described in our earlier message, plus two additions:
+
+1. The privacy policy at https://shukaihu.github.io/RainyClock/privacy-policy.html has been
+   updated. It previously stated that the app does not track users, which was written before
+   App Tracking Transparency was added; it now describes the tracking permission request and
+   what each answer means.
+
+2. The app declares Background App Refresh and Background Processing. They are used for a
+   single purpose: re-checking the weather forecast shortly before a scheduled alarm, so the
+   alarm is moved earlier only on mornings when rain is actually forecast. The app has no
+   server — the background task calls Apple Weather / WeatherKit and re-registers the local
+   alarm on the device.
+
+Our position on Guideline 2.1(a) is unchanged and is set out in the previous reply: the app is
+iPhone-only and ships no Home Screen widget, and the widget extension exists solely because
+AlarmKit requires one to render the alarm's snooze countdown as a Live Activity. We kindly ask
+that this be reviewed on an iPhone running iOS 26 or later.
+
+Thank you for your time.
+```
+
+### Historical — reply sent in App Store Connect for the 1.6.4 (19) rejection
 
 ```
 Thank you for the review.
