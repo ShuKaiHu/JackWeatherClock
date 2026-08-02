@@ -33,6 +33,11 @@ final class ConsentManager: ObservableObject {
     /// requests are gated on this; everyone else gets `npa=1`.
     @Published private(set) var isTrackingAuthorized = false
 
+    /// Bumped whenever an answer that shapes the ad request changes. A `BannerView`
+    /// is configured once in `makeUIView`, so the banner has to be rebuilt to pick up
+    /// a new answer — a late ATT grant, or a consent choice the user just revised.
+    @Published private(set) var adConfigurationRevision = 0
+
     private var hasRequestedConsent = false
     private var hasStartedMobileAds = false
     private var hasFinishedConsentFlow = false
@@ -63,6 +68,10 @@ final class ConsentManager: ObservableObject {
         Task {
             try? await ConsentForm.presentPrivacyOptionsForm(from: viewController)
             refreshConsentState()
+            // The form can change purposes or vendors without moving `canRequestAds`,
+            // and the published GDPR message promises the choice takes effect. Rebuild
+            // the banner unconditionally so the next request carries the new answer.
+            adConfigurationRevision &+= 1
         }
     }
 
@@ -108,21 +117,34 @@ final class ConsentManager: ObservableObject {
             return
         }
 
-        isTrackingAuthorized = await ATTrackingManager.requestTrackingAuthorization() == .authorized
+        let authorized = await ATTrackingManager.requestTrackingAuthorization() == .authorized
+        guard authorized != isTrackingAuthorized else {
+            return
+        }
+
+        isTrackingAuthorized = authorized
+        // A grant that arrives through the deferred path lands after the banner was
+        // built; without this the whole session would stay non-personalized.
+        adConfigurationRevision &+= 1
     }
 
     private func refreshConsentState() {
         showsPrivacyOptions = ConsentInformation.shared.privacyOptionsRequirementStatus == .required
 
-        guard ConsentInformation.shared.canRequestAds else {
-            return
-        }
-
-        if !hasStartedMobileAds {
+        let allowsAdRequests = ConsentInformation.shared.canRequestAds
+        if allowsAdRequests, !hasStartedMobileAds {
             hasStartedMobileAds = true
             MobileAds.shared.start()
         }
-        canRequestAds = true
+
+        // Two-way on purpose. This used to only ever latch true, so a user who
+        // withdrew consent through the privacy options form kept seeing ads for the
+        // rest of the session — the opposite of what that form promises them.
+        guard allowsAdRequests != canRequestAds else {
+            return
+        }
+
+        canRequestAds = allowsAdRequests
     }
 
     private static func requestParameters() -> RequestParameters {

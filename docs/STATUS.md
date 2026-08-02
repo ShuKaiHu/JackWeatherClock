@@ -16,7 +16,7 @@ Last updated: 2026-08-02.
 | --- | --- | --- |
 | Live on the App Store | `1.6.3 (18)` | Approved and released 2026-07-28 |
 | Rejected | `1.6.4 (19)` | Rejected 2026-08-01 on 5.1.2(i) and 2.1(a) |
-| **In development** | `1.6.5 (21)` | Build 20 was invalidated (ITMS-91064); 21 is archived and waiting to upload |
+| **In development** | `1.6.5 (22)` | Build 20 invalidated (ITMS-91064), 21 superseded by the audit fixes; 22 is archived and waiting to upload |
 
 `1.6.3` is the AlarmKit release: alarms pierce silent mode and Focus on iOS 26+, snooze with
 a 1–15 minute interval, and the first shipped `RainyClockAlarmWidget` extension. It cleared
@@ -103,10 +103,56 @@ places (`Info.plist` → `1.6.5 (20)`, project file → `MARKETING_VERSION 1.6.5
       have blocked AdMob's endpoint for everyone who declines the prompt. Manifest reverted to
       `false`, `build/RainyClock-1.6.5-21.xcarchive` built and verified. Details in
       `docs/app-store-submission-checklist.md`.
-- [ ] Upload build 21, attach it to the 1.6.5 version, and resubmit. The release notes, review
+- [x] **Pre-submission audit, 2026-08-02.** Six review dimensions, each adversarially verified.
+      What it caught and what was fixed is in the section below; the archive is now
+      `build/RainyClock-1.6.5-22.xcarchive` (21 was superseded before it was ever uploaded).
+- [ ] Upload build 22, attach it to the 1.6.5 version, and resubmit. The release notes, review
       note and Resolution Center reply are already in place from the build-20 attempt — only
-      the build changes.
-- [ ] Wait for the verdict. If 2.1(a) comes back a second time, the appeal did not land and
+      the build changes. **The website fixes must be pushed and live before resubmitting** —
+      App Review opens the privacy-policy URL.
+- [ ] Wait for the verdict.
+
+## Pre-submission audit — what it found
+
+The audit that ran before build 22 turned up one thing that would very likely have caused a
+third 5.1.2(i) rejection, and two real bugs. Fixed:
+
+1. **The live privacy policy said the app does not track you.** `docs/privacy-policy.html`
+   listed "Track you across apps or websites" under *Data We Do Not Collect*, in both
+   languages, while the app now shows an ATT prompt and the App Store Connect label declares
+   tracking. That page is linked from the listing and from the AdMob consent form, so App
+   Review reads it. Rewritten with a Tracking section that describes the ATT choice honestly.
+   **This repo's `docs/` is the published site — the fix only counts once it is pushed.**
+2. **The support page said the alarm cannot ring through silent mode.** Stale since `1.6.3`
+   shipped AlarmKit, and directly contradicted by the store description. Rewritten, with a
+   second entry covering the upgrade case where an old alarm still uses the notification path.
+3. **A failed registration still looked like a scheduled alarm.** `AlarmViewModel` published
+   and persisted `scheduledAlarmSummary` *before* `scheduleAlarm` could throw, while the error
+   message lived only in memory — so the next launch showed the green "alarm scheduled" state
+   for an alarm the system had never accepted. For an alarm app that is a missed alarm. The
+   assignment now happens only after registration succeeds.
+4. **Withdrawing ad consent did nothing.** `refreshConsentState()` could only ever latch
+   `canRequestAds` to true, and the banner's `BannerView` is configured once in `makeUIView`,
+   so a user who revoked consent through the privacy options form kept seeing ads until they
+   relaunched — the opposite of what that form promises. The flag is two-way now, and
+   `adConfigurationRevision` rebuilds the banner whenever an answer that shapes the ad request
+   changes (which also fixes a late ATT grant never reaching the current session).
+5. **The rain decision was frozen at scheduling time.** Both paths register a *weekly
+   repeating* alarm at whatever time the rain check produced, so an alarm armed on a rainy day
+   kept ringing early every week and one armed on a dry day never moved — against the intended
+   behaviour recorded in `PRODUCT_DECISIONS.md`. Opening the app now re-decides an armed alarm
+   whenever its rain check is older than four hours
+   (`refreshScheduledAlarmIfWeatherIsStale()`), silently, keeping the previous status line if
+   the refresh fails. Three regression tests cover 3 and 5.
+
+**Still open from the audit** (none block this submission): the app cannot re-check the weather
+while it is closed, so the fix above only covers users who open it — closing that gap needs a
+`BGAppRefreshTask` and a background-mode declaration, which is a change worth making *after*
+1.6.5 clears review rather than during it. Smaller items: Release builds on the Simulator still
+request the production ad unit, the alarm sound preview sets no `AVAudioSession` so it is silent
+under the ring switch, `RoutePolylineSampler` is dead production code containing a NaN-to-Int
+trap, the store screenshots predate the 1.6.4 interface redesign, and the English (U.S.) listing
+carries only the Traditional Chinese screenshots. If 2.1(a) comes back a second time, the appeal did not land and
       the options narrow to shipping a real Home Screen widget (iPhone only — still invisible
       on an iPad reviewer's device) or adding full iPad support.
 - [ ] Optional, no longer blocking: check whether AdMob → Privacy & messaging lets the GDPR

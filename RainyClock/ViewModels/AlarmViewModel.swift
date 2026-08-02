@@ -68,12 +68,29 @@ final class AlarmViewModel: ObservableObject {
             saveScheduledFingerprint()
         }
     }
+    /// When the rain decision behind the armed alarm was last computed. The alarm
+    /// itself repeats weekly, so this is what says whether that decision still
+    /// describes the weather — see `refreshScheduledAlarmIfWeatherIsStale()`.
+    private var lastWeatherEvaluationAt: Date? {
+        didSet {
+            if let lastWeatherEvaluationAt {
+                settingsStorage.set(lastWeatherEvaluationAt, forKey: Self.lastEvaluationStorageKey)
+            } else {
+                settingsStorage.removeObject(forKey: Self.lastEvaluationStorageKey)
+            }
+        }
+    }
     private var autoRefreshTask: Task<Void, Never>?
     private let autoRefreshDebounce: Duration
     private static let addressValidationTimeout: Duration = .seconds(4)
     private static let settingsStorageKey = "commuteAlarmSettings"
     private static let scheduledSummaryStorageKey = "scheduledAlarmSummaryDisplay"
     private static let scheduledFingerprintStorageKey = "scheduledAlarmFingerprint"
+    private static let lastEvaluationStorageKey = "lastWeatherEvaluationAt"
+    /// How stale the rain decision may get before opening the app re-runs it. Short
+    /// enough that an evening or overnight launch re-decides tomorrow's alarm, long
+    /// enough that flicking between apps does not refetch the forecast every time.
+    private static let weatherDecisionLifetime: TimeInterval = 4 * 60 * 60
 
     init(
         routeWeatherService: RouteWeatherService = MockRouteWeatherService(),
@@ -102,8 +119,47 @@ final class AlarmViewModel: ObservableObject {
             statusMessage = String(localized: "status_alarm_scheduled")
         }
         scheduledFingerprint = Self.loadScheduledFingerprint(from: settingsStorage)
+        lastWeatherEvaluationAt = settingsStorage.object(forKey: Self.lastEvaluationStorageKey) as? Date
         updateScheduleStaleness()
         updateAlarmKitRescheduleNotice()
+    }
+
+    /// Re-decides the armed alarm against current weather when the stored decision has
+    /// aged out.
+    ///
+    /// Both scheduling paths register a *weekly repeating* alarm at whatever time the
+    /// rain check produced when it ran, so an alarm armed on a rainy Monday would keep
+    /// ringing early every week, and one armed on a dry day would never move. The app
+    /// has no way to run at the lead-time point on its own, so the next best contract
+    /// is: every time the user opens the app, the armed alarm reflects a rain check no
+    /// older than `weatherDecisionLifetime`.
+    ///
+    /// Deliberately silent about failures — this runs unprompted, and a network blip
+    /// on launch should not replace the status line with an error for an alarm that is
+    /// still correctly armed from the previous run.
+    func refreshScheduledAlarmIfWeatherIsStale() async {
+        guard hasScheduledAlarm, canSchedule, !isScheduling, !isRefreshingRouteWeather else {
+            return
+        }
+        // A settings edit already queued its own re-registration; let that one win.
+        guard autoRefreshTask == nil else {
+            return
+        }
+
+        if let lastWeatherEvaluationAt,
+           Date().timeIntervalSince(lastWeatherEvaluationAt) < Self.weatherDecisionLifetime {
+            return
+        }
+
+        let previousStatusMessage = statusMessage
+        let evaluationsBefore = lastWeatherEvaluationAt
+        await evaluateRouteAndScheduleAlarm()
+        if lastWeatherEvaluationAt == evaluationsBefore {
+            // The run failed and left an error in the status line. The previously
+            // registered alarm is still armed and unchanged, so say what was true
+            // before rather than alarming the user about a refresh they never asked for.
+            statusMessage = previousStatusMessage
+        }
     }
 
     /// An install that upgraded to iOS 26 keeps ringing through the old notification
@@ -468,7 +524,6 @@ final class AlarmViewModel: ObservableObject {
                 selectedWeekdays: settingsSnapshot.selectedWeekdays,
                 now: now
             )
-            scheduledAlarmSummary = summary
 
             let body = exceedsThreshold
                 ? String(localized: "notification_body_adjusted")
@@ -483,6 +538,13 @@ final class AlarmViewModel: ObservableObject {
                 title: String(localized: "notification_title"),
                 body: body
             )
+            // Everything below runs only once registration actually succeeded. The
+            // summary is persisted and is what `hasScheduledAlarm` — the green "alarm
+            // is set" state — reads, so publishing it before this point left a failed
+            // run claiming an alarm that does not exist, and the failure message that
+            // contradicted it did not survive a relaunch.
+            scheduledAlarmSummary = summary
+            lastWeatherEvaluationAt = now
             // The fingerprint describes what was actually registered — the frozen
             // snapshot — never the live settings, which may have moved on.
             scheduledFingerprint = settingsSnapshot.scheduleFingerprint()

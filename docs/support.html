@@ -30,10 +30,18 @@
 
 <h2>Common Questions</h2>
 
-<h3>Why did my alarm not ring like the built-in iPhone Clock app?</h3>
-<p>Rainy Clock uses iOS local notifications. iOS does not allow third-party apps
-to exactly replicate the full-screen system Clock alarm behavior. Make sure
-notifications are enabled and your device sound settings allow notification audio.</p>
+<h3>Does the alarm ring when my iPhone is on silent?</h3>
+<p>On iOS 26 and later, yes. Rainy Clock schedules the alarm through Apple's AlarmKit,
+so it sounds through Silent mode and Focus and shows a full-screen alert, just like the
+built-in Clock app. Allow the alarm permission the first time you schedule one.</p>
+<p>On iOS 17 through 25, the alarm is delivered as a local notification and still follows
+the ring/silent switch — iOS gives third-party apps no way around it on those versions.
+Make sure notifications are enabled and your sound settings allow notification audio.</p>
+
+<h3>I upgraded to iOS 26 and the alarm still follows the silent switch.</h3>
+<p>An alarm scheduled before the upgrade keeps running on the old notification path.
+Open the app and schedule the alarm once more — it then moves to the new system and
+sounds through Silent mode. The Alarm tab shows a notice while this is pending.</p>
 
 <h3>Why does the app need my home and work address?</h3>
 <p>The app uses your addresses to preview your commute route and check weather
@@ -51,8 +59,12 @@ account for you.</p>
   <p><strong>Email：</strong>shukaihu@icloud.com</p>
 </div>
 
-<h3>為什麼鬧鐘不像 iPhone 內建時鐘 App 一樣全螢幕響鈴？</h3>
-<p>Rainy Clock 使用 iOS 本機通知。iOS 不允許第三方 App 完全複製系統時鐘的全螢幕鬧鐘行為。請確認通知權限已開啟，且裝置音量與通知聲音設定正常。</p>
+<h3>手機轉靜音時，鬧鐘還會響嗎？</h3>
+<p>在 iOS 26 以上會。Rainy Clock 透過 Apple 的 AlarmKit 排程鬧鐘，能穿透靜音與專注模式並顯示全螢幕警示，與內建時鐘 App 相同。第一次排程時請允許鬧鐘權限。</p>
+<p>在 iOS 17 至 25，鬧鐘以本機通知送達，仍會受靜音開關影響 —— 這些版本的 iOS 沒有提供第三方 App 任何繞過的方法。請確認通知權限已開啟，且裝置音量與通知聲音設定正常。</p>
+
+<h3>升級到 iOS 26 後，鬧鐘還是被靜音影響？</h3>
+<p>升級前排好的鬧鐘仍走舊的通知路徑。請打開 App 重新排程一次，鬧鐘就會轉到新機制並穿透靜音。在轉換完成前，鬧鐘頁會顯示提醒。</p>
 
 <h3>為什麼 App 需要住家與公司地址？</h3>
 <p>App 會使用這些地址預覽通勤路線，並查詢路線上的天氣。App 沒有後端伺服器，也不需要建立帳號。</p>

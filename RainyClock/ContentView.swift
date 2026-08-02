@@ -10,6 +10,7 @@ struct ContentView: View {
 
     @StateObject var viewModel: AlarmViewModel
     @ObservedObject private var consentManager = ConsentManager.shared
+    @Environment(\.scenePhase) private var scenePhase
     @State private var selectedTab: AppTab = .route
     var showsWeatherAttribution = false
 
@@ -34,6 +35,19 @@ struct ContentView: View {
         // controller to present from, which is not available during app `init()`.
         .task {
             consentManager.requestConsentThenStartAds()
+            // The armed alarm repeats weekly with the rain decision that was current
+            // when it was scheduled; opening the app is what brings that decision up
+            // to date. No-op when it is still fresh.
+            await viewModel.refreshScheduledAlarmIfWeatherIsStale()
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            guard newPhase == .active else {
+                return
+            }
+
+            Task {
+                await viewModel.refreshScheduledAlarmIfWeatherIsStale()
+            }
         }
     }
 
@@ -70,6 +84,10 @@ struct ContentView: View {
                     adUnitID: AppEnvironment.adMobBannerAdUnitID,
                     allowsPersonalizedAds: consentManager.isTrackingAuthorized
                 )
+                    // The banner configures its `BannerView` once, so a changed answer
+                    // — a late ATT grant, a revised consent choice — only reaches the
+                    // ad request by rebuilding it under a new identity.
+                    .id(consentManager.adConfigurationRevision)
                     .frame(maxWidth: .infinity)
                     .background(Color.appBackground)
             }

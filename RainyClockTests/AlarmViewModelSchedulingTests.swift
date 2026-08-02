@@ -97,6 +97,82 @@ final class AlarmViewModelSchedulingTests: XCTestCase {
         XCTAssertEqual(spy.cancelCount, 0)
     }
 
+    /// A registration that throws must leave nothing behind that says an alarm is set.
+    /// The summary is persisted while the failure message is not, so publishing it
+    /// before registration succeeded made the next launch show a green "alarm
+    /// scheduled" state for an alarm the system had never accepted.
+    func testFailedRegistrationLeavesNoScheduledAlarmEvenAfterRelaunch() async throws {
+        let spy = SchedulerSpy()
+        spy.scheduleFailure = TestError.registrationRejected
+        let viewModel = makeViewModel(spy: spy)
+
+        await viewModel.evaluateRouteAndScheduleAlarm()
+
+        XCTAssertFalse(viewModel.hasScheduledAlarm)
+        XCTAssertNil(viewModel.scheduledAlarmSummary)
+
+        let relaunched = AlarmViewModel(
+            routeWeatherService: MockRouteWeatherService(),
+            notificationScheduler: spy,
+            settingsStorage: storage,
+            autoRefreshDebounce: .milliseconds(80)
+        )
+        XCTAssertFalse(relaunched.hasScheduledAlarm)
+    }
+
+    /// The registered alarm repeats weekly with whatever the rain check said when it
+    /// ran, so opening the app has to re-decide it once the answer is old enough.
+    func testOpeningTheAppRedecidesAnArmedAlarmOnlyOnceItsRainCheckHasAgedOut() async throws {
+        let spy = SchedulerSpy()
+        let viewModel = makeViewModel(spy: spy)
+
+        await viewModel.evaluateRouteAndScheduleAlarm()
+        XCTAssertEqual(spy.scheduleCalls.count, 1)
+
+        // Fresh decision: opening the app must not refetch or re-register anything.
+        await viewModel.refreshScheduledAlarmIfWeatherIsStale()
+        XCTAssertEqual(spy.scheduleCalls.count, 1)
+
+        // Age the stored decision past its lifetime, the way an overnight gap would.
+        storage.set(Date().addingTimeInterval(-5 * 60 * 60), forKey: "lastWeatherEvaluationAt")
+        let relaunched = AlarmViewModel(
+            routeWeatherService: MockRouteWeatherService(),
+            notificationScheduler: spy,
+            settingsStorage: storage,
+            autoRefreshDebounce: .milliseconds(80)
+        )
+        XCTAssertTrue(relaunched.hasScheduledAlarm)
+
+        await relaunched.refreshScheduledAlarmIfWeatherIsStale()
+        XCTAssertEqual(spy.scheduleCalls.count, 2)
+    }
+
+    /// The refresh runs unprompted, so a failure must not replace the status line of an
+    /// alarm that is still correctly armed from the previous run.
+    func testAStaleRefreshThatFailsKeepsTheAlarmAndItsStatusMessage() async throws {
+        let spy = SchedulerSpy()
+        let viewModel = makeViewModel(spy: spy)
+
+        await viewModel.evaluateRouteAndScheduleAlarm()
+        let armedStatus = viewModel.statusMessage
+
+        storage.set(Date().addingTimeInterval(-5 * 60 * 60), forKey: "lastWeatherEvaluationAt")
+        let relaunched = AlarmViewModel(
+            routeWeatherService: MockRouteWeatherService(),
+            notificationScheduler: spy,
+            settingsStorage: storage,
+            autoRefreshDebounce: .milliseconds(80)
+        )
+        let restoredStatus = relaunched.statusMessage
+        spy.scheduleFailure = TestError.registrationRejected
+
+        await relaunched.refreshScheduledAlarmIfWeatherIsStale()
+
+        XCTAssertTrue(relaunched.hasScheduledAlarm)
+        XCTAssertEqual(relaunched.statusMessage, restoredStatus)
+        XCTAssertFalse(armedStatus.isEmpty)
+    }
+
     private func waitUntil(
         _ what: String,
         timeout: TimeInterval = 5,
@@ -115,6 +191,10 @@ final class AlarmViewModelSchedulingTests: XCTestCase {
     }
 }
 
+private enum TestError: Error {
+    case registrationRejected
+}
+
 private final class SchedulerSpy: NotificationScheduling, @unchecked Sendable {
     struct ScheduleCall {
         var date: Date
@@ -127,6 +207,14 @@ private final class SchedulerSpy: NotificationScheduling, @unchecked Sendable {
     private let lock = NSLock()
     private var storedScheduleCalls: [ScheduleCall] = []
     private var storedCancelCount = 0
+    private var storedScheduleFailure: Error?
+
+    /// Set to make the next registration throw, standing in for AlarmKit or
+    /// `UNUserNotificationCenter` refusing the alarm.
+    var scheduleFailure: Error? {
+        get { lock.withLock { storedScheduleFailure } }
+        set { lock.withLock { storedScheduleFailure = newValue } }
+    }
 
     var scheduleCalls: [ScheduleCall] {
         lock.withLock { storedScheduleCalls }
@@ -149,6 +237,10 @@ private final class SchedulerSpy: NotificationScheduling, @unchecked Sendable {
         title: String,
         body: String
     ) async throws {
+        if let failure = scheduleFailure {
+            throw failure
+        }
+
         lock.withLock {
             storedScheduleCalls.append(
                 ScheduleCall(
