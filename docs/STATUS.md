@@ -145,14 +145,36 @@ third 5.1.2(i) rejection, and two real bugs. Fixed:
    (`refreshScheduledAlarmIfWeatherIsStale()`), silently, keeping the previous status line if
    the refresh fails. Three regression tests cover 3 and 5.
 
-**Still open from the audit** (none block this submission): the app cannot re-check the weather
-while it is closed, so the fix above only covers users who open it — closing that gap needs a
-`BGAppRefreshTask` and a background-mode declaration, which is a change worth making *after*
-1.6.5 clears review rather than during it. Smaller items: Release builds on the Simulator still
+6. **The rain check now runs while the app is closed.** Item 5 only covered users who open the
+   app, which is not the product: an alarm set for Mon/Tue/Wed has to be decided by *each*
+   morning's forecast. `BackgroundWeatherRefresh` registers two `BGTaskScheduler` budgets and
+   re-asks for them after every successful scheduling — a `BGAppRefreshTask` aimed 45 minutes
+   before the next lead-time point, and a `BGProcessingTask` aimed the evening before, which is
+   the window iOS grants most readily because the phone is usually idle and charging. Whichever
+   runs first re-decides that morning's alarm and re-arms the next pair. `Info.plist` now
+   declares `UIBackgroundModes` (`fetch`, `processing`) and `BGTaskSchedulerPermittedIdentifiers`
+   — **an identifier here that does not match the code crashes the app at launch**, so verify a
+   launch after touching either.
+
+   **iOS never guarantees background execution**, so the honest contract is three paths — the
+   overnight processing task, the morning refresh task, and opening the app — and a morning
+   where none of them ran still rings, on the previous decision. The alarm itself is a weekly
+   repeat and never disappears; only the earlier-or-not decision can go stale. A hard guarantee
+   would need silent pushes from a server, which this app deliberately does not have.
+
+**Still open from the audit** (none block this submission). Smaller items: Release builds on the Simulator still
 request the production ad unit, the alarm sound preview sets no `AVAudioSession` so it is silent
 under the ring switch, `RoutePolylineSampler` is dead production code containing a NaN-to-Int
-trap, the store screenshots predate the 1.6.4 interface redesign, and the English (U.S.) listing
-carries only the Traditional Chinese screenshots. If 2.1(a) comes back a second time, the appeal did not land and
+trap, the store screenshots predate the 1.6.4 interface redesign, the English (U.S.) listing
+carries only the Traditional Chinese screenshots, the app never reconciles its persisted "armed"
+state against AlarmKit's actual alarm list, and the alarm-time header hardcodes a 12-hour clock
+(so it reads "7:00 PM" for a picker that says 19:00 when 24-Hour Time is on).
+
+Also fixed in the same pass, from the audit's own list: an unbounded retry loop where a failed
+re-registration and the auto-refresh reconciler spun against each other every 1.5 seconds; an
+unattended refresh marking correctly typed addresses as invalid; and the ATT purpose string,
+which promised "the ad at the bottom of the screen" — a banner that renders at zero height
+whenever the request does not fill. If 2.1(a) comes back a second time, the appeal did not land and
       the options narrow to shipping a real Home Screen widget (iPhone only — still invisible
       on an iPad reviewer's device) or adding full iPad support.
 - [ ] Optional, no longer blocking: check whether AdMob → Privacy & messaging lets the GDPR

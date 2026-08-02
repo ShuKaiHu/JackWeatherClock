@@ -80,7 +80,7 @@ rain alarm,weather alarm,commute alarm,smart alarm,rain,weather,alarm clock,comm
 
 雨天鬧鐘,天氣鬧鐘,通勤鬧鐘,智慧鬧鐘,降雨,天氣,鬧鐘,通勤
 
-## Version 1.6.5 (20) “What’s New”
+## Version 1.6.5 (22) “What’s New”
 
 `1.6.4` was rejected before release, so these notes carry its interface changes as well — from
 a user's point of view `1.6.5` is the version where both land.
@@ -92,6 +92,7 @@ Interface refresh, plus a say over your ads:
 
 • The weekday selector on the Alarm tab now uses round buttons — the days your alarm will ring are clearly highlighted with a blue circle, visible at a glance.
 • One consistent blue across the whole app: the sound preview, snooze switch, schedule button, and transport mode selector now share the same accent color.
+• Each alarm morning is now decided on its own forecast: Rainy Clock re-checks the weather before every scheduled day, so an alarm moves earlier only on the mornings rain is actually expected.
 • You are now asked whether ads may be matched to your interests. Decline and the app works exactly the same — you just see less relevant ads.
 ```
 
@@ -102,6 +103,7 @@ Interface refresh, plus a say over your ads:
 
 • 鬧鐘頁的星期選擇改為圓形按鈕——鬧鐘會響的日子以藍色圓底清楚標示，一眼就能看出來。
 • 統一整個 App 的介面色彩：鈴聲試聽、賴床開關、排程按鈕與交通方式選擇現在使用同一個藍色。
+• 每個鬧鐘日都會依當天的預報決定：雨天鬧鐘會在每個排程日前重新查詢天氣，只有真的預報會下雨的早晨才提前響。
 • 新增詢問是否允許廣告依你的興趣呈現。選擇不允許也不影響任何功能，只是看到的廣告關聯性較低。
 ```
 
@@ -201,15 +203,20 @@ Everywhere else the experience is unchanged — alarms, commute routes, and weat
 
 ## App Review Notes
 
-### English
+**Never paste from the historical blocks below.** The only current note is the
+version-specific one for `1.6.5`. The two older blocks are kept as a record of what was
+told to App Review at the time, and both are now false: they say alarm scheduling uses
+local notifications only (untrue since `1.6.3` adopted AlarmKit — and it undercuts the
+2.1(a) reply, which rests on AlarmKit requiring the widget extension) and that the app does
+not track (untrue since `1.6.5` added ATT).
+
+### Historical — the generic note used up to 1.6.2
 
 Rainy Clock uses Apple Maps for route preview and Apple Weather / WeatherKit for home and office weather checks. Alarm scheduling uses local notifications only. The app includes a Google AdMob banner ad at the bottom of the screen. No login is required.
 
-### 繁體中文
-
 雨天鬧鐘使用 Apple Maps 顯示路線預覽，並使用 Apple Weather / WeatherKit 檢查住家與公司附近天氣。鬧鐘排程只使用本機通知。App 底部有 Google AdMob 橫幅廣告。不需要登入。
 
-### Version-specific note prepared for 1.6.2 (17)
+### Historical — version-specific note prepared for 1.6.2 (17)
 
 The note carried over from the 5.1.2(i) resolution still described build `1.6 (10)` and said nothing about the new consent flow, so this replacement was prepared:
 
@@ -226,10 +233,9 @@ link remain in the Route tab weather section, as reviewed in 1.6.1 (16).
 
 The "Sign-in required" checkbox in App Review Information was also found checked with a demo account, even though the app has no login. It should be cleared.
 
-### Version-specific note prepared for 1.6.5 (20)
+### Version-specific note prepared for 1.6.5 — CURRENT
 
-Replaces the 1.6.2 note above, which said the app does not track — no longer true. Paste into
-the version's 備註 / Notes field:
+The only note to paste. Replaces everything above. Update the build number if it moves again:
 
 ```
 This build adds App Tracking Transparency.
@@ -242,6 +248,12 @@ Request to Track" is enabled in Settings > Privacy & Security > Tracking.
 
 Ads are requested as non-personalized (npa=1) unless the user grants tracking permission, and
 the App Privacy information has been updated to declare data used to track.
+
+Background modes: the app declares Background App Refresh and Background Processing. It uses
+them for one purpose — re-checking the weather forecast shortly before a scheduled alarm, so
+that each morning's alarm is moved earlier only if rain is actually forecast for that morning.
+The app has no server and sends nothing anywhere; the background task calls Apple Weather /
+WeatherKit and re-registers the local alarm.
 
 Regarding "unable to add Widgets at the Home Screen" (2.1(a)): Rainy Clock is an iPhone-only
 app and does not provide a Home Screen widget. The widget extension it ships contains only the

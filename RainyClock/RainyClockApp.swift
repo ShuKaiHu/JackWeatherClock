@@ -8,6 +8,8 @@ struct RainyClockApp: App {
     init() {
         UNUserNotificationCenter.current().delegate = NotificationPresentationDelegate.shared
         LocalNotificationScheduler.registerNotificationCategories()
+        // Has to happen before launch finishes, or the system refuses the handlers.
+        BackgroundWeatherRefresh.registerHandlers()
     }
 
     var body: some Scene {

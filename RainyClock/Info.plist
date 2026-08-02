@@ -18,6 +18,11 @@
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
 	<string>1.6.5</string>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.shukaihu.RainyClock.weatherRefresh</string>
+		<string>com.shukaihu.RainyClock.alarmMaintenance</string>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>22</string>
 	<key>GADApplicationIdentifier</key>
@@ -33,7 +38,7 @@
 	<key>NSSupportsLiveActivities</key>
 	<true/>
 	<key>NSUserTrackingUsageDescription</key>
-	<string>Allow tracking so the ad at the bottom of the screen can be matched to your interests. Rainy Clock works exactly the same either way.</string>
+	<string>Allow tracking so the ads in Rainy Clock can be matched to your interests. The app works exactly the same either way.</string>
 	<key>SKAdNetworkItems</key>
 	<array>
 		<dict>
@@ -246,6 +251,11 @@
 	</dict>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>processing</string>
+	</array>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations~iphone</key>

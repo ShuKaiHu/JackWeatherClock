@@ -81,6 +81,10 @@ final class AlarmViewModel: ObservableObject {
         }
     }
     private var autoRefreshTask: Task<Void, Never>?
+    /// True while a run nobody asked for is in flight — a background task, or a launch
+    /// that found the rain decision stale. Such a run must not repaint the status line
+    /// or flag addresses the user typed correctly.
+    private var isRunningUnattended = false
     private let autoRefreshDebounce: Duration
     private static let addressValidationTimeout: Duration = .seconds(4)
     private static let settingsStorageKey = "commuteAlarmSettings"
@@ -125,24 +129,11 @@ final class AlarmViewModel: ObservableObject {
     }
 
     /// Re-decides the armed alarm against current weather when the stored decision has
-    /// aged out.
-    ///
-    /// Both scheduling paths register a *weekly repeating* alarm at whatever time the
-    /// rain check produced when it ran, so an alarm armed on a rainy Monday would keep
-    /// ringing early every week, and one armed on a dry day would never move. The app
-    /// has no way to run at the lead-time point on its own, so the next best contract
-    /// is: every time the user opens the app, the armed alarm reflects a rain check no
-    /// older than `weatherDecisionLifetime`.
-    ///
-    /// Deliberately silent about failures — this runs unprompted, and a network blip
-    /// on launch should not replace the status line with an error for an alarm that is
-    /// still correctly armed from the previous run.
+    /// aged out. This is the "user opened the app" path; `BackgroundWeatherRefresh` is
+    /// the one that covers the mornings they do not.
     func refreshScheduledAlarmIfWeatherIsStale() async {
-        guard hasScheduledAlarm, canSchedule, !isScheduling, !isRefreshingRouteWeather else {
-            return
-        }
         // A settings edit already queued its own re-registration; let that one win.
-        guard autoRefreshTask == nil else {
+        guard autoRefreshTask == nil, !isRefreshingRouteWeather else {
             return
         }
 
@@ -151,15 +142,35 @@ final class AlarmViewModel: ObservableObject {
             return
         }
 
-        let previousStatusMessage = statusMessage
-        let evaluationsBefore = lastWeatherEvaluationAt
-        await evaluateRouteAndScheduleAlarm()
-        if lastWeatherEvaluationAt == evaluationsBefore {
-            // The run failed and left an error in the status line. The previously
-            // registered alarm is still armed and unchanged, so say what was true
-            // before rather than alarming the user about a refresh they never asked for.
-            statusMessage = previousStatusMessage
+        _ = await refreshScheduledAlarmUnattended()
+    }
+
+    /// Re-decides the armed alarm without touching anything the user is looking at.
+    ///
+    /// Both scheduling paths register a *weekly repeating* alarm at whatever time the
+    /// rain check produced when it ran, so an alarm armed on a rainy Monday would keep
+    /// ringing early every week and one armed on a dry day would never move. Bringing
+    /// that decision up to date on each selected weekday is the whole product, and it
+    /// has to happen without a person present — from a background task, or from a
+    /// launch that the user did not make for this purpose.
+    ///
+    /// Silent by construction: failures leave the previously registered alarm armed
+    /// and unchanged, and an unprompted run must not repaint the status line or mark
+    /// correctly typed addresses as invalid on the way past.
+    ///
+    /// - Returns: whether the alarm was actually re-registered.
+    @discardableResult
+    func refreshScheduledAlarmUnattended() async -> Bool {
+        guard hasScheduledAlarm, canSchedule, !isScheduling else {
+            return false
         }
+
+        let evaluationsBefore = lastWeatherEvaluationAt
+        isRunningUnattended = true
+        defer { isRunningUnattended = false }
+
+        await evaluateRouteAndScheduleAlarm()
+        return lastWeatherEvaluationAt != evaluationsBefore
     }
 
     /// An install that upgraded to iOS 26 keeps ringing through the old notification
@@ -479,6 +490,11 @@ final class AlarmViewModel: ObservableObject {
         do {
             let authorized = try await notificationScheduler.requestAuthorization()
             guard authorized else {
+                // Same reasoning as the catch below: an unattended run says nothing.
+                guard !isRunningUnattended else {
+                    return
+                }
+
                 // iOS 26 asks for alarm permission, not notification permission, and
                 // the system only prompts once — point at Settings either way.
                 statusMessage = if #available(iOS 26.0, *) {
@@ -550,17 +566,42 @@ final class AlarmViewModel: ObservableObject {
             scheduledFingerprint = settingsSnapshot.scheduleFingerprint()
             updateScheduleStaleness()
             updateAlarmKitRescheduleNotice()
+            // Point the background budget at the next selected weekday's lead-time
+            // point, so that morning's forecast — not this one — decides that alarm.
+            // When this run *is* the one for the imminent occurrence, aim past it at
+            // the following weekday instead, or the request would keep resubmitting
+            // itself for a check point that has already been answered.
+            let horizon = now.addingTimeInterval(BackgroundWeatherRefresh.refreshLeadTime)
+            let nextCheckDate = summary.weatherRefreshDate > horizon
+                ? summary.weatherRefreshDate
+                : nextWeatherCheckDate(for: settingsSnapshot, now: summary.weatherRefreshDate.addingTimeInterval(60))
+            BackgroundWeatherRefresh.scheduleNextRun(before: nextCheckDate, now: now)
 
             let checkedAt = snapshot.checkedAt.formatted(date: .omitted, time: .shortened)
             let forecastAt = snapshot.forecastAt.formatted(date: .abbreviated, time: .shortened)
             let statusKey = exceedsThreshold ? "status_adjusted_checked" : "status_normal_checked"
             statusMessage = String.localizedStringWithFormat(String(localized: String.LocalizationValue(statusKey)), forecastAt, checkedAt)
         } catch {
+            // An unattended run reports to nobody: the alarm registered by the last
+            // successful run is still armed, so repainting the status line or marking
+            // the addresses invalid would only be noise the user cannot act on.
+            guard !isRunningUnattended else {
+                updateScheduleStaleness()
+                return
+            }
+
             updateAddressValidation(for: error)
             statusMessage = String.localizedStringWithFormat(
                 String(localized: "status_schedule_failed"),
                 Self.userFacingMessage(for: error)
             )
+            // Deliberately no reconcile pass on this path. The fingerprint still
+            // describes the last alarm that registered, so drifted settings would
+            // look like drift forever: reconcile schedules an auto-refresh, that run
+            // fails the same way, and the two spin against each other every 1.5
+            // seconds for as long as the failure lasts. The amber stale notice above
+            // says the same thing and waits for the user.
+            return
         }
 
         // Settings that drifted while this run was in flight get their own pass —

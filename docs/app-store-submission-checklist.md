@@ -98,8 +98,12 @@ for is real.
   is not granted, and AdMob serves personalized and non-personalized ads from the same
   endpoint (`googleads.g.doubleclick.net`), so listing it would leave every user who declines
   the prompt — most of them — with no ads at all. Google publishes no domain list for
-  publishers and its own SDK manifests declare `Tracking = false` for every data type, which
-  is the same posture. So the app manifest stays `false` + empty; the ATT prompt and the App
+  publishers, and its own SDK manifest is not the precedent it looks like: `GoogleMobileAds`
+  declares six data types with `Tracking = false` but marks `NSPrivacyCollectedDataTypeDeviceID`
+  — the IDFA, the one type ATT governs — as `Tracking = true`, and neither Google framework
+  carries a top-level `NSPrivacyTracking` key at all. The real reason to stay at `false` is the
+  pairing rule plus the blocking behaviour above; `1.6.3 (18)` shipped and was approved with
+  exactly this combination. So the app manifest stays `false` + empty; the ATT prompt and the App
   Store Connect privacy label are what disclose tracking, and those are what App Review reads.
 - **Manual step, App Store Connect (Account Holder/Admin):** App Privacy must be changed to
   declare tracking — Identifiers → Device ID, plus advertising/usage data, checked as "Used to
