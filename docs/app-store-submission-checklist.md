@@ -7,8 +7,8 @@ Ongoing state and the backlog live in `docs/STATUS.md`; this file is the submiss
 | Item | Status |
 | --- | --- |
 | App version | `1.6.5` (in development) |
-| Build number | `22` (build `20` was invalidated — ITMS-91064; `21` superseded by the pre-submission audit fixes) |
-| Review status | `1.6.5 (22)` ready to upload and resubmit |
+| Build number | `23` (`20` invalidated by ITMS-91064; `21` and `22` superseded before upload) |
+| Review status | `1.6.5 (23)` ready to upload and resubmit |
 | Last released | `1.6.3 (18)` — released to the App Store 2026-07-28 |
 | Bundle identifier | `com.shukaihu.RainyClock` |
 | Extension bundle identifier | `com.shukaihu.RainyClock.AlarmWidget` (added in `1.6.3`) |
@@ -25,7 +25,8 @@ Ongoing state and the backlog live in `docs/STATUS.md`; this file is the submiss
   - **2.1(a)** — "We were unable to add Widgets at the Home Screen." Not a defect; answered in the reply, see the 2.1(a) section below.
   Apple offered to approve the build as a bug-fix submission if asked; we declined and fixed both instead.
   Content of the build: Debug builds request Google's test banner unit instead of the production one, the weekday selector was redesigned as circle chips, and accents were unified on the system blue.
-- `1.6.5 (22)` — Rebuilt 2026-08-02 after the pre-submission audit: live privacy-policy and support pages corrected, a failed alarm registration no longer looks scheduled, ad-consent withdrawal takes effect, and an armed alarm re-decides its rain check when the app is opened. See `docs/STATUS.md`.
+- `1.6.5 (23)` — Rebuilt 2026-08-03 with the background weather refresh (`UIBackgroundModes` = `fetch`, `processing`; the review note explains what they are for) and the audit's smaller fixes. **This is the build to upload.**
+- `1.6.5 (22)` — Never uploaded. Rebuilt 2026-08-02 after the pre-submission audit: live privacy-policy and support pages corrected, a failed alarm registration no longer looks scheduled, ad-consent withdrawal takes effect, and an armed alarm re-decides its rain check when the app is opened. See `docs/STATUS.md`.
 - `1.6.5 (21)` — Rebuilt 2026-08-02 with `NSPrivacyTracking` back to `false`, which is what build 20 tripped over. Never uploaded; superseded by 22.
 - `1.6.5 (20)` — **Submitted 2026-08-02 and invalidated the same day (ITMS-91064)** before review ever saw it. Adds App Tracking Transparency (5.1.2(i) fix), with the 2.1(a) finding answered by reply rather than by code. App Privacy in App Store Connect was changed the same day to declare tracking. Because `1.6.4` never shipped, this submission also carries its interface changes, its release notes, and the English (U.S.) localization — the shared-app-info changes App Store Connect listed in the submission dialog were that localization, which is expected.
 - `1.6.3 (18)` — Submitted 2026-07-27. **Approved and released 2026-07-28, first attempt.** AlarmKit's usage-description prompt and the new widget extension raised no review questions. Adopts AlarmKit on iOS 26+ (alarm pierces silent mode and Focus), adds snooze on/off with a 1–15 minute interval, the system default alarm tone, automatic re-scheduling when settings change (address changes instead remove the alarm), and the colour-coded status line. First build to ship the `RainyClockAlarmWidget` extension. Release notes and updated description are in `docs/appstore-metadata.md`.

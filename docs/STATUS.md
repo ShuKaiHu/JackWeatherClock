@@ -16,7 +16,7 @@ Last updated: 2026-08-02.
 | --- | --- | --- |
 | Live on the App Store | `1.6.3 (18)` | Approved and released 2026-07-28 |
 | Rejected | `1.6.4 (19)` | Rejected 2026-08-01 on 5.1.2(i) and 2.1(a) |
-| **In development** | `1.6.5 (22)` | Build 20 invalidated (ITMS-91064), 21 superseded by the audit fixes; 22 is archived and waiting to upload |
+| **In development** | `1.6.5 (23)` | Builds 20 (invalidated), 21 and 22 superseded before upload; **23 is the one to upload** |
 
 `1.6.3` is the AlarmKit release: alarms pierce silent mode and Focus on iOS 26+, snooze with
 a 1–15 minute interval, and the first shipped `RainyClockAlarmWidget` extension. It cleared
@@ -106,10 +106,13 @@ places (`Info.plist` → `1.6.5 (20)`, project file → `MARKETING_VERSION 1.6.5
 - [x] **Pre-submission audit, 2026-08-02.** Six review dimensions, each adversarially verified.
       What it caught and what was fixed is in the section below; the archive is now
       `build/RainyClock-1.6.5-22.xcarchive` (21 was superseded before it was ever uploaded).
-- [ ] Upload build 22, attach it to the 1.6.5 version, and resubmit. The release notes, review
+- [x] Website fixes pushed 2026-08-03 and verified live: `privacy-policy.html` serves the new
+      Tracking section, the old "Track you across apps or websites" line is gone, and
+      `support.html` describes the AlarmKit behaviour.
+- [x] Second cleanup pass, 2026-08-03 — the audit's smaller findings, listed below.
+- [ ] Upload build 23, attach it to the 1.6.5 version, and resubmit. The release notes, review
       note and Resolution Center reply are already in place from the build-20 attempt — only
-      the build changes. **The website fixes must be pushed and live before resubmitting** —
-      App Review opens the privacy-policy URL.
+      the build changes.
 - [ ] Wait for the verdict.
 
 ## Pre-submission audit — what it found
@@ -162,13 +165,39 @@ third 5.1.2(i) rejection, and two real bugs. Fixed:
    repeat and never disappears; only the earlier-or-not decision can go stale. A hard guarantee
    would need silent pushes from a server, which this app deliberately does not have.
 
-**Still open from the audit** (none block this submission). Smaller items: Release builds on the Simulator still
-request the production ad unit, the alarm sound preview sets no `AVAudioSession` so it is silent
-under the ring switch, `RoutePolylineSampler` is dead production code containing a NaN-to-Int
-trap, the store screenshots predate the 1.6.4 interface redesign, the English (U.S.) listing
-carries only the Traditional Chinese screenshots, the app never reconciles its persisted "armed"
-state against AlarmKit's actual alarm list, and the alarm-time header hardcodes a 12-hour clock
-(so it reads "7:00 PM" for a picker that says 19:00 when 24-Hour Time is on).
+### Second cleanup pass (build 23)
+
+- The alarm-time headline used the app's only hand-built formatter: it forced a 12-hour clock,
+  so with 24-Hour Time on it read "7:00 PM" above a picker set to 19:00, and it took the
+  Chinese word order from the *device* language, putting "AM" in front of English strings on a
+  Simplified Chinese device. Now `date.formatted(.dateTime.hour().minute())`; the orphaned
+  `alarm_am`/`alarm_pm` keys are gone from both `.strings` files.
+- The sound preview set no `AVAudioSession`, so it inherited `.soloAmbient` and played nothing
+  under the ring switch — in an app whose premise is piercing silent mode. Now `.playback` with
+  `.duckOthers`, released with `.notifyOthersOnDeactivation`.
+- The banner asked for `inlineAdaptiveBanner(maxHeight: 36)` in an anchored slot. Google
+  documents inline adaptive as the scroll-view variant, and a 36pt cap excludes the standard
+  50pt creative — the one untested hypothesis left for the 0.00% match rate. Now
+  `currentOrientationAnchoredAdaptiveBanner`, reserving the height the creative reports.
+- A failed ad load discarded its error; it logs under `#if DEBUG` now. That was the blind spot
+  behind every "is the integration broken?" round-trip described above.
+- A failed UMP consent update latched `hasRequestedConsent` permanently, so one networkless
+  cold start cost both ads and the privacy-options row for that whole launch. The latch clears
+  on error and the foreground handler retries.
+- "Ad privacy options" used `try?` and showed nothing when the form had not finished loading —
+  a documented no-op with no feedback. It now surfaces a localized alert.
+- `AppEnvironment` gated the test ad unit on `#if DEBUG` alone, so a Release build run on a
+  simulator requested production ads. Now `#if DEBUG || targetEnvironment(simulator)`.
+- Deleted `RoutePolylineSampler` (nothing shipped calls it, and it traps on `Int(Double.nan)`
+  at `maximumCount == 1`) and `AlarmTimeCalculator.nextAlarmDate` (only ever called by five
+  tests, none of which touched the shipped entry point). The invariant those tests guarded —
+  never schedule in the past — is now asserted against the function the app actually calls.
+
+**Still open** (none block this submission): the store screenshots predate the 1.6.4 interface
+redesign and the English (U.S.) listing carries only the Traditional Chinese ones; and the app
+never reconciles its persisted "armed" state against AlarmKit's actual alarm list — worth doing,
+but `scheduledAlarmIdentifiers()` swallows its throw, so a transient error would read as "your
+alarm is gone". Propagate it first.
 
 Also fixed in the same pass, from the audit's own list: an unbounded retry loop where a failed
 re-registration and the auto-refresh reconciler spun against each other every 1.5 seconds; an
