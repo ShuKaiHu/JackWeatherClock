@@ -16,15 +16,17 @@ Last updated: 2026-08-02.
 | --- | --- | --- |
 | Live on the App Store | `1.6.3 (18)` | Approved and released 2026-07-28 |
 | Rejected | `1.6.4 (19)` | Rejected 2026-08-01 on 5.1.2(i) and 2.1(a) |
-| In development | `1.6.5 (20)` | ATT implemented; needs an upload and a reply to App Review |
+| **In review** | `1.6.5 (20)` | Submitted 2026-08-02 with the ATT fix and the widget reply |
 
 `1.6.3` is the AlarmKit release: alarms pierce silent mode and Focus on iOS 26+, snooze with
 a 1–15 minute interval, and the first shipped `RainyClockAlarmWidget` extension. It cleared
 review on the first attempt, so AlarmKit's `NSAlarmKitUsageDescription` prompt and the new
 widget extension are both proven acceptable to App Review — nothing extra was asked for.
 
-Nothing is in review right now. Apple offered to approve `1.6.4` as a bug-fix submission if
-asked; we chose to fix both findings and resubmit as `1.6.5` instead.
+Apple offered to approve `1.6.4` as a bug-fix submission if asked; we chose to fix both
+findings and resubmit as `1.6.5` instead. The resubmission also carries the English (U.S.)
+localization added for `1.6.4` — that metadata has still never been through review, since
+`1.6.4` never shipped.
 
 ## The 1.6.4 rejection
 
@@ -92,9 +94,13 @@ places (`Info.plist` → `1.6.5 (20)`, project file → `MARKETING_VERSION 1.6.5
       fix — the code change alone does not resolve the rejection.
 - [x] `build/RainyClock-1.6.5-20.xcarchive` created and verified: app and extension both at
       `1.6.5 (20)`, ATT string present, `NSPrivacyTracking = true`.
-- [ ] Upload build 20 from Organizer, rename the rejected `1.6.4` version in App Store Connect
-      to `1.6.5`, attach the build, paste the 1.6.5 release notes and review note, reply to the
-      rejection message, and submit. Draft copy is in `docs/appstore-metadata.md`.
+- [x] Build 20 uploaded, the rejected `1.6.4` version renamed to `1.6.5` with the build
+      attached, release notes and review note pasted, the rejection message answered in
+      Resolution Center, and the whole thing **submitted 2026-08-02**. Copy used is in
+      `docs/appstore-metadata.md`.
+- [ ] Wait for the verdict. If 2.1(a) comes back a second time, the appeal did not land and
+      the options narrow to shipping a real Home Screen widget (iPhone only — still invisible
+      on an iPad reviewer's device) or adding full iPad support.
 - [ ] Optional, no longer blocking: check whether AdMob → Privacy & messaging lets the GDPR
       message drop its personalization purposes. Only worth acting on if the no-tracking
       posture is wanted back — it would mean reversing the privacy label a second time.

@@ -8,7 +8,7 @@ Ongoing state and the backlog live in `docs/STATUS.md`; this file is the submiss
 | --- | --- |
 | App version | `1.6.5` (in development) |
 | Build number | `20` |
-| Review status | `1.6.4 (19)` rejected 2026-08-01; `1.6.5 (20)` carries the fixes |
+| Review status | `1.6.5 (20)` submitted 2026-08-02, waiting for review |
 | Last released | `1.6.3 (18)` — released to the App Store 2026-07-28 |
 | Bundle identifier | `com.shukaihu.RainyClock` |
 | Extension bundle identifier | `com.shukaihu.RainyClock.AlarmWidget` (added in `1.6.3`) |
@@ -25,7 +25,7 @@ Ongoing state and the backlog live in `docs/STATUS.md`; this file is the submiss
   - **2.1(a)** — "We were unable to add Widgets at the Home Screen." Not a defect; answered in the reply, see the 2.1(a) section below.
   Apple offered to approve the build as a bug-fix submission if asked; we declined and fixed both instead.
   Content of the build: Debug builds request Google's test banner unit instead of the production one, the weekday selector was redesigned as circle chips, and accents were unified on the system blue.
-- `1.6.5 (20)` — In development. Adds App Tracking Transparency and answers the widget question.
+- `1.6.5 (20)` — **Submitted 2026-08-02.** Adds App Tracking Transparency (5.1.2(i) fix), with the 2.1(a) finding answered by reply rather than by code. App Privacy in App Store Connect was changed the same day to declare tracking. Because `1.6.4` never shipped, this submission also carries its interface changes, its release notes, and the English (U.S.) localization — the shared-app-info changes App Store Connect listed in the submission dialog were that localization, which is expected.
 - `1.6.3 (18)` — Submitted 2026-07-27. **Approved and released 2026-07-28, first attempt.** AlarmKit's usage-description prompt and the new widget extension raised no review questions. Adopts AlarmKit on iOS 26+ (alarm pierces silent mode and Focus), adds snooze on/off with a 1–15 minute interval, the system default alarm tone, automatic re-scheduling when settings change (address changes instead remove the alarm), and the colour-coded status line. First build to ship the `RainyClockAlarmWidget` extension. Release notes and updated description are in `docs/appstore-metadata.md`.
 - `1.6.2 (17)` — Submitted 2026-07-27. **Approved and released the same day.** Declares Google's `SKAdNetworkItems` list (50 identifiers) in `Info.plist`, which the shipped builds were missing, and adds the UMP consent flow for EEA/UK/Swiss users. Also the first version to carry a marketing URL (`https://shukaihu.github.io/RainyClock/`), which is what unblocks AdMob's app-ads.txt verification — see below. Release notes are in `docs/appstore-metadata.md`.
 
