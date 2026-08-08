@@ -20,6 +20,15 @@ The production implementation should:
 
 Open-Meteo is not part of the active release path.
 
+**On-route sampling (queued for the next version, not in the shipped `1.6.5`):** the rain
+check also covers interior points along the MapKit route — none under 4 km, the midpoint
+from 4–20 km, quarter/mid/three-quarter points beyond — and *any* sampled point (home, en
+route, office) over the threshold pulls the alarm earlier. Sampling is distance-based
+because weather-model cells are a few km wide. Transit has no MKDirections geometry, and any
+route failure silently degrades to the endpoint-only check: the alarm decision must never
+depend on the routing infrastructure. The Android port ships the same rule
+(`RouteSampler`), so both platforms decide identically.
+
 ### Address Strategy
 
 Address entry should make resolution quality visible:
@@ -69,6 +78,12 @@ App 以 `RouteWeatherService` protocol 作為路線天氣抽象層。目前上�
 5. 回傳任一端點是否達到或超過使用者設定的降雨門檻。
 
 Open-Meteo 已不在目前上架版本的主要流程中。
+
+**路線途中取樣（排入下一版，未包含在已送審的 `1.6.5`）：** 降雨判斷同時涵蓋 MapKit 路線
+上的內部取樣點——4 公里以下不取、4–20 公里取中點、更長取 1/4、1/2、3/4 三點——住家、
+途中任一點、公司**任一處**超過門檻就提前響鈴。以距離為基準是因為天氣模型的網格本來就有
+數公里寬。大眾運輸拿不到 MKDirections 路線幾何；任何路線查詢失敗都靜默退回只查兩端點，
+鬧鐘判斷絕不依賴路線基礎設施。Android 版用同一套規則（`RouteSampler`），兩平台判斷一致。
 
 ### 地址策略
 

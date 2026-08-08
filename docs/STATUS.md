@@ -232,6 +232,23 @@ whenever the request does not fill. If 2.1(a) comes back a second time, the appe
 - [x] Submitted 2026-07-29 and rejected 2026-08-01; the store metadata and screenshots uploaded
       for it stay valid for 1.6.5.
 
+## Queued for the next iOS version (after 1.6.5 clears review)
+
+**On-route rain sampling** landed in `MapKitRouteWeatherService` 2026-08-08: the rain check
+now covers interior points along the MKDirections route (midpoint from 4 km, quarter points
+from 20 km) in addition to home and office — any of them over the threshold pulls the alarm
+earlier. Transit and any route failure degrade to the endpoint-only check. The distance
+rules and the sampler match the Android `RouteSampler` exactly; the degenerate cases that
+trapped the deleted `RoutePolylineSampler` are covered in `WeatherSampleMapperTests.swift`
+(`RoutePolylineSamplerTests`). Decision recorded in `PRODUCT_DECISIONS.md`.
+
+**This does not touch the pending 1.6.5 submission** — build 23's archive is already built;
+version numbers are deliberately unbumped. When cutting the next release, bump both places
+(`Info.plist` and the project file) per the gotcha below, and note the behaviour change in
+the release notes. Written on a Linux container without Xcode, so **run the iOS test suite
+once before archiving** — the new `RoutePolylineSamplerTests` should pass alongside the
+existing ones.
+
 ## Android port — in development
 
 Started 2026-08-08 on branch `claude/android-play-store-release-jykw59`. A standalone Gradle
