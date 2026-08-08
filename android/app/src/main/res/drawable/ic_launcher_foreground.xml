@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Cloud -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M36,52c-6.1,0 -11,-4.9 -11,-11c0,-5.6 4.2,-10.2 9.6,-10.9C36.5,23.6 42.6,19 49.5,19c7.6,0 14,5.5 15.3,12.8c0.6,-0.1 1.1,-0.2 1.7,-0.2c6.1,0 11,4.9 11,11s-4.9,11 -11,11H36z" />
+    <!-- Rain drops -->
+    <path
+        android:fillColor="#93C5FD"
+        android:pathData="M38,60l-4,9c-0.8,1.9 0.6,4 2.7,4c2.1,0 3.5,-2.1 2.7,-4L38,60z" />
+    <path
+        android:fillColor="#93C5FD"
+        android:pathData="M54,62l-4,9c-0.8,1.9 0.6,4 2.7,4c2.1,0 3.5,-2.1 2.7,-4L54,62z" />
+    <path
+        android:fillColor="#93C5FD"
+        android:pathData="M70,60l-4,9c-0.8,1.9 0.6,4 2.7,4c2.1,0 3.5,-2.1 2.7,-4L70,60z" />
+    <!-- Clock -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M67,71m-14,0a14,14 0,1 1,28 0a14,14 0,1 1,-28 0" />
+    <path
+        android:fillColor="#1D4ED8"
+        android:pathData="M67,71m-11.5,0a11.5,11.5 0,1 1,23 0a11.5,11.5 0,1 1,-23 0" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:pathData="M67,71L67,63.5 M67,71L72.5,74" />
+</vector>

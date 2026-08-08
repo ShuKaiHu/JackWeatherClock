@@ -1,0 +1,43 @@
+package com.shukaihu.rainyclock
+
+import android.content.Context
+import com.shukaihu.rainyclock.alarm.AlarmScheduler
+import com.shukaihu.rainyclock.data.SettingsRepository
+import com.shukaihu.rainyclock.geo.AddressResolver
+import com.shukaihu.rainyclock.weather.EndpointRouteWeatherService
+import com.shukaihu.rainyclock.weather.OpenMeteoWeatherService
+import com.shukaihu.rainyclock.weather.RouteWeatherService
+
+/**
+ * Hand-rolled service locator — the app is small enough that a DI framework
+ * would outweigh the object graph it wires.
+ */
+object AppGraph {
+
+    @Volatile
+    private var initialized = false
+
+    lateinit var settingsRepository: SettingsRepository
+        private set
+    lateinit var addressResolver: AddressResolver
+        private set
+    lateinit var routeWeatherService: RouteWeatherService
+        private set
+    lateinit var alarmScheduler: AlarmScheduler
+        private set
+
+    @Synchronized
+    fun initialize(context: Context) {
+        if (initialized) return
+        val appContext = context.applicationContext
+        settingsRepository = SettingsRepository(appContext)
+        addressResolver = AddressResolver(appContext)
+        routeWeatherService = EndpointRouteWeatherService(
+            context = appContext,
+            resolver = addressResolver,
+            sampler = OpenMeteoWeatherService()
+        )
+        alarmScheduler = AlarmScheduler(appContext, settingsRepository, routeWeatherService)
+        initialized = true
+    }
+}

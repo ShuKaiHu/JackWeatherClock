@@ -1,7 +1,10 @@
 # Rainy Clock
 
-iPhone-only rain-aware commute alarm. SwiftUI, no backend. Apple Maps for routes, Apple
-Weather / WeatherKit for forecasts, AlarmKit for alarms on iOS 26+, one Google AdMob banner.
+Rain-aware commute alarm. No backend. The iPhone app (repo root) is SwiftUI with Apple Maps
+for routes, Apple Weather / WeatherKit for forecasts, AlarmKit for alarms on iOS 26+, and one
+Google AdMob banner. The Android port lives in `android/` (Kotlin + Jetpack Compose) —
+platform substitutions and its own gotchas are in `docs/ANDROID.md`, and the Play Store
+runbook is `docs/play-store-submission-checklist.md`.
 
 ## Read first
 
@@ -34,8 +37,16 @@ Supporting docs:
 
 ## Build
 
+iOS:
+
 ```bash
 xcodebuild -project RainyClock.xcodeproj -scheme RainyClock -configuration Debug \
   -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
   -derivedDataPath ./DerivedData CODE_SIGNING_ALLOWED=NO build
+```
+
+Android (requires the Android SDK; CI runs this on every push touching `android/`):
+
+```bash
+cd android && ./gradlew testDebugUnitTest assembleDebug
 ```

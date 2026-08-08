@@ -7,8 +7,10 @@ file is the index and the "where were we?".
 - Submission mechanics, rejection history, AdMob setup → `docs/app-store-submission-checklist.md`
 - Store copy, release notes, review notes → `docs/appstore-metadata.md`
 - Product reasoning and rejected alternatives → `docs/PRODUCT_DECISIONS.md`
+- Android port architecture and platform substitutions → `docs/ANDROID.md`
+- Play Store submission runbook → `docs/play-store-submission-checklist.md`
 
-Last updated: 2026-08-02.
+Last updated: 2026-08-08.
 
 ## Where things stand
 
@@ -229,6 +231,27 @@ whenever the request does not fill. If 2.1(a) comes back a second time, the appe
 - [x] New store screenshots uploaded by hand (source images in `pics/20260729/`).
 - [x] Submitted 2026-07-29 and rejected 2026-08-01; the store metadata and screenshots uploaded
       for it stay valid for 1.6.5.
+
+## Android port — in development
+
+Started 2026-08-08 on branch `claude/android-play-store-release-jykw59`. A standalone Gradle
+project in `android/` (Kotlin + Compose, minSdk 26, targetSdk 35) reimplementing the shipped
+product: endpoint rain check, smart alarm with the same time math (unit-tested against the
+iOS semantics), exact alarms that ring through silent mode and DND, snooze, boot re-arm,
+WorkManager morning re-decision, UMP consent + one AdMob banner, zh-Hant + English strings.
+CI builds it (`.github/workflows/android.yml`); the alarm tones are copied from the iOS
+target's `.wav`s at build time, not duplicated.
+
+Decisions and deliberate gaps (no map preview, no address autocomplete, Open-Meteo instead
+of WeatherKit) are in `docs/ANDROID.md`. **Blockers before a Play release, in order:**
+
+1. The weather-provider licensing decision — Open-Meteo's free tier is non-commercial and
+   the app carries ads (`docs/ANDROID.md` has the three options).
+2. Play developer account + the 12-testers/14-days rule if it registers as a personal
+   account (`docs/play-store-submission-checklist.md` is the runbook).
+3. A new AdMob Android app + banner unit, passed at build time via Gradle properties.
+4. `docs/privacy-policy.html` needs an Android paragraph before it is reused as the Play
+   privacy policy URL (it currently describes ATT, which does not exist on Android).
 
 ## Backlog
 
