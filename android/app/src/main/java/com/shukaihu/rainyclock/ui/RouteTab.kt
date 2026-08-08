@@ -28,10 +28,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.Polyline
+import com.google.maps.android.compose.rememberCameraPositionState
 import com.shukaihu.rainyclock.R
 import com.shukaihu.rainyclock.model.CommuteMode
+import com.shukaihu.rainyclock.model.RoutePreview
 import com.shukaihu.rainyclock.model.RouteWeatherSegment
 import com.shukaihu.rainyclock.model.WeatherCondition
 import java.time.ZoneId
@@ -42,6 +56,7 @@ import java.time.format.FormatStyle
 fun RouteTab(
     state: AlarmUiState,
     modifier: Modifier = Modifier,
+    isRoutePreviewConfigured: Boolean,
     onHomeAddressChange: (String) -> Unit,
     onWorkAddressChange: (String) -> Unit,
     onConfirmHomeSuggestion: () -> Unit,
@@ -92,7 +107,17 @@ fun RouteTab(
             modifier = Modifier.fillMaxWidth(),
             enabled = state.routeWeather != RouteWeatherState.Loading
         ) {
-            Text(stringResource(R.string.route_weather))
+            Text(stringResource(R.string.preview_route))
+        }
+
+        if (isRoutePreviewConfigured) {
+            state.routePreview?.let { preview -> RoutePreviewCard(preview) }
+        } else {
+            Text(
+                text = stringResource(R.string.route_preview_requires_key),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
 
         RouteWeatherCard(state = state.routeWeather)
@@ -139,6 +164,65 @@ private fun AddressField(
                         Text(stringResource(R.string.confirm_suggested_address))
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RoutePreviewCard(preview: RoutePreview) {
+    val latLngs = remember(preview) { preview.points.map { LatLng(it.latitude, it.longitude) } }
+    val cameraPositionState = rememberCameraPositionState()
+    var mapLoaded by remember { mutableStateOf(false) }
+
+    LaunchedEffect(mapLoaded, latLngs) {
+        if (mapLoaded && latLngs.size >= 2) {
+            val bounds = LatLngBounds.builder().apply { latLngs.forEach { include(it) } }.build()
+            // move (not animate): the card may recompose while the map settles.
+            cameraPositionState.move(CameraUpdateFactory.newLatLngBounds(bounds, 64))
+        }
+    }
+
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(text = stringResource(R.string.route_preview), style = MaterialTheme.typography.titleSmall)
+            GoogleMap(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(220.dp),
+                cameraPositionState = cameraPositionState,
+                onMapLoaded = { mapLoaded = true }
+            ) {
+                Marker(
+                    state = MarkerState(position = latLngs.first()),
+                    title = stringResource(R.string.route_preview_home_pin)
+                )
+                Marker(
+                    state = MarkerState(position = latLngs.last()),
+                    title = stringResource(R.string.route_preview_work_pin)
+                )
+                Polyline(points = latLngs, color = Color(0xFF2563EB), width = 8f)
+            }
+            Row {
+                Text(
+                    text = stringResource(R.string.route_preview_travel_time),
+                    modifier = Modifier.weight(1f),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(text = stringResource(R.string.route_preview_minutes_value, preview.durationMinutes))
+            }
+            Row {
+                Text(
+                    text = stringResource(R.string.route_preview_distance),
+                    modifier = Modifier.weight(1f),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = stringResource(R.string.route_preview_distance_value, preview.distanceMeters / 1000.0f)
+                )
             }
         }
     }

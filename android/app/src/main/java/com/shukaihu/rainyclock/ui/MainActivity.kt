@@ -123,6 +123,7 @@ private fun MainScreen(
             0 -> RouteTab(
                 state = uiState,
                 modifier = contentModifier,
+                isRoutePreviewConfigured = viewModel.isRoutePreviewConfigured,
                 onHomeAddressChange = viewModel::updateHomeAddress,
                 onWorkAddressChange = viewModel::updateWorkAddress,
                 onConfirmHomeSuggestion = viewModel::confirmHomeSuggestion,

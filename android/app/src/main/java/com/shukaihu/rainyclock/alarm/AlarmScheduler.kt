@@ -77,6 +77,7 @@ class AlarmScheduler(
             homeLocation = settings.homeResolvedLocation,
             workAddress = settings.workAddress,
             workLocation = settings.workResolvedLocation,
+            mode = settings.commuteMode,
             around = preliminary.weatherRefreshDate
         )
 

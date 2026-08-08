@@ -80,6 +80,17 @@
     <string name="alarm_snooze_button">Snooze</string>
     <string name="segment_home_area">Home area</string>
     <string name="segment_office_area">Office area</string>
+    <string name="segment_route_placeholder">Commute</string>
+    <string name="segment_route_sample_format">%1$s sample %2$d</string>
+    <string name="preview_route">Preview Route</string>
+    <string name="route_preview">Route Preview</string>
+    <string name="route_preview_travel_time">Travel time</string>
+    <string name="route_preview_distance">Distance</string>
+    <string name="route_preview_minutes_value">%1$d min</string>
+    <string name="route_preview_distance_value">%1$.1f km</string>
+    <string name="route_preview_home_pin">Home</string>
+    <string name="route_preview_work_pin">Work</string>
+    <string name="route_preview_requires_key">Route preview needs a Google Maps API key (see docs/ANDROID.md).</string>
     <string name="weather_data_attribution">Weather data by Open-Meteo.com.</string>
     <string name="address_not_found_inline">Address not found. Re-enter it or confirm the suggested address.</string>
     <string name="clear_address">Clear address</string>

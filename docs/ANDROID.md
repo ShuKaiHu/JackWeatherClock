@@ -47,13 +47,31 @@ commercial. Before the Play release goes live with ads enabled, pick one:
 The attribution string on the Route tab ("Weather data by Open-Meteo.com") satisfies their
 attribution requirement either way.
 
+## Google Maps route preview + on-route rain sampling
+
+The Route tab renders the commute on a Google map (Maps SDK for Android via `maps-compose`)
+with the polyline, travel time and distance from the **Routes API** (`computeRoutes`).
+Beyond the preview, the route feeds the alarm itself: `RouteSampler` picks interior points
+along the polyline — none under 4 km, the midpoint from 4–20 km, quarter/mid/three-quarter
+points beyond — and `EndpointRouteWeatherService` rain-checks **home, those points, and the
+office**; any of them over the threshold pulls the alarm earlier. (This goes beyond the
+shipped iOS app, which samples endpoints only; it implements the long-intended on-route
+check. The deleted iOS `RoutePolylineSampler` trapped on single-sample requests — the
+Android sampler's degenerate cases are unit-tested.)
+
+Configuration: one Google Maps Platform API key with **Maps SDK for Android** and
+**Routes API** enabled, passed as `-PmapsApiKey=…` (or `mapsApiKey` in
+`~/.gradle/gradle.properties`). Restrict the key in the Cloud console to the app's package
+name + signing-cert SHA-1 — the Routes client sends `X-Android-Package` / `X-Android-Cert`
+so restricted keys work over REST too. **With no key configured everything degrades
+gracefully**: the map card hides, and the rain decision falls back to the endpoint-only
+check. Mobile map display is free; Routes API has a 10k-calls/month free tier — cap the
+quota in the console and this app's usage (one call per preview, one per scheduling round)
+never approaches it. Scooter uses `TWO_WHEELER` with an automatic `DRIVE` fallback where
+Google lacks two-wheeler coverage.
+
 ## Deliberately not ported
 
-- **Route map preview** (`RoutePreviewMapView`, MapKit polyline). Google's Directions/Routes
-  API needs a billing-enabled key; the shipped iOS weather decision never used the polyline
-  anyway — it samples the home and office endpoints only (see PRODUCT_DECISIONS.md). The
-  Route tab shows the endpoint weather without a map. Maps SDK for Android is free for mobile
-  if a map view is ever wanted.
 - **Address autocomplete dropdown.** No platform API; see the geocoding row above.
 - **Live Activity / widget.** AlarmKit forced the iOS widget extension into existence. The
   Android alarm needs no extension; the ring notification itself carries Stop and Snooze.
@@ -75,6 +93,12 @@ attribution requirement either way.
 ## 繁體中文摘要
 
 `android/` 是獨立的 Gradle 專案（Kotlin + Compose，minSdk 26、targetSdk 35）。核心邏輯
+（見下）之外，路線預覽用 Google Maps（地圖顯示免費）＋ Routes API（每月一萬次免費，
+在主控台把配額鎖在免費額度內），金鑰用 `-PmapsApiKey=…` 傳入並在 Cloud 主控台綁定套件
+名稱＋簽章憑證；**沒設金鑰時地圖卡片自動隱藏、降雨判斷退回只查住家與公司**。路線同時
+餵給鬧鐘判斷：依距離取路線內部取樣點（<4 公里不取、4–20 公里取中點、更長取 1/4、1/2、
+3/4 三點），住家／途中任一點／公司任一處超過降雨門檻就提前響鈴——這是 iOS 版一直想做
+而未做的行為，Android 版先行。核心邏輯
 （鬧鐘時間計算、天氣決策、設定模型）從 iOS 版一比一移植並附單元測試；平台差異如下：
 天氣改用 Open-Meteo（**免金鑰，但免費層限非商業使用——上架含廣告前必須訂閱其商業方案、
 換供應商、或先拿掉廣告**，介面已抽象好可直接抽換）；地址解析用系統 Geocoder（同樣不需

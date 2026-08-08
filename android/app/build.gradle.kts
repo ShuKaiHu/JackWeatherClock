@@ -41,6 +41,13 @@ android {
             "ADMOB_BANNER_AD_UNIT_ID",
             "\"${providers.gradleProperty("admobBannerAdUnitId").getOrElse("")}\""
         )
+
+        // Google Maps Platform key (Maps SDK + Routes API). Empty disables the
+        // route preview and midpoint weather sampling; the rain decision then
+        // falls back to the home/work endpoints.
+        val mapsApiKey = providers.gradleProperty("mapsApiKey").getOrElse("")
+        manifestPlaceholders["mapsApiKey"] = mapsApiKey
+        buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
     }
 
     buildTypes {
@@ -91,6 +98,8 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.play.services.ads)
+    implementation(libs.play.services.maps)
+    implementation(libs.maps.compose)
     implementation(libs.user.messaging.platform)
 
     testImplementation(libs.junit)

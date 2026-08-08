@@ -40,6 +40,22 @@ Mechanics for getting `android/` onto Google Play. The App Store counterpart is
       Read the AdMob report (requests > 0, impressions 0 = wait), do not self-test against
       the production unit; that is the exact loop documented in `STATUS.md` for iOS.
 
+## Google Maps Platform (route preview + on-route rain sampling)
+
+- [ ] Create a Google Cloud project (or reuse one) and **attach a billing account** —
+      required even though this app's usage stays inside the free tiers.
+- [ ] Enable two APIs: **Maps SDK for Android** (map display — free on mobile) and
+      **Routes API** (polyline/duration — 10k free calls/month).
+- [ ] Create one API key and restrict it: Application restriction → Android apps →
+      `com.shukaihu.rainyclock` + the SHA-1 of BOTH the upload cert and the Play App
+      Signing cert (Play Console → Test and release → App signing shows the latter; ads and
+      maps break in production if only the upload cert is listed). API restriction → the
+      two APIs above.
+- [ ] Set a **quota cap** on Routes API (e.g. 9,000/month) so cost is structurally $0.
+- [ ] Pass the key at build time: `-PmapsApiKey=…` (or `mapsApiKey` in
+      `~/.gradle/gradle.properties`). Never commit it. Without it the app still works —
+      map hidden, endpoint-only rain check.
+
 ## Before the first upload
 
 - [ ] **Weather-provider licensing decision** — Open-Meteo's keyless tier is non-commercial

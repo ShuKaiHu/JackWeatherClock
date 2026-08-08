@@ -15,6 +15,7 @@ import com.shukaihu.rainyclock.logic.AlarmTimeCalculator
 import com.shukaihu.rainyclock.model.AlarmSound
 import com.shukaihu.rainyclock.model.CommuteAlarmSettings
 import com.shukaihu.rainyclock.model.CommuteMode
+import com.shukaihu.rainyclock.model.RoutePreview
 import com.shukaihu.rainyclock.model.RouteWeatherSnapshot
 import com.shukaihu.rainyclock.model.ScheduledAlarmSummary
 import com.shukaihu.rainyclock.weather.WeatherUnavailableException
@@ -53,6 +54,7 @@ data class AlarmUiState(
     val homeInvalid: Boolean = false,
     val workInvalid: Boolean = false,
     val routeWeather: RouteWeatherState = RouteWeatherState.Empty,
+    val routePreview: RoutePreview? = null,
     val summary: ScheduledAlarmSummary? = null,
     val isScheduling: Boolean = false,
     val isStale: Boolean = false,
@@ -64,6 +66,10 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = AppGraph.settingsRepository
     private val scheduler = AppGraph.alarmScheduler
     private val routeWeatherService = AppGraph.routeWeatherService
+    private val routePreviewService = AppGraph.routePreviewService
+
+    /** False when no Maps key is configured; the map card hides itself. */
+    val isRoutePreviewConfigured: Boolean = routePreviewService != null
 
     private val _uiState = MutableStateFlow(AlarmUiState())
     val uiState: StateFlow<AlarmUiState> = _uiState.asStateFlow()
@@ -329,11 +335,13 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
                     homeLocation = settings.homeResolvedLocation,
                     workAddress = settings.workAddress,
                     workLocation = settings.workResolvedLocation,
+                    mode = settings.commuteMode,
                     around = checkTime
                 )
 
                 maybeSurfaceResolvedAddresses(settings)
                 _uiState.update { it.copy(routeWeather = RouteWeatherState.Loaded(snapshot)) }
+                refreshRoutePreview()
             } catch (error: AddressNotFoundException) {
                 val home = error.address.trim() == settings.homeAddress.trim()
                 _uiState.update {
@@ -347,6 +355,23 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
                 _uiState.update { it.copy(routeWeather = RouteWeatherState.Failed(R.string.error_weather_unavailable)) }
             }
         }
+    }
+
+    /**
+     * Fetches the route polyline for the map card. Best-effort: a failure
+     * clears the map but never touches the weather result or the alarm.
+     */
+    private suspend fun refreshRoutePreview() {
+        val service = routePreviewService ?: return
+        val settings = _uiState.value.settings
+        val home = settings.homeResolvedLocation ?: return
+        val work = settings.workResolvedLocation ?: return
+        val preview = try {
+            service.fetchRoute(home, work, settings.commuteMode)
+        } catch (_: Exception) {
+            null
+        }
+        _uiState.update { it.copy(routePreview = preview) }
     }
 
     /**

@@ -242,8 +242,15 @@ WorkManager morning re-decision, UMP consent + one AdMob banner, zh-Hant + Engli
 CI builds it (`.github/workflows/android.yml`); the alarm tones are copied from the iOS
 target's `.wav`s at build time, not duplicated.
 
-Decisions and deliberate gaps (no map preview, no address autocomplete, Open-Meteo instead
-of WeatherKit) are in `docs/ANDROID.md`. **Blockers before a Play release, in order:**
+Since the first push it also gained the **Google Maps route preview** (Maps SDK +
+Routes API, key via `-PmapsApiKey`, hides itself when unconfigured) and — a first for the
+product — **on-route rain sampling**: interior points along the polyline (midpoint, or
+quarter points on long commutes) are rain-checked alongside home and office, and any of
+them over the threshold pulls the alarm earlier. iOS still samples endpoints only.
+
+Decisions and deliberate gaps (no address autocomplete, Open-Meteo instead of WeatherKit —
+the WeatherKit REST key cannot ship in an APK; four options incl. a tiny signing proxy are
+documented) are in `docs/ANDROID.md`. **Blockers before a Play release, in order:**
 
 1. The weather-provider licensing decision — Open-Meteo's free tier is non-commercial and
    the app carries ads (`docs/ANDROID.md` has the three options).
@@ -252,6 +259,9 @@ of WeatherKit) are in `docs/ANDROID.md`. **Blockers before a Play release, in or
 3. A new AdMob Android app + banner unit, passed at build time via Gradle properties.
 4. `docs/privacy-policy.html` needs an Android paragraph before it is reused as the Play
    privacy policy URL (it currently describes ATT, which does not exist on Android).
+5. A Google Maps Platform key (billing account attached, Maps SDK + Routes API enabled,
+   restricted to the package + both signing certs, quota capped) — without it the app
+   still ships, minus the map card and the on-route sampling.
 
 ## Backlog
 
