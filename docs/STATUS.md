@@ -10,7 +10,7 @@ file is the index and the "where were we?".
 - Android port architecture and platform substitutions → `docs/ANDROID.md`
 - Play Store submission runbook → `docs/play-store-submission-checklist.md`
 
-Last updated: 2026-08-08.
+Last updated: 2026-08-09.
 
 ## Where things stand
 
@@ -18,7 +18,8 @@ Last updated: 2026-08-08.
 | --- | --- | --- |
 | Live on the App Store | `1.6.3 (18)` | Approved and released 2026-07-28 |
 | Rejected | `1.6.4 (19)` | Rejected 2026-08-01 on 5.1.2(i) and 2.1(a) |
-| **In development** | `1.6.5 (23)` | Builds 20 (invalidated), 21 and 22 superseded before upload; **23 is the one to upload** |
+| **Waiting to upload** | `1.6.5 (23)` | Builds 20 (invalidated), 21 and 22 superseded before upload; **`build/RainyClock-1.6.5-23.xcarchive` is the one to upload** |
+| **In development** | `1.6.6 (24)` | Version numbers bumped 2026-08-09; on-route rain sampling and the Dynamic Type fix. Holds until 1.6.5 clears review |
 
 `1.6.3` is the AlarmKit release: alarms pierce silent mode and Focus on iOS 26+, snooze with
 a 1–15 minute interval, and the first shipped `RainyClockAlarmWidget` extension. It cleared
@@ -114,7 +115,8 @@ places (`Info.plist` → `1.6.5 (20)`, project file → `MARKETING_VERSION 1.6.5
 - [x] Second cleanup pass, 2026-08-03 — the audit's smaller findings, listed below.
 - [ ] Upload build 23, attach it to the 1.6.5 version, and resubmit. The release notes, review
       note and Resolution Center reply are already in place from the build-20 attempt — only
-      the build changes.
+      the build changes. **Upload the existing `build/RainyClock-1.6.5-23.xcarchive`** — source
+      moved on to `1.6.6 (24)` on 2026-08-09, so a fresh archive would no longer be build 23.
 - [ ] Wait for the verdict.
 
 ## Pre-submission audit — what it found
@@ -232,7 +234,13 @@ whenever the request does not fill. If 2.1(a) comes back a second time, the appe
 - [x] Submitted 2026-07-29 and rejected 2026-08-01; the store metadata and screenshots uploaded
       for it stay valid for 1.6.5.
 
-## Queued for the next iOS version (after 1.6.5 clears review)
+## 1.6.6 (24) — next iOS version, holds until 1.6.5 clears review
+
+**Version numbers bumped 2026-08-09** to `1.6.6` / build `24`, in `Info.plist` *and* the
+project file, verified in a Debug build: app and `RainyClockAlarmWidget.appex` both report
+`1.6.6 (24)`. **`build/RainyClock-1.6.5-23.xcarchive` is unaffected and is still the archive
+to upload for the pending 1.6.5 submission** — it was archived before the bump. Only rebuild
+build 23 from source if you first put the version numbers back.
 
 **On-route rain sampling** landed in `MapKitRouteWeatherService` 2026-08-08: the rain check
 now covers interior points along the MKDirections route (midpoint from 4 km, quarter points
@@ -242,12 +250,35 @@ rules and the sampler match the Android `RouteSampler` exactly; the degenerate c
 trapped the deleted `RoutePolylineSampler` are covered in `WeatherSampleMapperTests.swift`
 (`RoutePolylineSamplerTests`). Decision recorded in `PRODUCT_DECISIONS.md`.
 
-**This does not touch the pending 1.6.5 submission** — build 23's archive is already built;
-version numbers are deliberately unbumped. When cutting the next release, bump both places
-(`Info.plist` and the project file) per the gotcha below, and note the behaviour change in
-the release notes. Written on a Linux container without Xcode, so **run the iOS test suite
-once before archiving** — the new `RoutePolylineSamplerTests` should pass alongside the
-existing ones.
+Note the behaviour change in the release notes when this version goes out. Written on a Linux
+container without Xcode, so the code needed a compile check before archiving — **done
+2026-08-09 on the Mac**: `xcodebuild test` against an iPhone 17 Pro simulator, 57 tests passed
+and none failed, the six `RoutePolylineSamplerTests` among them. Re-run after the Dynamic Type
+work below landed, so that count covers both.
+
+**Dynamic Type no longer truncates the controls** (2026-08-09). Reported from a real user:
+on an iPhone with an enlarged system font the weekday circles all read "…". Three controls
+sized text into a fixed box and truncated once the text style scaled past xxxLarge:
+
+- the seven weekday chips (~34pt wide each on a 6.1" phone) — now wrap to **four per row**
+  at accessibility sizes, and the circle grows with the text (`@ScaledMetric`, capped at 76pt);
+- the four `RouteModePicker` pills — now **two columns** at accessibility sizes, with the
+  "Mode" label moved onto its own line (`AnyLayout` switching `HStack`→`VStack`);
+- the route weather card titles — `lineLimit(1)` → `2`, centred.
+
+`minimumScaleFactor` alone was not enough, and is the reason both rows then looked ragged:
+it shrinks each label independently to fit its own box, so "Fri" stayed full size next to a
+shrunken "Wed", and `大眾交通` came out visibly smaller than `開車`. `RowLabelFont.fittedSize`
+measures the widest label in the row with `UIFont` and gives every label in that row the same
+size; a `GeometryReader` supplies the row width, which is free here because both grids have a
+computed height. `minimumScaleFactor` stays as a fallback for the first layout pass.
+
+Deliberately *not* fixed by pinning the font size or swapping in images: both would leave the
+people who enlarged the font unable to read the control, and images cannot localize. Nothing
+below xxxLarge changes shape. Verified on an iPhone 16e simulator via
+`xcrun simctl ui <device> content_size accessibility-extra-extra-extra-large`, in English and
+zh-Hant. **The Android `WeekdaySelector` has the same defect** — a fixed `Modifier.size(40.dp)`
+circle — and is untouched here.
 
 ## Android port — in development
 

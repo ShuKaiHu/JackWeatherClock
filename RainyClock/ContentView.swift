@@ -1,6 +1,7 @@
 import AVFoundation
 import MapKit
 import SwiftUI
+import UIKit
 
 struct ContentView: View {
     private enum AppTab {
@@ -141,6 +142,7 @@ private struct RouteTabView: View {
 
     @ObservedObject var viewModel: AlarmViewModel
     let showsWeatherAttribution: Bool
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @StateObject private var addressCompleter = AddressSearchCompleter()
     @FocusState private var focusedAddressField: AddressField?
     @State private var expandedAddressSuggestionField: AddressField?
@@ -193,7 +195,11 @@ private struct RouteTabView: View {
                             }
                         }
 
-                        HStack(spacing: 12) {
+                        // The label keeps its intrinsic width, so at an
+                        // accessibility text size it would eat most of the row
+                        // and leave the pills too narrow to read. Put it on its
+                        // own line there instead.
+                        modeRowLayout {
                             Text("mode")
                                 .font(.subheadline.weight(.semibold))
                                 .foregroundStyle(.secondary)
@@ -323,6 +329,12 @@ private struct RouteTabView: View {
         .onChange(of: viewModel.settings.selectedWeekdays) { _, _ in
             scheduleRouteWeather()
         }
+    }
+
+    private var modeRowLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
+            : AnyLayout(HStackLayout(spacing: 12))
     }
 
     private func normalizeRouteMode() {
@@ -468,10 +480,20 @@ private struct RouteTabView: View {
 }
 
 private struct AlarmTabView: View {
+    private static let weekdayGridSpacing: CGFloat = 12
+    private static let weekdayLabelInset: CGFloat = 4
+
     private let weekdayOrder = [1, 2, 3, 4, 5, 6, 7]
 
     @ObservedObject var viewModel: AlarmViewModel
     @ObservedObject private var consentManager = ConsentManager.shared
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    // Only consulted at accessibility text sizes, where the row wraps and the
+    // chip finally has room to grow. Capped so AX5 doesn't produce a chip
+    // taller than the alarm time underneath it.
+    @ScaledMetric(relativeTo: .callout) private var scaledWeekdayChipHeight: CGFloat = 44
+    // `.callout` at the reader's text size, as a number the row can fit labels to.
+    @ScaledMetric(relativeTo: .callout) private var scaledWeekdayLabelSize: CGFloat = 16
     @State private var showsTimePicker = false
     @State private var audioPlayer: AVAudioPlayer?
     @State private var previewingSound: CommuteAlarmSettings.AlarmSound?
@@ -482,28 +504,31 @@ private struct AlarmTabView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
                     VStack(alignment: .leading, spacing: 20) {
-                        HStack(spacing: 12) {
-                            ForEach(weekdayOrder, id: \.self) { weekday in
-                                let isSelected = viewModel.settings.selectedWeekdays.contains(weekday)
-                                Button {
-                                    toggleWeekday(weekday)
-                                } label: {
-                                    Text(label(for: weekday))
-                                        .font(.callout.weight(.semibold))
-                                        .lineLimit(1)
-                                        .minimumScaleFactor(0.72)
-                                        .foregroundStyle(isSelected ? .white : Color.white.opacity(0.45))
-                                        .frame(maxWidth: .infinity)
-                                        .frame(height: 44)
-                                        .background(
-                                            Circle()
-                                                .fill(isSelected ? Color.accentColor : Color.appCardBackground)
-                                        )
+                        // The geometry reader is what lets every chip share one
+                        // font size; the grid's height is fixed either way, so
+                        // it costs no layout ambiguity.
+                        GeometryReader { proxy in
+                            let labelSize = weekdayLabelSize(inRowOfWidth: proxy.size.width)
+
+                            VStack(spacing: Self.weekdayGridSpacing) {
+                                ForEach(Array(weekdayRows.enumerated()), id: \.offset) { _, row in
+                                    HStack(spacing: Self.weekdayGridSpacing) {
+                                        ForEach(row, id: \.self) { weekday in
+                                            weekdayChip(for: weekday, labelSize: labelSize)
+                                        }
+
+                                        // Keep the short trailing row's chips the
+                                        // same width as the full row's.
+                                        ForEach(Array(row.count..<weekdayColumnCount), id: \.self) { _ in
+                                            Color.clear
+                                                .frame(maxWidth: .infinity)
+                                                .frame(height: weekdayChipHeight)
+                                        }
+                                    }
                                 }
-                                .buttonStyle(.plain)
-                                .animation(.easeOut(duration: 0.15), value: isSelected)
                             }
                         }
+                        .frame(height: weekdayGridHeight)
 
                         Button {
                             showsTimePicker = true
@@ -704,6 +729,68 @@ private struct AlarmTabView: View {
         }
     }
 
+    /// Seven chips across one row leave each one only ~34pt wide on a small
+    /// phone. That is fine up to xxxLarge, but an accessibility text size makes
+    /// the label wider than the circle even at the minimum scale factor, and
+    /// SwiftUI truncates it to "…". Wrap onto four per row instead: the chips
+    /// then have room to actually grow with the reader's text size.
+    private var weekdayColumnCount: Int {
+        dynamicTypeSize.isAccessibilitySize ? 4 : 7
+    }
+
+    private var weekdayRows: [[Int]] {
+        stride(from: 0, to: weekdayOrder.count, by: weekdayColumnCount).map { start in
+            Array(weekdayOrder[start..<min(start + weekdayColumnCount, weekdayOrder.count)])
+        }
+    }
+
+    /// Standard sizes keep the historical 44pt circle — width, not height, is
+    /// the constraint there, so growing it would only add empty space.
+    private var weekdayChipHeight: CGFloat {
+        dynamicTypeSize.isAccessibilitySize ? min(scaledWeekdayChipHeight, 76) : 44
+    }
+
+    private var weekdayGridHeight: CGFloat {
+        let rows = CGFloat(weekdayRows.count)
+        return rows * weekdayChipHeight + (rows - 1) * Self.weekdayGridSpacing
+    }
+
+    private func weekdayLabelSize(inRowOfWidth rowWidth: CGFloat) -> CGFloat {
+        let columns = CGFloat(weekdayColumnCount)
+        let chipWidth = (rowWidth - Self.weekdayGridSpacing * (columns - 1)) / columns
+
+        return RowLabelFont.fittedSize(
+            labels: weekdayOrder.map(label(for:)),
+            fittingWidth: chipWidth - Self.weekdayLabelInset * 2,
+            baseSize: scaledWeekdayLabelSize,
+            weight: .semibold
+        )
+    }
+
+    private func weekdayChip(for weekday: Int, labelSize: CGFloat) -> some View {
+        let isSelected = viewModel.settings.selectedWeekdays.contains(weekday)
+
+        return Button {
+            toggleWeekday(weekday)
+        } label: {
+            Text(label(for: weekday))
+                .font(.system(size: labelSize, weight: .semibold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+                .allowsTightening(true)
+                .foregroundStyle(isSelected ? .white : Color.white.opacity(0.45))
+                .padding(.horizontal, Self.weekdayLabelInset)
+                .frame(maxWidth: .infinity)
+                .frame(height: weekdayChipHeight)
+                .background(
+                    Circle()
+                        .fill(isSelected ? Color.accentColor : Color.appCardBackground)
+                )
+        }
+        .buttonStyle(.plain)
+        .animation(.easeOut(duration: 0.15), value: isSelected)
+    }
+
     private func toggleWeekday(_ weekday: Int) {
         if viewModel.settings.selectedWeekdays.contains(weekday) {
             viewModel.settings.selectedWeekdays.remove(weekday)
@@ -848,29 +935,111 @@ private struct AlarmTabView: View {
     }
 }
 
+/// One font size for a row of equal-width labels.
+///
+/// `minimumScaleFactor` shrinks each label independently to fit its own box, so
+/// a row ends up with mismatched text sizes — "Fri" stays full size while "Wed"
+/// shrinks, and `大眾交通` comes out visibly smaller than `開車`. Sizing every
+/// label in the row to whichever one is widest keeps them consistent.
+private enum RowLabelFont {
+    static func fittedSize(
+        labels: [String],
+        fittingWidth: CGFloat,
+        baseSize: CGFloat,
+        weight: UIFont.Weight,
+        minimumScale: CGFloat = 0.5
+    ) -> CGFloat {
+        guard fittingWidth > 0, baseSize > 0 else {
+            return baseSize
+        }
+
+        let font = UIFont.systemFont(ofSize: baseSize, weight: weight)
+        let widest = labels.reduce(CGFloat.zero) { widest, label in
+            max(widest, (label as NSString).size(withAttributes: [.font: font]).width)
+        }
+
+        guard widest > fittingWidth else {
+            return baseSize
+        }
+
+        return max(baseSize * fittingWidth / widest, baseSize * minimumScale)
+    }
+}
+
 private struct RouteModePicker: View {
+    private static let gridSpacing: CGFloat = 6
+    private static let labelInset: CGFloat = 8
+
     @Binding var selection: CommuteAlarmSettings.CommuteMode
     let modes: [CommuteAlarmSettings.CommuteMode]
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @ScaledMetric(relativeTo: .subheadline) private var scaledLabelSize: CGFloat = 15
+
     var body: some View {
-        HStack(spacing: 6) {
-            ForEach(modes) { mode in
-                Button {
-                    selection = mode
-                } label: {
-                    Text(mode.displayName)
-                        .font(.subheadline.weight(.semibold))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.75)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
+        GeometryReader { proxy in
+            let labelSize = labelSize(inRowOfWidth: proxy.size.width)
+
+            VStack(spacing: Self.gridSpacing) {
+                ForEach(rowStarts, id: \.self) { start in
+                    HStack(spacing: Self.gridSpacing) {
+                        ForEach(modes[start..<min(start + columnCount, modes.count)]) { mode in
+                            Button {
+                                selection = mode
+                            } label: {
+                                Text(mode.displayName)
+                                    .font(.system(size: labelSize, weight: .semibold))
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.5)
+                                    .allowsTightening(true)
+                                    .padding(.horizontal, Self.labelInset)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: pillHeight)
+                            }
+                            .buttonStyle(.plain)
+                            .foregroundStyle(.white)
+                            .background(selection == mode ? Color.accentColor : Color.appFieldBackground)
+                            .clipShape(Capsule())
+                        }
+                    }
                 }
-                .buttonStyle(.plain)
-                .foregroundStyle(.white)
-                .background(selection == mode ? Color.accentColor : Color.appFieldBackground)
-                .clipShape(Capsule())
             }
         }
+        .frame(height: gridHeight)
+    }
+
+    /// Four pills on one row leave each label ~45pt wide at an accessibility
+    /// text size, which truncates every one of them to "…". Two columns give
+    /// the labels room to grow instead.
+    private var columnCount: Int {
+        dynamicTypeSize.isAccessibilitySize ? 2 : modes.count
+    }
+
+    private var rowStarts: [Int] {
+        Array(stride(from: 0, to: modes.count, by: columnCount))
+    }
+
+    /// Sized from the unshrunk text so the pill height does not depend on the
+    /// fitted label size, which in turn depends on the row width.
+    private var pillHeight: CGFloat {
+        UIFont.systemFont(ofSize: scaledLabelSize, weight: .semibold).lineHeight.rounded(.up) + 20
+    }
+
+    private var gridHeight: CGFloat {
+        let rows = (CGFloat(modes.count) / CGFloat(columnCount)).rounded(.up)
+        return rows * pillHeight + (rows - 1) * Self.gridSpacing
+    }
+
+    private func labelSize(inRowOfWidth rowWidth: CGFloat) -> CGFloat {
+        let columns = CGFloat(columnCount)
+        let pillWidth = (rowWidth - Self.gridSpacing * (columns - 1)) / columns
+
+        return RowLabelFont.fittedSize(
+            labels: modes.map(\.displayName),
+            fittingWidth: pillWidth - Self.labelInset * 2,
+            baseSize: scaledLabelSize,
+            weight: .semibold
+        )
     }
 }
 
@@ -1152,7 +1321,8 @@ private struct RouteWeatherCard: View {
         VStack(spacing: 12) {
             Text(segment.name)
                 .font(.headline.weight(.semibold))
-                .lineLimit(1)
+                .lineLimit(2)
+                .multilineTextAlignment(.center)
                 .minimumScaleFactor(0.7)
 
             Image(systemName: segment.condition.iconName)
@@ -1213,7 +1383,8 @@ private struct RouteWeatherPlaceholderCards: View {
                 VStack(spacing: 12) {
                     Text(title)
                         .font(.headline.weight(.semibold))
-                        .lineLimit(1)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.center)
                         .minimumScaleFactor(0.7)
 
                     Image(systemName: "cloud.sun.fill")
