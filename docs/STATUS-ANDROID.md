@@ -93,10 +93,16 @@ default.
       breaches one licence or the other. It says "Apple Weather" **in words**: the  glyph the
       iOS app uses is U+F8FF, a private-use codepoint only Apple's fonts carry, and on Android
       it renders as *nothing* — leaving "Weather data provided by Weather".
-- [ ] **(you) Move the `.p8` out of `~/Downloads`** and say where. Apple allows exactly one
-      download; losing it means generating a new key.
-- [ ] Deploy the proxy to Cloud Run with the `.p8` in Secret Manager, then rebuild with the
-      public URL. Until then the Android build only works on a machine running the proxy.
+- [x] Key stored at `~/.config/rainyclock/AuthKey_QQLPN677CU.p8`, mode 600, and in Secret
+      Manager as `weatherkit-private-key`. It briefly sat inside this repo, which is
+      **public** — `*.p8` is now gitignored as a second line of defence, and the history is
+      clean. Apple allows exactly one download; losing the file means a new key.
+- [x] **Proxy deployed to Cloud Run 2026-08-09**, `asia-east1`, max 3 instances, 256 MiB,
+      the key mounted from Secret Manager rather than baked into the deploy command:
+      `https://rainyclock-weather-proxy-510427696731.asia-east1.run.app`. Verified from
+      the emulator with the local proxy stopped, so the reading genuinely came from the
+      cloud service. Build with
+      `-PweatherProxyUrl=https://rainyclock-weather-proxy-510427696731.asia-east1.run.app`.
 - [ ] Decide on proxy access control. There is a shared-secret hook, unused: the secret would
       ship in the APK too, so it only raises the bar. Firebase App Check is the real answer if
       the quota ever gets scraped.
