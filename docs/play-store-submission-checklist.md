@@ -2,7 +2,7 @@
 
 Mechanics for getting `android/` onto Google Play. The App Store counterpart is
 `docs/app-store-submission-checklist.md`; architecture and platform decisions are in
-`docs/ANDROID.md`. Nothing here is done yet — this is the runbook.
+`docs/ANDROID.md`. Tick boxes as they close — several already have.
 
 ## One-time account setup
 
@@ -63,18 +63,21 @@ Mechanics for getting `android/` onto Google Play. The App Store counterpart is
       uploaded bundle, so a build installed from Play presents the *Play* certificate — list
       only the upload cert and production maps fail for every real user while working
       perfectly in every local test.
-- [ ] Set a **quota cap** on Routes API (e.g. 9,000/month) so cost is structurally $0.
-      Debug-build SHA-1 for local testing:
+- [x] **Quota capped at 300 Routes calls/day 2026-08-09** (~9,000/month, inside the free
+      Essentials allowance), with a US$1 budget alert alongside it. Note for whoever looks
+      later: Maps Platform has **no daily cap by default** once billing is attached, so this
+      was adding a limit rather than lowering one. Debug-build SHA-1 for local testing:
       `3A:6A:BC:72:DB:DB:B8:81:E6:EB:68:52:99:F1:1F:8D:24:07:AD:32`.
-- [ ] Pass the key at build time: `-PmapsApiKey=…` (or `mapsApiKey` in
-      `~/.gradle/gradle.properties`). Never commit it. Without it the app still works —
-      map hidden, endpoint-only rain check.
+- [x] Key passed at build time via `mapsApiKey` in `~/.gradle/gradle.properties`; never
+      committed. Without it the app still works — map hidden, endpoint-only rain check.
 
 ## Before the first upload
 
-- [ ] **Weather-provider licensing decision** — Open-Meteo's keyless tier is non-commercial
-      and the app carries ads. Subscribe, swap providers, or ship the first release ad-free.
-      Details and options in `docs/ANDROID.md`. **Do not ship ads + free tier.**
+- [x] **Weather provider settled 2026-08-09: Apple WeatherKit REST**, replacing Open-Meteo,
+      whose keyless tier is non-commercial and could never have shipped beside ads. Reached
+      through the signing proxy in `weather-proxy/`, deployed to Cloud Run. Build with
+      `-PweatherProxyUrl=…`; **a release built without it silently falls back to Open-Meteo**,
+      which is the exact combination that must not ship. Reasoning in `docs/ANDROID.md`.
 - [ ] Version in `android/app/build.gradle.kts` (`versionCode` must increase every upload;
       `versionName` is display-only). Single source of truth — no dual-file trap like the
       iOS `Info.plist` / project-file split.
@@ -104,8 +107,6 @@ Mechanics for getting `android/` onto Google Play. The App Store counterpart is
       location is *transmitted but not collected*. Whatever wording the form takes, it must
       match the privacy-policy page; the iOS 1.6.4 rejection was exactly a policy-versus-
       declaration mismatch.
-      Keep this consistent with the privacy-policy page — the iOS 1.6.4 rejection was
-      exactly a policy-vs-declaration mismatch; App Review and Play review both read the page.
 - [ ] **Ads declaration** — yes, the app contains ads.
 - [ ] **`USE_EXACT_ALARM` declaration.** Play policy restricts this permission to apps whose
       **core functionality is an alarm clock or timer**. In the console's permission
