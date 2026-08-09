@@ -14,17 +14,27 @@ val AppBackground = Color(0xFF000000)
 val AppCard = Color(0xFF1F1F21)
 val AppField = Color(0xFF2E2E33)
 
-/** iOS system blue, dark-mode variant. */
-val AppAccent = Color(0xFF0A84FF)
+/**
+ * iOS's system blue in dark mode, **measured** from the running iPhone app
+ * rather than taken from a reference chart: `#0A84FF` is the value every
+ * pre-iOS-26 table gives, and it is no longer what iOS renders. Sampled from a
+ * screenshot with no system alert dimming the window, five interior points of
+ * the accent-filled capsule and the selected tab label all read this exactly.
+ */
+val AppAccent = Color(0xFF0091FF)
 
 /** iOS secondary label over black. */
 val AppSecondaryLabel = Color(0xFF98989E)
 
-// The three weather-condition tints, and the card gradient behind them, are
-// iOS's .yellow / .cyan / .blue in their dark-mode form.
-val WeatherClear = Color(0xFFFFD60A)
+// The weather marks. iOS renders these as multicolour SF Symbols, so what
+// shows is the symbol's own palette rather than the condition tint: a white
+// cloud with a yellow sun or blue rain. Clear and rain are measured from the
+// iPhone app; the cloudy tint is the one value here still taken from a
+// reference table rather than a screenshot, because no overcast icon has been
+// on screen to sample.
+val WeatherClear = Color(0xFFFFD600)
 val WeatherCloudy = Color(0xFF64D2FF)
-val WeatherRain = Color(0xFF0A84FF)
+val WeatherRain = AppAccent
 val WeatherCardTop = Color(0xFF051F26)
 val WeatherCardBottom = Color(0xFF05476B)
 

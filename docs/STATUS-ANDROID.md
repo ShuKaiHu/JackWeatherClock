@@ -31,7 +31,7 @@ them over the threshold pulls the alarm earlier. iOS still samples endpoints onl
 
 **Restyled to match iOS on 2026-08-09**: the Material baseline purple is gone, replaced by
 the palette `ContentView.swift` defines — black canvas, `#1F1F21` cards, `#2E2E33` filled
-fields, iOS dark-mode system blue `#0A84FF`, dark-only like iOS. The route-weather segments
+fields, iOS dark-mode system blue `#0091FF`, dark-only like iOS. The route-weather segments
 now sit side by side as gradient tiles the way the iOS `HStack` presents them, and the ad
 banner moved *below* the tab strip. Details and the two Material colour roles left
 deliberately untinted are in `docs/ANDROID.md`.
@@ -105,8 +105,9 @@ default.
       `-PweatherProxyUrl=https://rainyclock-weather-proxy-510427696731.asia-east1.run.app`.
 - [x] **Proxy abuse defences, 2026-08-09.** It has to stay unauthenticated — any credential
       it demanded would ship in the APK beside the URL — so it bounds cost instead of
-      identity: a 15-minute response cache keyed on ~1.1 km coordinates, a 60-per-5-minute
-      per-caller throttle, and a hard 5,000/day ceiling on upstream calls. All three
+      identity: a 15-minute response cache keyed on ~1.1 km coordinates, a 600-per-5-minute
+      per-caller throttle, and a hard 5,000/day ceiling on upstream calls. The throttle is
+      loose on purpose: a public IP is not a person, and carrier-grade NAT is the norm here. All three
       verified against the deployed service; the throttle starts answering `429` on the
       56th distinct request. Reasoning in `docs/ANDROID.md`.
 - [ ] **Firebase App Check** once a Play Console listing exists — Play Integrity is the only

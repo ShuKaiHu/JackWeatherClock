@@ -34,8 +34,16 @@ copies the iOS target's `.wav` files into a generated `res/raw/` folder at build
 ## Palette and chrome
 
 `ui/theme/Theme.kt` restates the iOS palette rather than using the Material baseline: black
-canvas, `#1F1F21` cards, `#2E2E33` filled fields, and iOS's dark-mode system blue `#0A84FF`
-as the single accent. The scheme is dark-only, because `ContentView.swift` pins itself with
+canvas, `#1F1F21` cards, `#2E2E33` filled fields, and iOS's dark-mode system blue as the
+single accent.
+
+That blue is **`#0091FF`, measured from the running iPhone app** — not `#0A84FF`, the value
+every pre-iOS-26 reference gives and the one this port first shipped with. Do not "correct" it
+back from a chart. Measuring it needs one precaution: a system alert dims the whole window by
+about 0.8, so a screenshot taken with the ATT prompt up reads `#0074CC` instead. Confirm the
+capture is clean by sampling a colour the source pins — `#2E2E33` for a field background — and
+checking it comes back unchanged. The sun in the weather marks was measured the same way and
+is `#FFD600`. The scheme is dark-only, because `ContentView.swift` pins itself with
 `preferredColorScheme(.dark)` — `values/themes.xml` matches `values-night` so the launch
 window never flashes white. Weather tints are iOS's `.yellow` / `.cyan` / `.blue`, and the
 route-weather tiles carry the same top-to-bottom teal→blue gradient, laid out **side by side**
@@ -87,8 +95,13 @@ the WeatherKit allowance rather than its own CPU as the thing being defended:
   far finer than any forecast grid). This is the largest lever by some distance — one hour and
   one neighbourhood is the same answer for everybody, so a whole city collapses into a single
   upstream call. Measured on Cloud Run: 0.83 s cold, 0.09 s cached.
-- **A per-caller throttle**, 60 requests per 5 minutes, so one client cannot drain the day
-  alone. Verified end to end: the 56th distinct request onwards answers `429`.
+- **A per-caller throttle**, 600 requests per 5 minutes — deliberately generous, because a
+  public IP is not a person. Carrier-grade NAT puts thousands of mobile subscribers behind one
+  address, which is the normal case in this app's home market, so a tight limit locks out a
+  whole carrier at 7am without stopping anyone determined; the daily budget already caps the
+  worst case. It exists to catch runaway loops. Cache hits never reach it. (It was 60 for
+  about an hour, which was enough for a burst of test traffic from the developer's own machine
+  to `429` the emulator sitting behind the same address.)
 - **A hard daily ceiling on upstream calls** (`DAILY_UPSTREAM_LIMIT`, 5,000 — roughly 150,000
   a month against an allowance of 500,000). Apple offers no way to cap the allowance from
   their side, so this is what stops a scraped URL draining the month in an afternoon.
