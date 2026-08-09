@@ -100,8 +100,8 @@
 "alarm_alert_title_adjusted" = "Rain ahead — up early today";
 "alarm_snooze_button" = "Snooze";
 "alarm_snoozing_title" = "Snoozing";
-"segment_home_area" = "Home area";
-"segment_office_area" = "Office area";
+"segment_home_area" = "Home";
+"segment_office_area" = "Office";
 "segment_route_placeholder" = "Commute";
 "segment_route_format" = "%@ route";
 "segment_route_sample_format" = "%@ sample %d";

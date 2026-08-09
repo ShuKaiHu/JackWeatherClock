@@ -273,6 +273,27 @@ card's condition line went `lineLimit(1)` → `2`, which is what truncated "62% 
 "62…" at accessibility sizes even with only three cards. A ≥20 km commute is ordinary here —
 Taipei to Hsinchu hits it — so this was a real user-facing break, not a corner case.
 
+**Five cards then became a W** (2026-08-09): stops 1, 3, 5 on the top row, stops 2 and 4
+dropped onto a lower row nesting in the gaps between them. A plain 3+2 grid reads wrong —
+the fourth stop starts a new row at the far left, *behind* the second one — whereas the W
+keeps every card further right than the one before it, so the block reads home → office left
+to right. Geometry: the lower row is simply centred, which lands each card exactly half a
+card plus half a gap off the row above; the width comes from a `GeometryReader` in the top
+row's background. Only odd counts stagger (an even count fills the lower row completely and
+leaves no gap to nest into), and only below accessibility sizes.
+
+Shortening the labels was considered first and **measured, not assumed**: with
+"中點1/2/3" and the old `HStack` the row still overflowed by 40pt. A card cannot go below
+~70pt wide whatever the title says — the weather glyph is a hardcoded 42pt, the condition
+line needs ~60pt at its minimum scale, and "住家附近"/"公司附近" are not shortenable. Five of
+those plus spacing is 390pt against 350pt of usable width.
+
+The English endpoint labels dropped "area" the same day — `segment_home_area` and
+`segment_office_area` now read "Home" and "Office". zh-Hant keeps 住家附近 / 公司附近.
+**Still open:** the interior samples are called "通勤途中取樣 N" / "Commute sample N". They are
+at 1/4, 1/2 and 3/4 of the route, so "中點" would be wrong for two of the three; a shorter
+wording needs to survive that.
+
 **Dynamic Type no longer truncates the controls** (2026-08-09). Reported from a real user:
 on an iPhone with an enlarged system font the weekday circles all read "…". Three controls
 sized text into a fixed box and truncated once the text style scaled past xxxLarge:
@@ -313,20 +334,92 @@ product — **on-route rain sampling**: interior points along the polyline (midp
 quarter points on long commutes) are rain-checked alongside home and office, and any of
 them over the threshold pulls the alarm earlier. iOS still samples endpoints only.
 
+**Restyled to match iOS on 2026-08-09**: the Material baseline purple is gone, replaced by
+the palette `ContentView.swift` defines — black canvas, `#1F1F21` cards, `#2E2E33` filled
+fields, iOS dark-mode system blue `#0A84FF`, dark-only like iOS. The route-weather segments
+now sit side by side as gradient tiles the way the iOS `HStack` presents them, and the ad
+banner moved *below* the tab strip. Details and the two Material colour roles left
+deliberately untinted are in `docs/ANDROID.md`.
+
 Decisions and deliberate gaps (no address autocomplete, Open-Meteo instead of WeatherKit —
 the WeatherKit REST key cannot ship in an APK; four options incl. a tiny signing proxy are
-documented) are in `docs/ANDROID.md`. **Blockers before a Play release, in order:**
+documented) are in `docs/ANDROID.md`.
 
-1. The weather-provider licensing decision — Open-Meteo's free tier is non-commercial and
-   the app carries ads (`docs/ANDROID.md` has the three options).
-2. Play developer account + the 12-testers/14-days rule if it registers as a personal
-   account (`docs/play-store-submission-checklist.md` is the runbook).
-3. A new AdMob Android app + banner unit, passed at build time via Gradle properties.
-4. `docs/privacy-policy.html` needs an Android paragraph before it is reused as the Play
-   privacy policy URL (it currently describes ATT, which does not exist on Android).
-5. A Google Maps Platform key (billing account attached, Maps SDK + Routes API enabled,
-   restricted to the package + both signing certs, quota capped) — without it the app
-   still ships, minus the map card and the on-route sampling.
+### Outstanding — everything still owed, in priority order
+
+Mechanics live in `docs/play-store-submission-checklist.md`; this is the "what is left and
+who has to do it" view. Items marked **(you)** need a human with console access, a payment
+method, or a product call — nobody else can close them.
+
+**1. Money and secrets — open right now, do these first**
+
+- [ ] **(you) Restrict the Maps API key. It is currently wide open.** Verified 2026-08-09: a
+      `curl` from a laptop, sending no Android headers at all, reached both Geocoding and
+      Places with this key. The key ships *inside the APK* and is trivially extracted from a
+      decompiled build, so the restriction is not hardening — it is the only control there
+      is, and a billing account is already attached. Set **both** halves in the console
+      (Credentials → the key): Application restriction → Android apps →
+      `com.shukaihu.rainyclock` + SHA-1, and API restriction → Maps SDK for Android +
+      Routes API only. Debug SHA-1 for local testing is
+      `3A:6A:BC:72:DB:DB:B8:81:E6:EB:68:52:99:F1:1F:8D:24:07:AD:32`; the upload and Play App
+      Signing SHA-1s must be added before release or production maps break. Re-run the probe
+      afterwards — a correct setup answers `REQUEST_DENIED`.
+- [ ] **(you) Cap the Routes API quota** (API & Services → Routes API → Quotas). Structural,
+      not advisory: a capped quota makes the bill $0 even if the key leaks or a bug loops.
+- [ ] **(you) Disable the ~30 Maps APIs the console enabled by default.** The app calls two.
+      Route Optimization, Navigation SDK and Places are expensive; every one left enabled is
+      reachable with a leaked key.
+
+**2. The one product decision still blocking a release**
+
+- [ ] **(you) Weather-provider licensing.** Open-Meteo's keyless tier is **non-commercial**
+      and this app carries ads. Three options in `docs/ANDROID.md`: buy their commercial
+      plan, swap the provider behind `WeatherSamplingService`, or ship the first release
+      ad-free. **Shipping ads on the free tier is not one of them.** Everything else below
+      can proceed in parallel; this one gates going live.
+
+**3. Accounts and assets that take calendar time**
+
+- [ ] **(you) Play Developer account** (US$25). If it registers as a *personal* account, the
+      **12-testers-for-14-days closed test** applies — that is the longest pole in the whole
+      schedule, so open the account early even if the build is not final.
+- [ ] **(you) Upload keystore**, generated once and backed up outside the repo, with Play App
+      Signing opted in at first upload. Its SHA-1 (and Play's) then go into the Maps key.
+- [ ] **(you) AdMob: register a new Android app** and one anchored adaptive banner unit; pass
+      both as Gradle properties at build time. `app-ads.txt` needs no change — it is
+      per-account and already verified.
+
+**4. Content and code left to write**
+
+- [ ] `docs/privacy-policy.html` needs an **Android paragraph** before it can be the Play
+      privacy-policy URL — it currently describes ATT, which does not exist on Android.
+      The page ships from this repo, so it only counts once pushed.
+- [ ] **Android screenshots** for the listing. `pics/20260729/` is iPhone-framed and the
+      Android UI genuinely differs; retake on the emulator. The dark/blue restyle means the
+      old shots are wrong twice over.
+- [ ] Feature graphic 1024×500 and a 512×512 icon.
+- [ ] **`WeekdaySelector` truncates at large font scales** — a fixed `Modifier.size(40.dp)`
+      circle, the same defect fixed on iOS on 2026-08-09 and still open here.
+- [ ] Commit and merge the work sitting uncommitted on
+      `claude/android-play-store-release-jykw59` (PR #2 is still a draft).
+
+**5. Play Console declarations and rollout** — all in the checklist doc: data safety form,
+ads declaration, the **`USE_EXACT_ALARM`** permission declaration (mandatory; the release is
+rejected on upload without it), content rating, then internal test → closed test if required
+→ staged production rollout.
+
+**Already closed:** the Maps Platform key itself. Project `RainyClock` (`510427696731`),
+billing attached, Maps SDK for Android + Routes API enabled, key in
+`~/.gradle/gradle.properties`. Verified end to end on the emulator 2026-08-09 — map tiles,
+polyline, 26 min / 17.2 km on a real Tainan commute.
+
+**The scooter mode was dropped from Android on 2026-08-09.** Routes API prices two-wheeler
+routing as Enterprise tier, outside the free Essentials allowance, and scooters are the most
+common commute in the target market — so the mode would have put most real traffic on the
+only billable path. Android now offers Car, Walking and Transit; iOS keeps its scooter pill
+(Apple Maps is free and has no two-wheeler mode, so it already shows a driving estimate).
+Reasoning in `docs/PRODUCT_DECISIONS.md`, both languages. A settings blob still holding
+`"scooter"` degrades to `CAR` instead of wiping every other field — pinned by a test.
 
 ## Backlog
 

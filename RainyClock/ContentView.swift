@@ -1313,15 +1313,49 @@ private struct MetricRow: View {
 /// The card count is dynamic: the two endpoints, plus up to three interior
 /// samples once the commute is long enough. Five cards in one `HStack` are
 /// wider than the screen — they clip at both edges and drag the whole page's
-/// horizontal margins with them — so the row wraps instead of overflowing.
+/// horizontal margins with them — so the cards move onto two rows instead.
+///
+/// Five of them do that as a **W**: stops 1, 3 and 5 on the top row, stops 2
+/// and 4 dropped onto a second row nesting in the gaps between them. Every
+/// card then still sits further right than the one before it, so the row reads
+/// home → office left to right, which a plain 3+2 grid loses — there the
+/// fourth stop starts a new row at the far left, behind the second.
 private struct RouteWeatherGrid: View {
     private static let spacing: CGFloat = 10
 
     let segments: [RouteWeatherSegment]
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @State private var rowWidth: CGFloat = 0
 
     var body: some View {
+        if usesStaggeredRows {
+            staggeredRows
+        } else {
+            wrappedRows
+        }
+    }
+
+    private var staggeredRows: some View {
+        VStack(spacing: Self.spacing) {
+            HStack(spacing: Self.spacing) {
+                ForEach(topIndices, id: \.self) { index in
+                    RouteWeatherCard(segment: segments[index])
+                }
+            }
+            .background(rowWidthReader)
+
+            HStack(spacing: Self.spacing) {
+                ForEach(bottomIndices, id: \.self) { index in
+                    RouteWeatherCard(segment: segments[index])
+                }
+            }
+            // One card lands the lower row exactly between the two above it.
+            .padding(.horizontal, staggerInset)
+        }
+    }
+
+    private var wrappedRows: some View {
         VStack(spacing: Self.spacing) {
             ForEach(rowStarts, id: \.self) { start in
                 let end = min(start + columnCount, segments.count)
@@ -1340,6 +1374,41 @@ private struct RouteWeatherGrid: View {
                 }
             }
         }
+    }
+
+    private var rowWidthReader: some View {
+        GeometryReader { proxy in
+            Color.clear
+                .onChange(of: proxy.size.width, initial: true) { _, width in
+                    rowWidth = width
+                }
+        }
+    }
+
+    /// An even count would put as many cards on the lower row as the upper one,
+    /// leaving no gap to nest into; only an odd count staggers. In practice the
+    /// sampler produces two, three or five. Accessibility sizes stay on the
+    /// wrapped rows — a W at those sizes is back to five cards' worth of width.
+    private var usesStaggeredRows: Bool {
+        !dynamicTypeSize.isAccessibilitySize && segments.count >= 5 && !segments.count.isMultiple(of: 2)
+    }
+
+    private var topIndices: [Int] {
+        Array(stride(from: 0, to: segments.count, by: 2))
+    }
+
+    private var bottomIndices: [Int] {
+        Array(stride(from: 1, to: segments.count, by: 2))
+    }
+
+    private var staggerInset: CGFloat {
+        guard rowWidth > 0, !topIndices.isEmpty else {
+            return 0
+        }
+
+        let columns = CGFloat(topIndices.count)
+        let cardWidth = (rowWidth - Self.spacing * (columns - 1)) / columns
+        return (cardWidth + Self.spacing) / 2
     }
 
     /// Two endpoints alone keep the historical side-by-side pair.
