@@ -41,6 +41,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -208,6 +209,13 @@ private fun AlarmTimePickerDialog(
 /**
  * Selected days are filled circles with contrasting text, unselected days
  * plain dim text — the 1.6.4 redesign, ported. Weekday 1 = Sunday.
+ *
+ * The circle grows with the system font scale rather than staying at 40dp. It
+ * used to be fixed, so anyone who had enlarged their font saw seven ellipses
+ * instead of seven day names: the label scaled, the box did not. Above a
+ * scale of 1.3 the row also wraps to four per line, because seven circles wide
+ * enough to hold scaled-up text do not fit across a phone at any size. This is
+ * the same defect, and the same shape of fix, that iOS took on 2026-08-09.
  */
 @Composable
 private fun WeekdaySelector(selected: Set<Int>, onToggle: (Int) -> Unit) {
@@ -221,32 +229,49 @@ private fun WeekdaySelector(selected: Set<Int>, onToggle: (Int) -> Unit) {
         R.string.weekday_saturday_short
     )
 
+    val fontScale = LocalDensity.current.fontScale
+    // Capped so the largest accessibility scale cannot produce a chip taller
+    // than the alarm time it sits under.
+    val diameter = (40.dp * fontScale.coerceIn(1f, 1.9f))
+    val rows = if (fontScale > 1.3f) labels.chunked(4) else listOf(labels)
+
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(text = stringResource(R.string.repeat_days), style = MaterialTheme.typography.titleSmall)
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            labels.forEachIndexed { index, labelResId ->
-                val weekday = index + 1
-                val isSelected = selected.contains(weekday)
-                Surface(
-                    shape = CircleShape,
-                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clickable { onToggle(weekday) }
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text(
-                            text = stringResource(labelResId),
-                            color = if (isSelected) {
-                                MaterialTheme.colorScheme.onPrimary
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                            },
-                            style = MaterialTheme.typography.bodyMedium
-                        )
+        rows.forEachIndexed { rowIndex, rowLabels ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = if (rows.size == 1) {
+                    Arrangement.SpaceBetween
+                } else {
+                    Arrangement.spacedBy(8.dp)
+                }
+            ) {
+                rowLabels.forEachIndexed { indexInRow, labelResId ->
+                    val weekday = rowIndex * 4 + indexInRow + 1
+                    val isSelected = selected.contains(weekday)
+                    Surface(
+                        shape = CircleShape,
+                        color = if (isSelected) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.surface
+                        },
+                        modifier = Modifier
+                            .size(diameter)
+                            .clickable { onToggle(weekday) }
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(
+                                text = stringResource(labelResId),
+                                color = if (isSelected) {
+                                    MaterialTheme.colorScheme.onPrimary
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                },
+                                style = MaterialTheme.typography.bodyMedium,
+                                maxLines = 1
+                            )
+                        }
                     }
                 }
             }

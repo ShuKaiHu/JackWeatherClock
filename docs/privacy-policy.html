@@ -47,15 +47,36 @@ your privacy. This policy explains what data is used and how.</p>
 <p>When you enter addresses or tap "Schedule Smart Alarm," the app contacts
 the following services on your behalf:</p>
 <ul>
-  <li><strong>Apple Maps (MapKit / CLGeocoder)</strong> – to convert your address
+  <li><strong>iPhone — Apple Maps (MapKit / CLGeocoder)</strong> – to convert your address
       text into geographic coordinates and calculate a commute route.</li>
-  <li><strong>Apple Weather / WeatherKit</strong> – to retrieve weather forecasts for your home and work areas.</li>
+  <li><strong>Android — Google Maps Platform</strong> – the Maps SDK and Routes API draw the
+      route and calculate its length; addresses are turned into coordinates by Android's own
+      geocoder on the device.</li>
+  <li><strong>Both — Apple Weather / WeatherKit</strong> – to retrieve weather forecasts for
+      your home and work areas, and for points along your route.</li>
 </ul>
-<p>Apple Maps is provided by Apple Inc. and is subject to Apple's own
-<a href="https://www.apple.com/legal/privacy/">Privacy Policy</a>.
-Apple Weather / WeatherKit is provided by Apple Inc. and is subject to Apple's own
-<a href="https://www.apple.com/legal/privacy/">Privacy Policy</a>.
-Your addresses and location coordinates are used only to calculate routes and retrieve weather forecasts.</p>
+<p>Apple Maps and Apple Weather / WeatherKit are provided by Apple Inc. and are subject to
+Apple's own <a href="https://www.apple.com/legal/privacy/">Privacy Policy</a>.
+Google Maps Platform is provided by Google LLC and is subject to Google's
+<a href="https://policies.google.com/privacy">Privacy Policy</a>.
+Your addresses and location coordinates are used only to calculate routes and retrieve
+weather forecasts.</p>
+
+<h3>Weather requests on Android</h3>
+<p>Apple requires weather requests to be signed with a private key that cannot safely be
+placed inside an Android app, so the Android version asks Apple for the forecast through a
+small relay service we operate, rather than contacting Apple directly. What this means for
+you:</p>
+<ul>
+  <li>The relay receives <strong>only</strong> a coordinate, a time range and a language —
+      never your address text, your device identifier, or anything that identifies you.</li>
+  <li>Coordinates are rounded to roughly one kilometre before being used, and the resulting
+      forecast is held in memory for about fifteen minutes so that repeated requests for the
+      same area do not have to be asked again.</li>
+  <li>Nothing is written to a database or a log of your requests, and nothing is shared with
+      anyone else.</li>
+</ul>
+<p>The iPhone version has no relay: it talks to Apple Weather directly.</p>
 
 <h2>Advertising</h2>
 <p>Rainy Clock displays one banner advertisement through Google AdMob. Google may
@@ -64,6 +85,10 @@ improve ads. AdMob is provided by Google LLC and is subject to Google's
 <a href="https://policies.google.com/privacy">Privacy Policy</a>.</p>
 
 <h2 id="tracking">Tracking</h2>
+<p><strong>On Android</strong> there is no App Tracking Transparency prompt — the mechanism
+does not exist on that platform. Whether the banner is personalised is governed entirely by
+the consent choice described at the end of this section, which the Google Mobile Ads SDK
+applies on its own. The rest of this section describes the iPhone version.</p>
 <p>The first time you open the app, iOS asks whether Rainy Clock may track your
 activity across other companies' apps and websites. This is Apple's App Tracking
 Transparency prompt, and your answer decides what happens:</p>
@@ -118,18 +143,29 @@ shukaihu@icloud.com.</p>
 <h2>第三方服務</h2>
 <p>當你輸入地址或點選「排程智慧鬧鐘」時，App 會代表你使用下列服務：</p>
 <ul>
-  <li><strong>Apple Maps（MapKit / CLGeocoder）</strong>：將地址文字轉換為座標並計算通勤路線。</li>
-  <li><strong>Apple Weather / WeatherKit</strong>：取得住家與公司附近的天氣預報。</li>
+  <li><strong>iPhone — Apple Maps（MapKit / CLGeocoder）</strong>：將地址文字轉換為座標並計算通勤路線。</li>
+  <li><strong>Android — Google Maps Platform</strong>：以 Maps SDK 與 Routes API 繪製路線並計算距離；地址轉換為座標則由 Android 內建的地理編碼器在裝置上完成。</li>
+  <li><strong>兩個平台 — Apple Weather / WeatherKit</strong>：取得住家、公司以及路線沿途各點的天氣預報。</li>
 </ul>
-<p>Apple Maps 由 Apple Inc. 提供，並受 Apple 的
-<a href="https://www.apple.com/legal/privacy/">隱私權政策</a>約束。Apple Weather / WeatherKit 由 Apple Inc. 提供，並受 Apple 的
-<a href="https://www.apple.com/legal/privacy/">隱私權政策</a>約束。你的地址與座標只會用於計算路線與取得天氣預報。</p>
+<p>Apple Maps 與 Apple Weather / WeatherKit 由 Apple Inc. 提供，並受 Apple 的
+<a href="https://www.apple.com/legal/privacy/">隱私權政策</a>約束。Google Maps Platform 由 Google LLC 提供，並受 Google 的
+<a href="https://policies.google.com/privacy">隱私權政策</a>約束。你的地址與座標只會用於計算路線與取得天氣預報。</p>
+
+<h3>Android 版的天氣請求</h3>
+<p>Apple 要求天氣請求必須以私鑰簽章，而該私鑰無法安全地放進 Android App，因此 Android 版是透過我們自行營運的一個小型轉發服務向 Apple 取得預報，而非直接連線。這對你的意義是：</p>
+<ul>
+  <li>轉發服務<strong>只會</strong>收到一組座標、一段時間範圍與語言設定，不會收到你的地址文字、裝置識別碼，或任何能識別你身分的資訊。</li>
+  <li>座標在使用前會被四捨五入到約一公里的精度，取得的預報會在記憶體中保留約十五分鐘，讓同一地區的重複查詢不必再次向 Apple 索取。</li>
+  <li>不會寫入任何資料庫或請求紀錄，也不會提供給任何第三方。</li>
+</ul>
+<p>iPhone 版沒有這個轉發服務，它直接與 Apple Weather 連線。</p>
 
 <h2>廣告</h2>
 <p>Rainy Clock 會透過 Google AdMob 顯示一則橫幅廣告。Google 可能會處理裝置、廣告與互動資料，用於提供、限制、衡量與改善廣告。AdMob 由 Google LLC 提供，並受 Google 的
 <a href="https://policies.google.com/privacy">隱私權政策</a>約束。</p>
 
 <h2 id="tracking-zh">追蹤</h2>
+<p><strong>Android 版沒有「App 追蹤透明度」提示</strong>——這個機制在該平台上並不存在。廣告是否個人化，完全取決於本節末尾所述的同意選擇，由 Google Mobile Ads SDK 自行套用。本節其餘內容描述的是 iPhone 版。</p>
 <p>第一次開啟 App 時，iOS 會詢問是否允許 Rainy Clock 追蹤你在其他公司 App 與網站上的活動。這是 Apple 的「App 追蹤透明度」提示，你的選擇決定接下來的行為：</p>
 <ul>
   <li><strong>選擇允許</strong>：裝置上的廣告識別碼可能會提供給 Google，讓橫幅廣告更貼近你的興趣。</li>

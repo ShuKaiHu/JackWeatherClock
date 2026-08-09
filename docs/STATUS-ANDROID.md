@@ -126,15 +126,20 @@ default.
 
 **4. Content and code left to write**
 
-- [ ] `docs/privacy-policy.html` needs an **Android paragraph** before it can be the Play
-      privacy-policy URL — it currently describes ATT, which does not exist on Android.
-      The page ships from this repo, so it only counts once pushed.
+- [x] **`docs/privacy-policy.html` covers Android, 2026-08-09**, both languages: Google Maps
+      Platform named, a Tracking section that states there is no ATT prompt on Android, and a
+      new section on the WeatherKit relay — coordinates now leave the device to a service we
+      operate, which nothing disclosed before. Rounded to ~1 km, no identifier, in memory for
+      ~15 minutes, never written down. **Only counts once pushed and live**, and the Play
+      Data safety answers have to agree with it.
 - [ ] **Android screenshots** for the listing. `pics/20260729/` is iPhone-framed and the
       Android UI genuinely differs; retake on the emulator. The dark/blue restyle means the
       old shots are wrong twice over.
 - [ ] Feature graphic 1024×500 and a 512×512 icon.
-- [ ] **`WeekdaySelector` truncates at large font scales** — a fixed `Modifier.size(40.dp)`
-      circle, the same defect fixed on iOS on 2026-08-09 and still open here.
+- [x] **`WeekdaySelector` font scaling fixed 2026-08-09.** The circle now grows with the
+      system font scale (capped at 1.9x) and the row wraps to four per line above 1.3x, since
+      seven circles wide enough for scaled text do not fit across a phone. Verified at
+      `font_scale 1.8`: all seven day names render in full, no ellipses.
 - [ ] Commit and merge the work sitting uncommitted on
       `claude/android-play-store-release-jykw59` (PR #2 is still a draft).
 

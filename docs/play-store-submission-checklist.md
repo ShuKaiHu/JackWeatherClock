@@ -86,16 +86,24 @@ Mechanics for getting `android/` onto Google Play. The App Store counterpart is
 
 ## Play Console declarations (all required before review)
 
-- [ ] **Privacy policy URL** — reuse `https://shukaihu.github.io/RainyClock/privacy-policy.html`
-      **after updating the page**: it currently describes ATT, which does not exist on
-      Android. Add an Android paragraph (UMP consent governs personalization; no ATT).
-      The page ships from this repo's `docs/`, so the fix only counts once pushed.
+- [x] **Privacy policy updated for Android 2026-08-09**, both languages: Google Maps Platform
+      named alongside Apple Maps, a Tracking section that says plainly there is no ATT prompt
+      on Android, and — the disclosure that did not exist before — a section on the WeatherKit
+      relay. The page ships from this repo's `docs/`, so **it only counts once pushed and
+      live**; verify at `https://shukaihu.github.io/RainyClock/privacy-policy.html` before
+      pasting the URL into the console.
 - [ ] **Data safety form.** Truthful answers for this app: collects **approximate location?
       No** (addresses are geocoded to coordinates on-device and sent only to the weather API
       as query coordinates, not stored server-side — but the ads SDK is the real collector).
       Declare what the **Google Mobile Ads SDK** collects per Google's published data-safety
       guidance for AdMob: device identifiers (advertising ID), ad interaction data, coarse
       location derived from IP. Mark them as collected, shared with Google, for advertising.
+      **Also account for the weather relay**: on Android, coordinates leave the device to a
+      service we operate. They are rounded to ~1 km, carry no identifier, are held in memory
+      for ~15 minutes and are never written down — so the honest answer is that approximate
+      location is *transmitted but not collected*. Whatever wording the form takes, it must
+      match the privacy-policy page; the iOS 1.6.4 rejection was exactly a policy-versus-
+      declaration mismatch.
       Keep this consistent with the privacy-policy page — the iOS 1.6.4 rejection was
       exactly a policy-vs-declaration mismatch; App Review and Play review both read the page.
 - [ ] **Ads declaration** — yes, the app contains ads.
