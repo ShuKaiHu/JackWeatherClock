@@ -288,9 +288,11 @@ Shortening the labels was considered first and **measured, not assumed**: with
 line needs ~60pt at its minimum scale, and "住家附近"/"公司附近" are not shortenable. Five of
 those plus spacing is 390pt against 350pt of usable width.
 
-**The card labels were rewritten** the same day. The endpoints lost "area" in English —
-`segment_home_area` and `segment_office_area` now read "Home" and "Office"; zh-Hant keeps
-住家附近 / 公司附近. The interior samples stopped being "通勤途中取樣 N" / "Commute sample N"
+**The card labels were rewritten** the same day. The endpoints lost their qualifier in both
+languages — `segment_home_area` and `segment_office_area` now read "Home" / "Office" and
+住家 / 公司, not "Home area" / 住家附近. (The keys still say `_area`; the addresses above them
+still say 住家 / 工作, so the card and the field it comes from differ by a word in Chinese.)
+The interior samples stopped being "通勤途中取樣 N" / "Commute sample N"
 and now say where they are: **路程 ¼ / ½ / ¾**, **¼ way / Halfway / ¾ way**. A short commute
 samples one point and it is the true midpoint, so it reads 路程 ½ / Halfway.
 

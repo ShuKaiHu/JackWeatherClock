@@ -100,8 +100,8 @@
 "alarm_alert_title_adjusted" = "今天有雨，提前叫你起床";
 "alarm_snooze_button" = "再睡一下";
 "alarm_snoozing_title" = "賴床中";
-"segment_home_area" = "住家附近";
-"segment_office_area" = "公司附近";
+"segment_home_area" = "住家";
+"segment_office_area" = "公司";
 "segment_route_format" = "%@路線";
 "segment_route_quarter" = "路程 ¼";
 "segment_route_half" = "路程 ½";
