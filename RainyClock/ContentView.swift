@@ -1340,14 +1340,14 @@ private struct RouteWeatherGrid: View {
         VStack(spacing: Self.spacing) {
             HStack(spacing: Self.spacing) {
                 ForEach(topIndices, id: \.self) { index in
-                    RouteWeatherCard(segment: segments[index])
+                    RouteWeatherCard(segment: segments[index], peers: segments)
                 }
             }
             .background(rowWidthReader)
 
             HStack(spacing: Self.spacing) {
                 ForEach(bottomIndices, id: \.self) { index in
-                    RouteWeatherCard(segment: segments[index])
+                    RouteWeatherCard(segment: segments[index], peers: segments)
                 }
             }
             // One card lands the lower row exactly between the two above it.
@@ -1362,7 +1362,7 @@ private struct RouteWeatherGrid: View {
 
                 HStack(spacing: Self.spacing) {
                     ForEach(segments[start..<end]) { segment in
-                        RouteWeatherCard(segment: segment)
+                        RouteWeatherCard(segment: segment, peers: segments)
                     }
 
                     // Keep a short trailing row's cards the same width as a
@@ -1423,26 +1423,38 @@ private struct RouteWeatherGrid: View {
 
 private struct RouteWeatherCard: View {
     let segment: RouteWeatherSegment
+    /// Every card on screen, this one included. Their titles and rain figures
+    /// are laid out invisibly behind this card's own so each line reserves the
+    /// same height in every card, which keeps the three tiers on shared
+    /// baselines. Without it a one-line "Cloudy" makes its card's stack shorter
+    /// than a neighbour's two-line "62% precipitation", and centring that
+    /// shorter stack drops the title below the titles either side of it.
+    let peers: [RouteWeatherSegment]
 
     var body: some View {
         VStack(spacing: 12) {
-            Text(segment.name)
-                .font(.headline.weight(.semibold))
-                .lineLimit(2)
-                .multilineTextAlignment(.center)
-                .minimumScaleFactor(0.7)
+            ZStack {
+                ForEach(peers.indices, id: \.self) { index in
+                    title(peers[index].name)
+                        .hidden()
+                }
+
+                title(segment.name)
+            }
 
             Image(systemName: segment.condition.iconName)
                 .symbolRenderingMode(.multicolor)
                 .font(.system(size: 42))
                 .foregroundStyle(segment.condition.color)
 
-            Text(conditionText)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .lineLimit(2)
-                .multilineTextAlignment(.center)
-                .minimumScaleFactor(0.6)
+            ZStack {
+                ForEach(peers.indices, id: \.self) { index in
+                    conditionLabel(Self.conditionText(for: peers[index]))
+                        .hidden()
+                }
+
+                conditionLabel(conditionText)
+            }
         }
         .frame(maxWidth: .infinity, minHeight: 150)
         .padding(.vertical, 18)
@@ -1457,14 +1469,28 @@ private struct RouteWeatherCard: View {
         )
     }
 
-    private var conditionText: String {
-        if segment.condition == .rain {
-            return String.localizedStringWithFormat(
-                String(localized: "precipitation_value"),
-                Int(segment.precipitationProbability * 100)
-            )
-        }
+    private func title(_ text: String) -> some View {
+        Text(text)
+            .font(.headline.weight(.semibold))
+            .lineLimit(2)
+            .multilineTextAlignment(.center)
+            .minimumScaleFactor(0.7)
+    }
 
+    private func conditionLabel(_ text: String) -> some View {
+        Text(text)
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(.secondary)
+            .lineLimit(2)
+            .multilineTextAlignment(.center)
+            .minimumScaleFactor(0.6)
+    }
+
+    private var conditionText: String {
+        Self.conditionText(for: segment)
+    }
+
+    static func conditionText(for segment: RouteWeatherSegment) -> String {
         switch segment.condition {
         case .clear:
             return String(localized: "weather_clear")

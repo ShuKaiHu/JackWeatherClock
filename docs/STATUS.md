@@ -294,6 +294,14 @@ those plus spacing is 390pt against 350pt of usable width.
 and now say where they are: **路程 ¼ / ½ / ¾**, **¼ way / Halfway / ¾ way**. A short commute
 samples one point and it is the true midpoint, so it reads 路程 ½ / Halfway.
 
+**The card text now shares baselines across the row.** Each card centres a title / icon /
+rain-figure stack, so a one-line "Cloudy" made a shorter stack than a two-line "62%
+precipitation" beside it and centring dropped that card's title below its neighbours'. Each
+card now lays every peer's title and rain figure out behind its own with `.hidden()`, so all
+of them reserve the tallest card's height for each line and the three tiers line up. This
+beats reserving a fixed two lines: nothing is padded when the row happens to be all
+one-liners, and it holds in any language and at any text size without measuring text.
+
 "中點1/2/3" was rejected for this: at ≥20 km the three points sit at 1/4, 1/2 and 3/4, so
 two of the three are not the midpoint and the label would mislead. `interiorSegmentName`
 therefore derives the fraction from the position — sample `index` of `total` sits at
