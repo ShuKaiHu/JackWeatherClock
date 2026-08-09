@@ -2,6 +2,13 @@
 
 const http = require('node:http')
 const { createTokenCache } = require('./token')
+const {
+  cacheKey,
+  clientAddress,
+  createCache,
+  createDailyBudget,
+  createRateLimiter
+} = require('./guards')
 
 // A stateless signing proxy in front of Apple's WeatherKit REST API. It exists
 // for one reason: the ES256 private key that authenticates a WeatherKit request
@@ -31,6 +38,13 @@ for (const [name, value] of Object.entries({
 }
 
 const currentToken = createTokenCache({ teamId, serviceId, keyId, privateKey })
+
+// 5,000 a day is roughly 150,000 a month against an allowance of 500,000, so
+// there is headroom for real growth while a scraped URL still cannot drain the
+// month in an afternoon.
+const responseCache = createCache()
+const dailyBudget = createDailyBudget({ limit: Number(process.env.DAILY_UPSTREAM_LIMIT ?? 5_000) })
+const rateLimiter = createRateLimiter()
 
 const UPSTREAM_TIMEOUT_MS = 10_000
 
@@ -113,16 +127,39 @@ const server = http.createServer(async (request, response) => {
     return sendJson(response, 400, { error: 'lat, lon and tz are required' })
   }
 
+  const query = {
+    latitude,
+    longitude,
+    timezone,
+    language: url.searchParams.get('lang') || 'en',
+    start: url.searchParams.get('start'),
+    end: url.searchParams.get('end')
+  }
+
+  // Served from memory, so it costs no allowance and no caller can be throttled
+  // out of an answer somebody else already paid for.
+  const key = cacheKey(query)
+  const cached = responseCache.get(key)
+  if (cached) {
+    return sendJson(response, 200, cached)
+  }
+
+  if (!rateLimiter.tryConsume(clientAddress(request))) {
+    return sendJson(response, 429, { error: 'rate_limited' })
+  }
+
+  if (!dailyBudget.tryConsume()) {
+    // Loud, because reaching this on real traffic means the limit is wrong,
+    // and reaching it otherwise means the URL is being abused.
+    console.error(`Daily upstream limit reached after ${dailyBudget.spent} calls`)
+    return sendJson(response, 503, { error: 'daily_limit_reached' })
+  }
+
   try {
-    const weather = await fetchWeather({
-      latitude,
-      longitude,
-      timezone,
-      language: url.searchParams.get('lang') || 'en',
-      start: url.searchParams.get('start'),
-      end: url.searchParams.get('end')
-    })
-    sendJson(response, 200, { hours: projectHours(weather) })
+    const weather = await fetchWeather(query)
+    const body = { hours: projectHours(weather) }
+    responseCache.set(key, body)
+    sendJson(response, 200, body)
   } catch (error) {
     // 401 from Apple means the token is wrong — a configuration fault, not a
     // client one. Say so in the log; the client only ever needs "try later".

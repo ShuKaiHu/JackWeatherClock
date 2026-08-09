@@ -103,9 +103,15 @@ default.
       the emulator with the local proxy stopped, so the reading genuinely came from the
       cloud service. Build with
       `-PweatherProxyUrl=https://rainyclock-weather-proxy-510427696731.asia-east1.run.app`.
-- [ ] Decide on proxy access control. There is a shared-secret hook, unused: the secret would
-      ship in the APK too, so it only raises the bar. Firebase App Check is the real answer if
-      the quota ever gets scraped.
+- [x] **Proxy abuse defences, 2026-08-09.** It has to stay unauthenticated — any credential
+      it demanded would ship in the APK beside the URL — so it bounds cost instead of
+      identity: a 15-minute response cache keyed on ~1.1 km coordinates, a 60-per-5-minute
+      per-caller throttle, and a hard 5,000/day ceiling on upstream calls. All three
+      verified against the deployed service; the throttle starts answering `429` on the
+      56th distinct request. Reasoning in `docs/ANDROID.md`.
+- [ ] **Firebase App Check** once a Play Console listing exists — Play Integrity is the only
+      thing that actually proves a request came from a genuine build, and it needs the app
+      registered in Play. Until then the cost bounds above are the whole defence.
 
 **3. Accounts and assets that take calendar time**
 

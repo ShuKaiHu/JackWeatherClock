@@ -77,6 +77,26 @@ contradicts the "no backend" line in `CLAUDE.md`, which is now out of date for A
 The proxy is deliberately tiny and stateless, and the app **degrades to the previous rain
 decision if it is unreachable** — a proxy outage must never mean a missed alarm.
 
+**The proxy is public, and stays public.** It cannot authenticate callers: any credential it
+demanded would ship inside the APK next to the URL. Firebase App Check with Play Integrity is
+the only real answer, and it needs the app registered in Play Console — which does not exist
+yet. So instead of proving *who* is calling, the proxy bounds what any caller can cost, with
+the WeatherKit allowance rather than its own CPU as the thing being defended:
+
+- **A response cache**, 15 minutes, keyed on coordinates rounded to two decimals (~1.1 km,
+  far finer than any forecast grid). This is the largest lever by some distance — one hour and
+  one neighbourhood is the same answer for everybody, so a whole city collapses into a single
+  upstream call. Measured on Cloud Run: 0.83 s cold, 0.09 s cached.
+- **A per-caller throttle**, 60 requests per 5 minutes, so one client cannot drain the day
+  alone. Verified end to end: the 56th distinct request onwards answers `429`.
+- **A hard daily ceiling on upstream calls** (`DAILY_UPSTREAM_LIMIT`, 5,000 — roughly 150,000
+  a month against an allowance of 500,000). Apple offers no way to cap the allowance from
+  their side, so this is what stops a scraped URL draining the month in an afternoon.
+
+The cache is checked **before** the throttle on purpose: a cached answer costs no allowance,
+and nobody should be refused an answer someone else already paid for. Hammering cached
+coordinates therefore costs only Cloud Run CPU, which `--max-instances 3` already bounds.
+
 **Auth shape** (from Apple's docs, exact — the token is rejected if it carries extra claims):
 header `alg: ES256`, `kid: <10-char Key ID>`, `id: "<TeamID>.<ServiceID>"`; claims `iss:
 <TeamID>`, `iat`, `exp`, `sub: <ServiceID>`; sent as `Authorization: Bearer <token>`.

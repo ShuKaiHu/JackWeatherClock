@@ -1,9 +1,12 @@
 # No dependencies to install: the proxy uses only Node's standard library, so
-# the image is the runtime plus three files.
+# the image is the runtime plus the sources.
 FROM node:22-alpine
 
 WORKDIR /app
-COPY package.json server.js token.js ./
+# Copy the directory rather than naming each file — .gcloudignore and
+# .dockerignore already keep the tests out, and an explicit list silently ships
+# a broken image the moment a new module is added.
+COPY . .
 
 USER node
 ENV NODE_ENV=production
