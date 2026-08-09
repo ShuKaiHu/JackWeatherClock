@@ -92,12 +92,22 @@ class EndpointRouteWeatherService(
         }
     }
 
-    private fun interiorSegmentName(index: Int, total: Int): String {
-        val base = appContext.getString(R.string.segment_route_placeholder)
-        return if (total == 1) {
-            base
-        } else {
-            appContext.getString(R.string.segment_route_sample_format, base, index + 1)
-        }
+    /**
+     * Names an interior sample by where it sits along the route rather than by
+     * its index — "Halfway" says something a rider can act on, "sample 2" does
+     * not. The sampler only ever produces one or three interior points, so those
+     * two get proper fraction names; the format string is the safety net if that
+     * ever changes.
+     */
+    private fun interiorSegmentName(index: Int, total: Int): String = when {
+        total == 1 -> appContext.getString(R.string.segment_route_half)
+        total == 3 -> appContext.getString(
+            when (index) {
+                0 -> R.string.segment_route_quarter
+                1 -> R.string.segment_route_half
+                else -> R.string.segment_route_three_quarter
+            }
+        )
+        else -> appContext.getString(R.string.segment_route_fraction_format, index + 1, total + 1)
     }
 }

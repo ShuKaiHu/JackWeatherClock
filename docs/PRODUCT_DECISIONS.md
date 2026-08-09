@@ -6,6 +6,8 @@
 
 Rainy Clock focuses on one commute profile: home to work. Users choose a commute mode, set a normal alarm time, select weekdays, set a rain lead time, and set a rain probability threshold. If weather around the next scheduled alarm check time meets the rain threshold, the app schedules an earlier local-notification alarm.
 
+**The commute modes differ by platform, on purpose (2026-08-09).** iOS offers Car, Scooter, Walking and Transit; Android offers Car, Walking and Transit only. Google prices two-wheeler routing as an Enterprise-tier Routes API feature, outside the free Essentials allowance, while every other mode stays inside it. Scooters are the most common commute in this app's home market, so shipping the mode would have sent the majority of real traffic down the only billable path — on a free, ad-supported app currently earning US$0. Apple Maps has no two-wheeler mode and charges nothing, so iOS keeps the pill and quietly shows a driving estimate; there is no equivalent trick available on Android, where the honest choice is to not offer what we would be guessing at. Revisit if the app ever earns enough to absorb per-call routing costs.
+
 ### Weather Strategy
 
 The app is structured around a `RouteWeatherService` protocol. The current release path uses `MapKitRouteWeatherService` with Apple Weather / WeatherKit.
@@ -64,6 +66,8 @@ All user-facing UI text should be backed by localized string resources. Document
 ### 目前範圍
 
 Rainy Clock 聚焦在單一通勤設定：住家到公司。使用者可以選擇通勤方式、設定平常鬧鐘時間、選擇星期、設定雨天提前時間與降雨機率門檻。若下一次鬧鐘判斷時間附近的天氣達到降雨門檻，App 就會提前安排本機通知鬧鐘。
+
+**兩個平台的通勤方式刻意不同（2026-08-09 決定）。** iOS 提供開車、騎車、步行、大眾交通；Android 只提供開車、步行、大眾交通。Google 把兩輪路線（`TWO_WHEELER`）歸類為 Routes API 的 Enterprise 等級功能，不在 Essentials 的免費額度內，而其他三種模式都在額度內。機車是本產品主力市場最常見的通勤方式，保留這個選項等於讓**多數**真實流量走上唯一要付費的路徑——而這是一款目前收入為 US$0 的免費含廣告 App。Apple Maps 沒有兩輪模式且不收費，所以 iOS 保留這個選項、實際顯示的是開車的時間估計；Android 沒有這種取巧空間，誠實的做法就是不提供我們只能用猜的功能。若日後廣告收入足以吸收每次呼叫的路線費用，可以重新評估。
 
 ### 天氣策略
 

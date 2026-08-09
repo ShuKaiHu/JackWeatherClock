@@ -59,7 +59,6 @@
     <string name="weather_cloudy">多雲</string>
     <string name="weather_waiting">等待中</string>
     <string name="commute_mode_car">開車</string>
-    <string name="commute_mode_scooter">騎車</string>
     <string name="commute_mode_walking">步行</string>
     <string name="commute_mode_public_transit">大眾交通</string>
     <string name="status_enter_settings">請輸入通勤與鬧鐘設定。</string>
@@ -78,10 +77,12 @@
     <string name="alarm_alert_title_normal">該起床了</string>
     <string name="alarm_alert_title_adjusted">今天有雨，提前叫你起床</string>
     <string name="alarm_snooze_button">再睡一下</string>
-    <string name="segment_home_area">住家附近</string>
-    <string name="segment_office_area">公司附近</string>
-    <string name="segment_route_placeholder">通勤途中</string>
-    <string name="segment_route_sample_format">%1$s取樣 %2$d</string>
+    <string name="segment_home_area">住家</string>
+    <string name="segment_office_area">公司</string>
+    <string name="segment_route_fraction_format">路程 %1$d/%2$d</string>
+    <string name="segment_route_three_quarter">路程 ¾</string>
+    <string name="segment_route_half">路程 ½</string>
+    <string name="segment_route_quarter">路程 ¼</string>
     <string name="preview_route">預覽路線</string>
     <string name="route_preview">路線預覽</string>
     <string name="route_preview_travel_time">預估時間</string>
@@ -92,6 +93,7 @@
     <string name="route_preview_work_pin">公司</string>
     <string name="route_preview_requires_key">路線預覽需要設定 Google Maps API key（見 docs/ANDROID.md）。</string>
     <string name="weather_data_attribution">天氣資料由 Open-Meteo.com 提供。</string>
+    <string name="weather_attribution_apple">天氣資料由 Apple Weather 提供</string>
     <string name="address_not_found_inline">找不到這個地址，請重新輸入或確認建議地址。</string>
     <string name="clear_address">清除地址</string>
     <string name="suggested_address_prefix">實際使用地址：%1$s</string>

@@ -1,0 +1,39 @@
+<!--
+  Stands in for SF Symbol `cloud.rain.fill`: a white cloud sitting higher in the
+  box than the cloudy mark, to leave room for the blue streaks beneath it.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M2.6,12.1a4.1,4.1 0 1,0 8.2,0a4.1,4.1 0 1,0 -8.2,0z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M6.6,9.6a5.4,5.4 0 1,0 10.8,0a5.4,5.4 0 1,0 -10.8,0z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M13.6,12.4a3.8,3.8 0 1,0 7.6,0a3.8,3.8 0 1,0 -7.6,0z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M6.7,9.8H17.4V16.2H6.7z" />
+
+    <path
+        android:strokeColor="#0A84FF"
+        android:strokeWidth="2.1"
+        android:strokeLineCap="round"
+        android:pathData="M8.4,18.2L7.1,21.6" />
+    <path
+        android:strokeColor="#0A84FF"
+        android:strokeWidth="2.1"
+        android:strokeLineCap="round"
+        android:pathData="M12.6,18.2L11.3,21.6" />
+    <path
+        android:strokeColor="#0A84FF"
+        android:strokeWidth="2.1"
+        android:strokeLineCap="round"
+        android:pathData="M16.8,18.2L15.5,21.6" />
+</vector>

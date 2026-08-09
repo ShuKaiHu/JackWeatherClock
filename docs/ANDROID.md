@@ -31,21 +31,64 @@ copies the iOS target's `.wav` files into a generated `res/raw/` folder at build
 | ATT prompt (`ConsentManager`) | UMP consent only | Android has no ATT. Personalization is governed by the UMP/TCF consent string, which the Google Mobile Ads SDK honours by itself — no manual `npa` juggling. The two-way `canRequestAds` and the rebuild-banner-on-consent-change behaviour (iOS audit findings) are ported. |
 | AdMob iOS app + banner unit | New AdMob **Android app** + banner unit | Same AdMob account, same `pub-` ID, so the existing `app-ads.txt` already covers it. Debug builds always use Google's test unit (`AppEnvironment`), and a release build with no configured production unit falls back to the test unit rather than hitting production by accident. |
 
-## The Open-Meteo licensing caveat
+## Palette and chrome
 
-Open-Meteo's keyless API is licensed for **non-commercial use**; an ad-supported app is
-commercial. Before the Play release goes live with ads enabled, pick one:
+`ui/theme/Theme.kt` restates the iOS palette rather than using the Material baseline: black
+canvas, `#1F1F21` cards, `#2E2E33` filled fields, and iOS's dark-mode system blue `#0A84FF`
+as the single accent. The scheme is dark-only, because `ContentView.swift` pins itself with
+`preferredColorScheme(.dark)` — `values/themes.xml` matches `values-night` so the launch
+window never flashes white. Weather tints are iOS's `.yellow` / `.cyan` / `.blue`, and the
+route-weather tiles carry the same top-to-bottom teal→blue gradient, laid out **side by side**
+the way the iOS `HStack` presents them.
 
-1. Subscribe to Open-Meteo's commercial API plan (adds an API key; one-line change in
-   `OpenMeteoWeatherService`).
-2. Swap the provider — everything sits behind the `WeatherSamplingService` interface, so a
-   MET Norway (free, CC-BY attribution, but thin precipitation-probability coverage outside
-   the Nordics) or paid-tier implementation is a drop-in.
-3. Ship the first release without the banner (remove the ads dependency), keep Open-Meteo
-   free tier legitimately, and add ads once a provider decision is made.
+Two Material roles are deliberately *not* tinted. Sliders draw their inactive track from
+`secondaryContainer` and the navigation pill draws from it too, so it stays dark and the mode
+chips and tab strip ask for the accent explicitly. The ad banner sits **below** the tab strip
+at the very bottom of the window, with the gesture-bar inset moved onto the enclosing column
+so the banner is never drawn under the system handle.
 
-The attribution string on the Route tab ("Weather data by Open-Meteo.com") satisfies their
-attribution requirement either way.
+## Weather provider: moving to WeatherKit REST (decided 2026-08-09)
+
+Open-Meteo's keyless API is licensed for **non-commercial use** and this app carries ads, so
+it cannot ship as-is. The replacement is **Apple's WeatherKit REST API**, chosen 2026-08-09.
+
+**Why, in one number.** Every provider was judged on the ceiling it imposes, because
+`RouteWeatherService` issues **one call per sample point** — home, office, and the interior
+route points — so a single rain decision costs 2–5 calls, not one. At roughly 90 calls per
+user per month:
+
+| Provider | Free allowance | Users before it costs money |
+| --- | --- | --- |
+| **WeatherKit REST** | 500,000 / month, included in the Apple Developer Program membership already paid for | **~5,500** |
+| Google Maps Platform Weather API | 10,000 / month per SKU | ~110 |
+| Open-Meteo free tier | 10,000 / day, but **non-commercial only** | licence-blocked, not volume-blocked |
+
+Google's Weather API was rejected despite being the least work to wire up: it costs money
+*and* has the lowest ceiling of the three. WeatherKit also means **both platforms make the
+same call against the same data**, which for an app whose entire product is one rain decision
+is worth more than the convenience of staying inside one vendor.
+
+**The cost: this app now has a backend.** WeatherKit REST authenticates with an ES256 JWT
+signed by an Apple private key, and Apple's own guidance is explicit — *"Never distribute your
+private key. If you need to create tokens for apps or websites, create an authenticated
+service to create and sign your own tokens."* A `.p8` inside an APK is a distributed private
+key, so a signing proxy is not a design preference, it is the only compliant option. That
+contradicts the "no backend" line in `CLAUDE.md`, which is now out of date for Android.
+The proxy is deliberately tiny and stateless, and the app **degrades to the previous rain
+decision if it is unreachable** — a proxy outage must never mean a missed alarm.
+
+**Auth shape** (from Apple's docs, exact — the token is rejected if it carries extra claims):
+header `alg: ES256`, `kid: <10-char Key ID>`, `id: "<TeamID>.<ServiceID>"`; claims `iss:
+<TeamID>`, `iat`, `exp`, `sub: <ServiceID>`; sent as `Authorization: Bearer <token>`.
+The data call is `GET https://weatherkit.apple.com/api/v1/weather/{language}/{lat}/{lon}`
+with `dataSets=forecastHourly` and a **required** `timezone`. Each `HourWeatherConditions`
+carries `forecastStart`, `precipitationChance` (0–1) and `conditionCode` — a one-to-one match
+for what `WeatherKitSamplingService` already consumes on iOS, so the three-bucket mapper is
+unchanged.
+
+Until the swap lands, `OpenMeteoWeatherService` stays in the tree and the Route tab keeps its
+"Weather data by Open-Meteo.com" attribution; **do not ship a release that pairs the
+Open-Meteo free tier with ads.**
 
 ## Google Maps route preview + on-route rain sampling
 
@@ -67,11 +110,23 @@ so restricted keys work over REST too. **With no key configured everything degra
 gracefully**: the map card hides, and the rain decision falls back to the endpoint-only
 check. Mobile map display is free; Routes API has a 10k-calls/month free tier — cap the
 quota in the console and this app's usage (one call per preview, one per scheduling round)
-never approaches it. Scooter uses `TWO_WHEELER` with an automatic `DRIVE` fallback where
-Google lacks two-wheeler coverage.
+never approaches it — **provided every offered mode stays in the Essentials tier**, which is
+why the scooter mode was dropped (see "Deliberately not ported"). Routes API bills by feature
+tier, not by call count alone: `TRAFFIC_AWARE` modifiers are Pro, two-wheeler routing is
+Enterprise, and neither draws on the Essentials free allowance.
 
 ## Deliberately not ported
 
+- **The scooter commute mode** (decision 2026-08-09). Routes API prices two-wheeler routing
+  (`TWO_WHEELER`) as an **Enterprise-tier feature, outside the 10,000-call Essentials free
+  allowance**, while `DRIVE` / `WALK` / `TRANSIT` all stay inside it. Scooters are the most
+  common commute in this app's home market, so keeping the mode would have routed the
+  *majority* of real usage through the only billable path — on an ad-supported free app whose
+  revenue is currently US$0. iOS keeps its scooter pill (Apple Maps charges nothing and has
+  no two-wheeler mode anyway, so it already shows a driving estimate); Android offers Car,
+  Walking and Transit only. A settings blob still carrying `"scooter"` decodes to `CAR`
+  through `coerceInputValues` rather than failing and wiping every other field — pinned by a
+  test in `CommuteAlarmSettingsTest`.
 - **Address autocomplete dropdown.** No platform API; see the geocoding row above.
 - **Live Activity / widget.** AlarmKit forced the iOS widget extension into existence. The
   Android alarm needs no extension; the ring notification itself carries Stop and Snooze.

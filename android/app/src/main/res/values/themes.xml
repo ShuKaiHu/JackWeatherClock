@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Compose draws the whole interface; the platform theme only styles the
-         window before the first frame. -->
-    <style name="Theme.RainyClock" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:windowBackground">@android:color/white</item>
+         window before the first frame. The app is dark on both platforms
+         regardless of the system setting, so this matches values-night and the
+         launch never flashes white. -->
+    <style name="Theme.RainyClock" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@android:color/black</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
     </style>
 </resources>

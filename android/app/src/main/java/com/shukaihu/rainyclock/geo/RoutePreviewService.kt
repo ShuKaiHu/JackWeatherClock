@@ -49,18 +49,9 @@ class GoogleRoutesPreviewService(
         work: ResolvedLocation,
         mode: CommuteMode
     ): RoutePreview = withContext(Dispatchers.IO) {
-        try {
-            requestRoute(home, work, travelMode(mode))
-        } catch (error: RouteUnavailableException) {
-            // TWO_WHEELER coverage is regional; fall back to the drive route
-            // rather than losing the preview (same estimate the iOS app shows
-            // for scooters, since Apple Maps has no scooter mode either).
-            if (mode == CommuteMode.SCOOTER) {
-                requestRoute(home, work, "DRIVE")
-            } else {
-                throw error
-            }
-        }
+        // Every mode offered here maps to a free Essentials-tier travel mode, so
+        // there is no billable path to fall back from.
+        requestRoute(home, work, travelMode(mode))
     }
 
     private fun requestRoute(
@@ -150,7 +141,6 @@ class GoogleRoutesPreviewService(
 
     private fun travelMode(mode: CommuteMode): String = when (mode) {
         CommuteMode.CAR -> "DRIVE"
-        CommuteMode.SCOOTER -> "TWO_WHEELER"
         CommuteMode.WALKING -> "WALK"
         CommuteMode.PUBLIC_TRANSIT -> "TRANSIT"
     }

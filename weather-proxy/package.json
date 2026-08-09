@@ -1,0 +1,14 @@
+{
+  "name": "rainyclock-weather-proxy",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Signs WeatherKit REST developer tokens so the Android app never holds Apple's private key",
+  "main": "server.js",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test test/*.test.js"
+  }
+}

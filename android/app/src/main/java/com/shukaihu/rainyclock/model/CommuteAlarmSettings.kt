@@ -58,10 +58,17 @@ data class CommuteAlarmSettings(
     }
 }
 
+/**
+ * No scooter mode on Android, unlike iOS. Routing a two-wheeler is an
+ * Enterprise-tier Routes API feature, outside the free allowance, and scooters
+ * are the most-chosen mode in this app's home market — so offering it would put
+ * the most common request on the only billable path. A settings blob still
+ * carrying the old `"scooter"` value decodes to [CAR] rather than failing, via
+ * `coerceInputValues`; see `CommuteAlarmSettingsTest`.
+ */
 @Serializable
 enum class CommuteMode {
     @SerialName("car") CAR,
-    @SerialName("scooter") SCOOTER,
     @SerialName("walking") WALKING,
     @SerialName("publicTransit") PUBLIC_TRANSIT
 }

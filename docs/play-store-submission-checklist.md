@@ -38,20 +38,34 @@ Mechanics for getting `android/` onto Google Play. The App Store counterpart is
       AdMob (took a day on iOS).
 - [ ] Expect **0.00% match rate at first** on the Android unit too — new app, no installs.
       Read the AdMob report (requests > 0, impressions 0 = wait), do not self-test against
-      the production unit; that is the exact loop documented in `STATUS.md` for iOS.
+      the production unit; that is the exact loop documented in `docs/STATUS-IOS.md`.
 
 ## Google Maps Platform (route preview + on-route rain sampling)
 
-- [ ] Create a Google Cloud project (or reuse one) and **attach a billing account** —
-      required even though this app's usage stays inside the free tiers.
-- [ ] Enable two APIs: **Maps SDK for Android** (map display — free on mobile) and
-      **Routes API** (polyline/duration — 10k free calls/month).
-- [ ] Create one API key and restrict it: Application restriction → Android apps →
-      `com.shukaihu.rainyclock` + the SHA-1 of BOTH the upload cert and the Play App
-      Signing cert (Play Console → Test and release → App signing shows the latter; ads and
-      maps break in production if only the upload cert is listed). API restriction → the
-      two APIs above.
+- [x] Google Cloud project `RainyClock` (number `510427696731`) created 2026-08-09 with a
+      billing account attached — required even for free-tier usage; without one the Maps APIs
+      are throttled to **one request per day**.
+- [x] Enabled **Maps SDK for Android** (map display — free on mobile) and **Routes API**
+      (polyline/duration — 10k free Essentials calls/month). Verified working end to end on
+      the emulator 2026-08-09: map tiles, polyline, 26 min / 17.2 km for a Tainan commute.
+      The console's Maps onboarding enables ~30 APIs by default — **disable the ones this app
+      never calls**, several of which (Route Optimization, Navigation SDK, Places) are
+      expensive if the key ever leaks.
+- [x] **Key restricted 2026-08-09**, both halves: application restriction → Android apps →
+      `com.shukaihu.rainyclock` + debug SHA-1, and API restriction → the two APIs above.
+      Verified by probing from a laptop with no Android headers — Geocoding returns
+      `REQUEST_DENIED`, Routes returns `PERMISSION_DENIED` ("Requests from this Android
+      client application `<empty>` are blocked"). That probe is the regression test; re-run
+      it after any change to the key.
+- [ ] **Add the release SHA-1s to the same key** once the upload keystore exists and Play App
+      Signing is on: the SHA-1 of BOTH the upload cert and the Play App Signing cert (Play
+      Console → Test and release → App signing shows the latter). Google re-signs the
+      uploaded bundle, so a build installed from Play presents the *Play* certificate — list
+      only the upload cert and production maps fail for every real user while working
+      perfectly in every local test.
 - [ ] Set a **quota cap** on Routes API (e.g. 9,000/month) so cost is structurally $0.
+      Debug-build SHA-1 for local testing:
+      `3A:6A:BC:72:DB:DB:B8:81:E6:EB:68:52:99:F1:1F:8D:24:07:AD:32`.
 - [ ] Pass the key at build time: `-PmapsApiKey=…` (or `mapsApiKey` in
       `~/.gradle/gradle.properties`). Never commit it. Without it the app still works —
       map hidden, endpoint-only rain check.
@@ -121,7 +135,7 @@ Mechanics for getting `android/` onto Google Play. The App Store counterpart is
 - [ ] Production rollout: start staged (20%) — an alarm app failure mode (silent morning) is
       severe, so watch vitals (crashes, ANRs) before 100%.
 - [ ] After approval: add the Play badge/link to `docs/index.html` alongside the App Store
-      link, and update `docs/STATUS.md`.
+      link, and update `docs/STATUS-ANDROID.md`.
 
 ## Known review-risk areas (write the review note accordingly)
 

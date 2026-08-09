@@ -58,19 +58,48 @@ method, or a product call — nobody else can close them.
       App Signing SHA-1s** must be added before release, or maps break for everyone who
       installs from Play — Google re-signs the APK, so the shipped build presents the *Play*
       certificate, not the upload one. Re-run the same probe after adding them.
-- [ ] **(you) Cap the Routes API quota** (API & Services → Routes API → Quotas). Structural,
-      not advisory: a capped quota makes the bill $0 even if the key leaks or a bug loops.
+- [x] **Routes API capped at 300 requests/day, 2026-08-09** (≈9,000/month, inside the free
+      Essentials allowance), plus a US$1 monthly budget alert on the project. Worth knowing
+      for anyone who goes looking: Maps Platform has **no daily cap by default** once billing
+      is attached, so this was adding a limit that did not exist, not lowering one. The budget
+      alert only notifies — the quota is the hard stop.
 - [ ] **(you) Disable the ~30 Maps APIs the console enabled by default.** The app calls two.
       Route Optimization, Navigation SDK and Places are expensive; every one left enabled is
       reachable with a leaked key.
 
-**2. The one product decision still blocking a release**
+**2. Weather provider — decided, working locally, not yet deployed**
 
-- [ ] **(you) Weather-provider licensing.** Open-Meteo's keyless tier is **non-commercial**
-      and this app carries ads. Three options in `docs/ANDROID.md`: buy their commercial
-      plan, swap the provider behind `WeatherSamplingService`, or ship the first release
-      ad-free. **Shipping ads on the free tier is not one of them.** Everything else below
-      can proceed in parallel; this one gates going live.
+Open-Meteo's non-commercial licence made it unshippable alongside ads. **Apple WeatherKit REST
+was chosen on 2026-08-09** and works end to end on the emulator. Full reasoning and the
+provider comparison are in `docs/ANDROID.md`; the short version is that the free allowance is
+500,000 calls a month against Google's 10,000, it costs nothing extra because the Apple
+Developer Program membership is already paid for, and both platforms now read the *same*
+forecast — which matters for an app whose entire product is one rain decision.
+
+That is not cosmetic. On the first real comparison, the same hour and coordinate read **57%
+on WeatherKit and 92% on Open-Meteo**. Both cleared the 50% threshold that morning by luck;
+a 45/80 split would have woken iPhone users early and left Android users asleep. Expect the
+Android alarm to fire *less* often than it used to, and revisit whether 50% is still the right
+default.
+
+- [x] Signing proxy written (`weather-proxy/`, zero-dependency Node) and verified against the
+      real key: HTTP 200, hourly `precipitationChance` and `conditionCode` returned.
+- [x] `WeatherKitProxySamplingService` wired behind the existing `WeatherSamplingService`
+      seam; `-PweatherProxyUrl` selects it and an unset value falls back to Open-Meteo so a
+      credential-less checkout still builds. Verified on the emulator through
+      `http://10.0.2.2:8080` — cleartext is permitted **only** by a `src/debug` network
+      security config, so release builds still refuse it.
+- [x] Attribution now follows the provider actually in use, because showing the wrong credit
+      breaches one licence or the other. It says "Apple Weather" **in words**: the  glyph the
+      iOS app uses is U+F8FF, a private-use codepoint only Apple's fonts carry, and on Android
+      it renders as *nothing* — leaving "Weather data provided by Weather".
+- [ ] **(you) Move the `.p8` out of `~/Downloads`** and say where. Apple allows exactly one
+      download; losing it means generating a new key.
+- [ ] Deploy the proxy to Cloud Run with the `.p8` in Secret Manager, then rebuild with the
+      public URL. Until then the Android build only works on a machine running the proxy.
+- [ ] Decide on proxy access control. There is a shared-secret hook, unused: the secret would
+      ship in the APK too, so it only raises the bar. Firebase App Check is the real answer if
+      the quota ever gets scraped.
 
 **3. Accounts and assets that take calendar time**
 

@@ -4,10 +4,12 @@ import android.app.Application
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.media.RingtoneManager
+import android.util.Log
 import androidx.annotation.StringRes
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.shukaihu.rainyclock.AppGraph
+import com.shukaihu.rainyclock.BuildConfig
 import com.shukaihu.rainyclock.R
 import com.shukaihu.rainyclock.alarm.ExactAlarmPermissionException
 import com.shukaihu.rainyclock.geo.AddressNotFoundException
@@ -70,6 +72,14 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
 
     /** False when no Maps key is configured; the map card hides itself. */
     val isRoutePreviewConfigured: Boolean = routePreviewService != null
+
+    /**
+     * Which provider actually answered decides which attribution is legal to
+     * show: WeatherKit requires the Apple Weather mark linked to its legal page,
+     * Open-Meteo requires a credit line. Showing the wrong one is a licence
+     * breach either way, so this follows the graph rather than a constant.
+     */
+    val usesAppleWeather: Boolean = AppGraph.usesAppleWeather
 
     private val _uiState = MutableStateFlow(AlarmUiState())
     val uiState: StateFlow<AlarmUiState> = _uiState.asStateFlow()
@@ -368,7 +378,13 @@ class AlarmViewModel(application: Application) : AndroidViewModel(application) {
         val work = settings.workResolvedLocation ?: return
         val preview = try {
             service.fetchRoute(home, work, settings.commuteMode)
-        } catch (_: Exception) {
+        } catch (error: Exception) {
+            // A cleared map looks identical whether the key is missing, the API
+            // is disabled, or the route genuinely has no result — keep the reason
+            // visible in debug builds (same contract as the ad banner).
+            if (BuildConfig.DEBUG) {
+                Log.w("RoutePreview", "Route preview failed: $error")
+            }
             null
         }
         _uiState.update { it.copy(routePreview = preview) }

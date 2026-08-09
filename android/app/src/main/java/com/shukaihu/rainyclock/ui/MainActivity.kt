@@ -9,15 +9,17 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -29,11 +31,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
 import com.shukaihu.rainyclock.R
 import com.shukaihu.rainyclock.ads.AdBanner
 import com.shukaihu.rainyclock.ads.ConsentManager
+import com.shukaihu.rainyclock.ui.theme.AppAccent
+import com.shukaihu.rainyclock.ui.theme.AppSecondaryLabel
+import com.shukaihu.rainyclock.ui.theme.RainyClockTheme
 
 class MainActivity : ComponentActivity() {
 
@@ -52,7 +58,7 @@ class MainActivity : ComponentActivity() {
         consentManager.gatherConsent(this)
 
         setContent {
-            MaterialTheme {
+            RainyClockTheme {
                 MainScreen(
                     viewModel = viewModel,
                     consentManager = consentManager,
@@ -99,22 +105,28 @@ private fun MainScreen(
 
     Scaffold(
         bottomBar = {
-            Column {
-                AdBanner(canRequestAds = canRequestAds, revision = adRevision)
-                NavigationBar {
+            // The banner sits below the tab strip, at the very bottom of the
+            // window, so the tabs stay within thumb reach. The gesture-bar inset
+            // moves to the Column, or it would pad above the ad and leave the ad
+            // itself underneath the system handle.
+            Column(modifier = Modifier.navigationBarsPadding()) {
+                NavigationBar(windowInsets = WindowInsets(0, 0, 0, 0)) {
                     NavigationBarItem(
                         selected = selectedTab == 0,
                         onClick = { selectedTab = 0 },
                         icon = { Icon(Icons.Filled.Map, contentDescription = null) },
-                        label = { Text(stringResource(R.string.tab_route)) }
+                        label = { Text(stringResource(R.string.tab_route)) },
+                        colors = accentTabColors()
                     )
                     NavigationBarItem(
                         selected = selectedTab == 1,
                         onClick = { selectedTab = 1 },
                         icon = { Icon(Icons.Filled.Alarm, contentDescription = null) },
-                        label = { Text(stringResource(R.string.tab_alarm)) }
+                        label = { Text(stringResource(R.string.tab_alarm)) },
+                        colors = accentTabColors()
                     )
                 }
+                AdBanner(canRequestAds = canRequestAds, revision = adRevision)
             }
         }
     ) { innerPadding ->
@@ -124,6 +136,7 @@ private fun MainScreen(
                 state = uiState,
                 modifier = contentModifier,
                 isRoutePreviewConfigured = viewModel.isRoutePreviewConfigured,
+                usesAppleWeather = viewModel.usesAppleWeather,
                 onHomeAddressChange = viewModel::updateHomeAddress,
                 onWorkAddressChange = viewModel::updateWorkAddress,
                 onConfirmHomeSuggestion = viewModel::confirmHomeSuggestion,
@@ -162,3 +175,17 @@ private fun MainScreen(
         )
     }
 }
+
+/**
+ * The selected-tab pill would otherwise read from the secondary container, which
+ * is kept dark so sliders render an unfilled track. The tab strip asks for the
+ * accent directly instead.
+ */
+@Composable
+private fun accentTabColors() = NavigationBarItemDefaults.colors(
+    selectedIconColor = Color.White,
+    selectedTextColor = Color.White,
+    indicatorColor = AppAccent,
+    unselectedIconColor = AppSecondaryLabel,
+    unselectedTextColor = AppSecondaryLabel
+)

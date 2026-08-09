@@ -326,8 +326,8 @@ private fun SoundPicker(
 @Composable
 private fun StatusLineText(status: StatusLine) {
     val color = when (status.tone) {
-        StatusTone.POSITIVE -> androidx.compose.ui.graphics.Color(0xFF16A34A)
-        StatusTone.WARNING -> androidx.compose.ui.graphics.Color(0xFFEA580C)
+        StatusTone.POSITIVE -> com.shukaihu.rainyclock.ui.theme.StatusPositive
+        StatusTone.WARNING -> com.shukaihu.rainyclock.ui.theme.StatusWarning
         StatusTone.ERROR -> MaterialTheme.colorScheme.error
         StatusTone.NEUTRAL -> MaterialTheme.colorScheme.onSurfaceVariant
     }

@@ -2,6 +2,7 @@ package com.shukaihu.rainyclock
 
 import com.shukaihu.rainyclock.model.AlarmSound
 import com.shukaihu.rainyclock.model.CommuteAlarmSettings
+import com.shukaihu.rainyclock.model.CommuteMode
 import com.shukaihu.rainyclock.model.WeatherCondition
 import com.shukaihu.rainyclock.model.WeatherSampleMapper
 import kotlinx.serialization.json.Json
@@ -37,6 +38,21 @@ class CommuteAlarmSettingsTest {
             """{"alarmSound":"toneFromTheFuture"}"""
         ).sanitized()
         assertEquals(AlarmSound.RAINY_CLOCK, settings.alarmSound)
+    }
+
+    @Test
+    fun `a settings blob left over from the scooter mode keeps every other field`() {
+        // Android dropped the scooter mode; anything persisted before that must
+        // degrade to the default rather than losing the whole settings object,
+        // which is what the repository's decode does on a thrown exception.
+        val settings = json.decodeFromString<CommuteAlarmSettings>(
+            """{"commuteMode":"scooter","homeAddress":"台南","alarmHour":6,"snoozeDurationMinutes":9}"""
+        ).sanitized()
+
+        assertEquals(CommuteMode.CAR, settings.commuteMode)
+        assertEquals("台南", settings.homeAddress)
+        assertEquals(6, settings.alarmHour)
+        assertEquals(9, settings.snoozeDurationMinutes)
     }
 
     @Test

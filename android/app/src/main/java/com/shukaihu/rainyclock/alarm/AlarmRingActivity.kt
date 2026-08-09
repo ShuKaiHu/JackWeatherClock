@@ -36,6 +36,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.shukaihu.rainyclock.R
+import com.shukaihu.rainyclock.ui.theme.AppAccent
+import com.shukaihu.rainyclock.ui.theme.AppBackground
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -126,7 +128,7 @@ private fun RingScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0F172A))
+            .background(AppBackground)
             .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -141,14 +143,14 @@ private fun RingScreen(
             text = stringResource(
                 if (isAdjusted) R.string.alarm_alert_title_adjusted else R.string.alarm_alert_title_normal
             ),
-            color = Color(0xFF93C5FD),
+            color = AppAccent,
             style = MaterialTheme.typography.titleLarge
         )
         Spacer(modifier = Modifier.height(64.dp))
         Button(
             onClick = onStop,
             modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB))
+            colors = ButtonDefaults.buttonColors(containerColor = AppAccent)
         ) {
             Text(text = stringResource(R.string.stop_alarm), fontSize = 20.sp)
         }

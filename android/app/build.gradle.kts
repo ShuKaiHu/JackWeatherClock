@@ -48,6 +48,21 @@ android {
         val mapsApiKey = providers.gradleProperty("mapsApiKey").getOrElse("")
         manifestPlaceholders["mapsApiKey"] = mapsApiKey
         buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
+
+        // The WeatherKit signing proxy (weather-proxy/). Empty falls back to
+        // Open-Meteo, which is non-commercially licensed and must not ship
+        // alongside ads — see docs/ANDROID.md. Use http://10.0.2.2:8080 to
+        // reach a proxy running on the host from an emulator.
+        buildConfigField(
+            "String",
+            "WEATHER_PROXY_URL",
+            "\"${providers.gradleProperty("weatherProxyUrl").getOrElse("")}\""
+        )
+        buildConfigField(
+            "String",
+            "WEATHER_PROXY_SECRET",
+            "\"${providers.gradleProperty("weatherProxySecret").getOrElse("")}\""
+        )
     }
 
     buildTypes {
