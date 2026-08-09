@@ -8,8 +8,17 @@ runbook is `docs/play-store-submission-checklist.md`.
 
 ## Read first
 
-**`docs/STATUS.md`** — what shipped, what is in review, what is being worked on, and the
-backlog. Start there, and update it when state changes.
+The two platforms keep **separate logs** — they ship on different schedules and are often
+worked on at the same time, so never write one platform's state into the other's file:
+
+- **`docs/STATUS-IOS.md`** — the iPhone app: what shipped, what is in review, what is being
+  worked on, and the iOS backlog.
+- **`docs/STATUS-ANDROID.md`** — the Android port and everything still owed before a first
+  Play release.
+- **`docs/STATUS.md`** — a one-page router: which platform is where, plus the handful of facts
+  that are true of both.
+
+Start with the log for the platform you are touching, and update it when state changes.
 
 Supporting docs:
 

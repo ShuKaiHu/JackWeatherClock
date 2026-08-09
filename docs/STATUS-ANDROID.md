@@ -1,0 +1,116 @@
+# Rainy Clock — Android status & backlog
+
+Living handoff document for the **Android port**. Read this first when picking Android back
+up; update it when something ships, gets blocked, or gets discovered.
+
+The iPhone app keeps its own log in `docs/STATUS-IOS.md`. Keep the two apart: they ship on
+different schedules and are often worked on at the same time, and a shared file means two
+sessions writing over each other. Anything true of both platforms goes in `docs/STATUS.md`.
+
+- Port architecture, platform substitutions and Android gotchas → `docs/ANDROID.md`
+- Play Store submission runbook → `docs/play-store-submission-checklist.md`
+- Product reasoning and rejected alternatives (both platforms) → `docs/PRODUCT_DECISIONS.md`
+
+Last updated: 2026-08-09.
+
+## Android port — in development
+
+Started 2026-08-08 on branch `claude/android-play-store-release-jykw59`. A standalone Gradle
+project in `android/` (Kotlin + Compose, minSdk 26, targetSdk 35) reimplementing the shipped
+product: endpoint rain check, smart alarm with the same time math (unit-tested against the
+iOS semantics), exact alarms that ring through silent mode and DND, snooze, boot re-arm,
+WorkManager morning re-decision, UMP consent + one AdMob banner, zh-Hant + English strings.
+CI builds it (`.github/workflows/android.yml`); the alarm tones are copied from the iOS
+target's `.wav`s at build time, not duplicated.
+
+Since the first push it also gained the **Google Maps route preview** (Maps SDK +
+Routes API, key via `-PmapsApiKey`, hides itself when unconfigured) and — a first for the
+product — **on-route rain sampling**: interior points along the polyline (midpoint, or
+quarter points on long commutes) are rain-checked alongside home and office, and any of
+them over the threshold pulls the alarm earlier. iOS still samples endpoints only.
+
+**Restyled to match iOS on 2026-08-09**: the Material baseline purple is gone, replaced by
+the palette `ContentView.swift` defines — black canvas, `#1F1F21` cards, `#2E2E33` filled
+fields, iOS dark-mode system blue `#0A84FF`, dark-only like iOS. The route-weather segments
+now sit side by side as gradient tiles the way the iOS `HStack` presents them, and the ad
+banner moved *below* the tab strip. Details and the two Material colour roles left
+deliberately untinted are in `docs/ANDROID.md`.
+
+Decisions and deliberate gaps (no address autocomplete, Open-Meteo instead of WeatherKit —
+the WeatherKit REST key cannot ship in an APK; four options incl. a tiny signing proxy are
+documented) are in `docs/ANDROID.md`.
+
+### Outstanding — everything still owed, in priority order
+
+Mechanics live in `docs/play-store-submission-checklist.md`; this is the "what is left and
+who has to do it" view. Items marked **(you)** need a human with console access, a payment
+method, or a product call — nobody else can close them.
+
+**1. Money and secrets — open right now, do these first**
+
+- [x] **Maps API key restricted — done and verified 2026-08-09.** Both halves are set:
+      application restriction → Android apps → `com.shukaihu.rainyclock` + the debug SHA-1
+      `3A:6A:BC:72:DB:DB:B8:81:E6:EB:68:52:99:F1:1F:8D:24:07:AD:32`, and API restriction →
+      Maps SDK for Android + Routes API only. Confirmed by probing from a laptop with no
+      Android headers: Geocoding answers `REQUEST_DENIED` ("not authorized to use this API
+      key") and Routes answers `PERMISSION_DENIED` ("Requests from this Android client
+      application `<empty>` are blocked"). **Still owed on this key: the upload-cert and Play
+      App Signing SHA-1s** must be added before release, or maps break for everyone who
+      installs from Play — Google re-signs the APK, so the shipped build presents the *Play*
+      certificate, not the upload one. Re-run the same probe after adding them.
+- [ ] **(you) Cap the Routes API quota** (API & Services → Routes API → Quotas). Structural,
+      not advisory: a capped quota makes the bill $0 even if the key leaks or a bug loops.
+- [ ] **(you) Disable the ~30 Maps APIs the console enabled by default.** The app calls two.
+      Route Optimization, Navigation SDK and Places are expensive; every one left enabled is
+      reachable with a leaked key.
+
+**2. The one product decision still blocking a release**
+
+- [ ] **(you) Weather-provider licensing.** Open-Meteo's keyless tier is **non-commercial**
+      and this app carries ads. Three options in `docs/ANDROID.md`: buy their commercial
+      plan, swap the provider behind `WeatherSamplingService`, or ship the first release
+      ad-free. **Shipping ads on the free tier is not one of them.** Everything else below
+      can proceed in parallel; this one gates going live.
+
+**3. Accounts and assets that take calendar time**
+
+- [ ] **(you) Play Developer account** (US$25). If it registers as a *personal* account, the
+      **12-testers-for-14-days closed test** applies — that is the longest pole in the whole
+      schedule, so open the account early even if the build is not final.
+- [ ] **(you) Upload keystore**, generated once and backed up outside the repo, with Play App
+      Signing opted in at first upload. Its SHA-1 (and Play's) then go into the Maps key.
+- [ ] **(you) AdMob: register a new Android app** and one anchored adaptive banner unit; pass
+      both as Gradle properties at build time. `app-ads.txt` needs no change — it is
+      per-account and already verified.
+
+**4. Content and code left to write**
+
+- [ ] `docs/privacy-policy.html` needs an **Android paragraph** before it can be the Play
+      privacy-policy URL — it currently describes ATT, which does not exist on Android.
+      The page ships from this repo, so it only counts once pushed.
+- [ ] **Android screenshots** for the listing. `pics/20260729/` is iPhone-framed and the
+      Android UI genuinely differs; retake on the emulator. The dark/blue restyle means the
+      old shots are wrong twice over.
+- [ ] Feature graphic 1024×500 and a 512×512 icon.
+- [ ] **`WeekdaySelector` truncates at large font scales** — a fixed `Modifier.size(40.dp)`
+      circle, the same defect fixed on iOS on 2026-08-09 and still open here.
+- [ ] Commit and merge the work sitting uncommitted on
+      `claude/android-play-store-release-jykw59` (PR #2 is still a draft).
+
+**5. Play Console declarations and rollout** — all in the checklist doc: data safety form,
+ads declaration, the **`USE_EXACT_ALARM`** permission declaration (mandatory; the release is
+rejected on upload without it), content rating, then internal test → closed test if required
+→ staged production rollout.
+
+**Already closed:** the Maps Platform key itself. Project `RainyClock` (`510427696731`),
+billing attached, Maps SDK for Android + Routes API enabled, key in
+`~/.gradle/gradle.properties`. Verified end to end on the emulator 2026-08-09 — map tiles,
+polyline, 26 min / 17.2 km on a real Tainan commute.
+
+**The scooter mode was dropped from Android on 2026-08-09.** Routes API prices two-wheeler
+routing as Enterprise tier, outside the free Essentials allowance, and scooters are the most
+common commute in the target market — so the mode would have put most real traffic on the
+only billable path. Android now offers Car, Walking and Transit; iOS keeps its scooter pill
+(Apple Maps is free and has no two-wheeler mode, so it already shows a driving estimate).
+Reasoning in `docs/PRODUCT_DECISIONS.md`, both languages. A settings blob still holding
+`"scooter"` degrades to `CAR` instead of wiping every other field — pinned by a test.

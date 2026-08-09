@@ -102,7 +102,7 @@ private struct AdMobBannerContainer: UIViewRepresentable {
             isLoaded = false
             // A failed load collapses to zero height and is indistinguishable from
             // "no ad requested" on screen, which is the diagnosis blind spot behind
-            // every "is the integration broken?" round-trip in STATUS.md.
+            // every "is the integration broken?" round-trip in STATUS-IOS.md.
             #if DEBUG
             print("[AdMob] banner failed to load: \(error.localizedDescription)")
             #endif
