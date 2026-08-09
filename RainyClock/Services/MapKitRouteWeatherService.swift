@@ -117,12 +117,33 @@ actor MapKitRouteWeatherService: RouteWeatherService {
         return RoutePolylineSampler.interiorSamplePoints(along: route.polyline.coordinateArray)
     }
 
+    /// Names a sample by where it sits along the route — "路程 ¼", "Halfway" —
+    /// rather than by an index the reader has to decode. The sampler spaces its
+    /// points evenly, so sample `index` of `total` sits at `(index + 1) /
+    /// (total + 1)` of the way; `RoutePolylineSamplerTests` pins that agreement
+    /// so a changed fraction list cannot quietly make these labels lie.
     static func interiorSegmentName(index: Int, total: Int) -> String {
-        let base = String(localized: "segment_route_placeholder")
-        guard total > 1 else {
-            return base
+        let denominator = total + 1
+        let divisor = greatestCommonDivisor(index + 1, denominator)
+
+        switch ((index + 1) / divisor, denominator / divisor) {
+        case (1, 4):
+            return String(localized: "segment_route_quarter")
+        case (1, 2):
+            return String(localized: "segment_route_half")
+        case (3, 4):
+            return String(localized: "segment_route_three_quarter")
+        case let (numerator, denominator):
+            return String.localizedStringWithFormat(
+                String(localized: "segment_route_fraction_format"),
+                numerator,
+                denominator
+            )
         }
-        return String.localizedStringWithFormat(String(localized: "segment_route_sample_format"), base, index + 1)
+    }
+
+    private static func greatestCommonDivisor(_ a: Int, _ b: Int) -> Int {
+        b == 0 ? max(a, 1) : greatestCommonDivisor(b, a % b)
     }
 }
 
@@ -153,18 +174,25 @@ enum RoutePolylineSampler {
             return []
         }
 
-        let fractions: [Double]
-        switch total {
-        case ..<4_000:
-            return []
-        case ..<20_000:
-            fractions = [0.5]
-        default:
-            fractions = [0.25, 0.5, 0.75]
-        }
-
-        return fractions.map { fraction in
+        return interiorSampleFractions(forRouteLength: total).map { fraction in
             point(atDistance: total * fraction, along: coordinates, cumulative: cumulative)
+        }
+    }
+
+    /// Where along a route of this length the interior samples sit.
+    ///
+    /// The even spacing is not only cosmetic: `interiorSegmentName` labels each
+    /// card from its position, deriving it as `(index + 1) / (count + 1)`.
+    /// Changing these fractions to anything unevenly spaced makes those labels
+    /// wrong — `RoutePolylineSamplerTests` fails if that happens.
+    static func interiorSampleFractions(forRouteLength length: CLLocationDistance) -> [Double] {
+        switch length {
+        case ..<4_000:
+            []
+        case ..<20_000:
+            [0.5]
+        default:
+            [0.25, 0.5, 0.75]
         }
     }
 

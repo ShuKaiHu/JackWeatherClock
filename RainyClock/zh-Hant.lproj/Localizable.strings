@@ -102,9 +102,11 @@
 "alarm_snoozing_title" = "賴床中";
 "segment_home_area" = "住家附近";
 "segment_office_area" = "公司附近";
-"segment_route_placeholder" = "通勤途中";
 "segment_route_format" = "%@路線";
-"segment_route_sample_format" = "%@取樣 %d";
+"segment_route_quarter" = "路程 ¼";
+"segment_route_half" = "路程 ½";
+"segment_route_three_quarter" = "路程 ¾";
+"segment_route_fraction_format" = "路程 %1$d/%2$d";
 "weather_data_attribution" = "天氣資料由 Apple Weather 提供。";
 "address_not_found_inline" = "找不到這個地址或路線，請重新輸入或選擇建議地址。";
 "clear_address" = "清除地址";

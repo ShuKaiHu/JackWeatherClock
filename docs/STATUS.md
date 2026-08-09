@@ -288,11 +288,20 @@ Shortening the labels was considered first and **measured, not assumed**: with
 line needs ~60pt at its minimum scale, and "住家附近"/"公司附近" are not shortenable. Five of
 those plus spacing is 390pt against 350pt of usable width.
 
-The English endpoint labels dropped "area" the same day — `segment_home_area` and
-`segment_office_area` now read "Home" and "Office". zh-Hant keeps 住家附近 / 公司附近.
-**Still open:** the interior samples are called "通勤途中取樣 N" / "Commute sample N". They are
-at 1/4, 1/2 and 3/4 of the route, so "中點" would be wrong for two of the three; a shorter
-wording needs to survive that.
+**The card labels were rewritten** the same day. The endpoints lost "area" in English —
+`segment_home_area` and `segment_office_area` now read "Home" and "Office"; zh-Hant keeps
+住家附近 / 公司附近. The interior samples stopped being "通勤途中取樣 N" / "Commute sample N"
+and now say where they are: **路程 ¼ / ½ / ¾**, **¼ way / Halfway / ¾ way**. A short commute
+samples one point and it is the true midpoint, so it reads 路程 ½ / Halfway.
+
+"中點1/2/3" was rejected for this: at ≥20 km the three points sit at 1/4, 1/2 and 3/4, so
+two of the three are not the midpoint and the label would mislead. `interiorSegmentName`
+therefore derives the fraction from the position — sample `index` of `total` sits at
+`(index + 1) / (total + 1)` — rather than hardcoding three names. That only holds while the
+sampler spaces its points evenly, so `RoutePolylineSampler.interiorSampleFractions` is now a
+separate function and `testSampleFractionsAreEvenlySpacedSoTheNamesStayTrue` fails if a
+future fraction list breaks the assumption. **The Android strings still say the old thing**
+and are untouched here.
 
 **Dynamic Type no longer truncates the controls** (2026-08-09). Reported from a real user:
 on an iPhone with an enlarged system font the weekday circles all read "…". Three controls
@@ -353,17 +362,16 @@ method, or a product call — nobody else can close them.
 
 **1. Money and secrets — open right now, do these first**
 
-- [ ] **(you) Restrict the Maps API key. It is currently wide open.** Verified 2026-08-09: a
-      `curl` from a laptop, sending no Android headers at all, reached both Geocoding and
-      Places with this key. The key ships *inside the APK* and is trivially extracted from a
-      decompiled build, so the restriction is not hardening — it is the only control there
-      is, and a billing account is already attached. Set **both** halves in the console
-      (Credentials → the key): Application restriction → Android apps →
-      `com.shukaihu.rainyclock` + SHA-1, and API restriction → Maps SDK for Android +
-      Routes API only. Debug SHA-1 for local testing is
-      `3A:6A:BC:72:DB:DB:B8:81:E6:EB:68:52:99:F1:1F:8D:24:07:AD:32`; the upload and Play App
-      Signing SHA-1s must be added before release or production maps break. Re-run the probe
-      afterwards — a correct setup answers `REQUEST_DENIED`.
+- [x] **Maps API key restricted — done and verified 2026-08-09.** Both halves are set:
+      application restriction → Android apps → `com.shukaihu.rainyclock` + the debug SHA-1
+      `3A:6A:BC:72:DB:DB:B8:81:E6:EB:68:52:99:F1:1F:8D:24:07:AD:32`, and API restriction →
+      Maps SDK for Android + Routes API only. Confirmed by probing from a laptop with no
+      Android headers: Geocoding answers `REQUEST_DENIED` ("not authorized to use this API
+      key") and Routes answers `PERMISSION_DENIED` ("Requests from this Android client
+      application `<empty>` are blocked"). **Still owed on this key: the upload-cert and Play
+      App Signing SHA-1s** must be added before release, or maps break for everyone who
+      installs from Play — Google re-signs the APK, so the shipped build presents the *Play*
+      certificate, not the upload one. Re-run the same probe after adding them.
 - [ ] **(you) Cap the Routes API quota** (API & Services → Routes API → Quotas). Structural,
       not advisory: a capped quota makes the bill $0 even if the key leaks or a bug loops.
 - [ ] **(you) Disable the ~30 Maps APIs the console enabled by default.** The app calls two.

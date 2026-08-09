@@ -65,13 +65,30 @@ final class RoutePolylineSamplerTests: XCTestCase {
         XCTAssertEqual(samples[0].latitude, 25.045, accuracy: 1e-3)
     }
 
-    func testInteriorSegmentNamesMatchTheLocalizedFormat() {
+    func testInteriorSegmentNamesDescribeThePositionAlongTheRoute() {
         XCTAssertEqual(
             MapKitRouteWeatherService.interiorSegmentName(index: 0, total: 1),
-            String(localized: "segment_route_placeholder")
+            String(localized: "segment_route_half")
         )
-        let second = MapKitRouteWeatherService.interiorSegmentName(index: 1, total: 3)
-        XCTAssertTrue(second.contains("2"))
+
+        let names = (0..<3).map { MapKitRouteWeatherService.interiorSegmentName(index: $0, total: 3) }
+        XCTAssertEqual(names, [
+            String(localized: "segment_route_quarter"),
+            String(localized: "segment_route_half"),
+            String(localized: "segment_route_three_quarter")
+        ])
+    }
+
+    /// The labels above are derived from the position, so they only stay true
+    /// while the sampler keeps spacing its points evenly.
+    func testSampleFractionsAreEvenlySpacedSoTheNamesStayTrue() {
+        for length in [10_000.0, 40_000.0] {
+            let fractions = RoutePolylineSampler.interiorSampleFractions(forRouteLength: length)
+            let expected = (0..<fractions.count).map { Double($0 + 1) / Double(fractions.count + 1) }
+            XCTAssertEqual(fractions, expected, "route length \(length)")
+        }
+
+        XCTAssertTrue(RoutePolylineSampler.interiorSampleFractions(forRouteLength: 3_000).isEmpty)
     }
 }
 
