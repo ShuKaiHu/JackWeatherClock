@@ -256,6 +256,23 @@ container without Xcode, so the code needed a compile check before archiving —
 and none failed, the six `RoutePolylineSamplerTests` among them. Re-run after the Dynamic Type
 work below landed, so that count covers both.
 
+**The extra sample points broke the card row, fixed 2026-08-09.** The Route tab laid the
+weather cards out in a plain `HStack` written when there were only ever two of them. Rendered
+on an iPhone 16e simulator against a stubbed snapshot (the real path needs addresses, network
+and a signed WeatherKit build), the sample counts the sampler can actually produce look like
+this:
+
+| Segments | Commute | Before | After |
+| --- | --- | --- | --- |
+| 2 | < 4 km, transit, route failure | fine | unchanged |
+| 3 | 4–20 km | fine at standard sizes | unchanged; wraps 2+1 at accessibility sizes |
+| 5 | ≥ 20 km | **row wider than the screen** — first and last card clipped at the bezel, the page lost its 20pt margins, titles broke to "Com-/mute s…" | wraps 3+2 |
+
+`RouteWeatherGrid` now wraps at three cards per row (two at accessibility sizes), and the
+card's condition line went `lineLimit(1)` → `2`, which is what truncated "62% 降雨機率" to
+"62…" at accessibility sizes even with only three cards. A ≥20 km commute is ordinary here —
+Taipei to Hsinchu hits it — so this was a real user-facing break, not a corner case.
+
 **Dynamic Type no longer truncates the controls** (2026-08-09). Reported from a real user:
 on an iPhone with an enlarged system font the weekday circles all read "…". Three controls
 sized text into a fixed box and truncated once the text style scaled past xxxLarge:

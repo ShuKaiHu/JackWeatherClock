@@ -264,11 +264,7 @@ private struct RouteTabView: View {
                         }
 
                         if let snapshot = viewModel.routeWeatherSnapshot {
-                            HStack(spacing: 10) {
-                                ForEach(snapshot.segments) { segment in
-                                    RouteWeatherCard(segment: segment)
-                                }
-                            }
+                            RouteWeatherGrid(segments: snapshot.segments)
                         } else {
                             RouteWeatherPlaceholderCards()
                         }
@@ -1314,6 +1310,48 @@ private struct MetricRow: View {
     }
 }
 
+/// The card count is dynamic: the two endpoints, plus up to three interior
+/// samples once the commute is long enough. Five cards in one `HStack` are
+/// wider than the screen — they clip at both edges and drag the whole page's
+/// horizontal margins with them — so the row wraps instead of overflowing.
+private struct RouteWeatherGrid: View {
+    private static let spacing: CGFloat = 10
+
+    let segments: [RouteWeatherSegment]
+
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    var body: some View {
+        VStack(spacing: Self.spacing) {
+            ForEach(rowStarts, id: \.self) { start in
+                let end = min(start + columnCount, segments.count)
+
+                HStack(spacing: Self.spacing) {
+                    ForEach(segments[start..<end]) { segment in
+                        RouteWeatherCard(segment: segment)
+                    }
+
+                    // Keep a short trailing row's cards the same width as a
+                    // full row's rather than letting them stretch.
+                    ForEach(Array((end - start)..<columnCount), id: \.self) { _ in
+                        Color.clear
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+            }
+        }
+    }
+
+    /// Two endpoints alone keep the historical side-by-side pair.
+    private var columnCount: Int {
+        min(max(segments.count, 1), dynamicTypeSize.isAccessibilitySize ? 2 : 3)
+    }
+
+    private var rowStarts: [Int] {
+        Array(stride(from: 0, to: segments.count, by: columnCount))
+    }
+}
+
 private struct RouteWeatherCard: View {
     let segment: RouteWeatherSegment
 
@@ -1333,8 +1371,9 @@ private struct RouteWeatherCard: View {
             Text(conditionText)
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.secondary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
+                .lineLimit(2)
+                .multilineTextAlignment(.center)
+                .minimumScaleFactor(0.6)
         }
         .frame(maxWidth: .infinity, minHeight: 150)
         .padding(.vertical, 18)
