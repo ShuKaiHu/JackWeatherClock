@@ -10,11 +10,11 @@ Write platform state into its own log, never into this page. Split on 2026-08-09
 shared file kept collecting both platforms' edits from two sessions at once. Only facts that
 are true of *both* belong here.
 
-## Where things stand — 2026-08-09
+## Where things stand — 2026-08-13
 
 | Platform | State |
 | --- | --- |
-| **iOS** | `1.6.3 (18)` live on the App Store. `1.6.5 (23)` archived and waiting to upload — that submission answers the 1.6.4 rejection. `1.6.6 (24)` settled in the working tree, held back until 1.6.5 clears review. |
+| **iOS** | `1.6.5` live on the App Store since 2026-08-04. `1.6.6 (24)` is archived and ready to upload as the next submission. |
 | **Android** | Never shipped. The port builds, runs and matches the iOS behaviour, but a weather-provider licensing call and a Play developer account still block a first release. |
 
 ## Shared references

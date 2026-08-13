@@ -11,16 +11,28 @@ sessions writing over each other. Anything true of both platforms goes in `docs/
 - Store copy, release notes, review notes → `docs/appstore-metadata.md`
 - Product reasoning and rejected alternatives (both platforms) → `docs/PRODUCT_DECISIONS.md`
 
-Last updated: 2026-08-09.
+Last updated: 2026-08-13.
 
 ## Where things stand
 
 | | Version | State |
 | --- | --- | --- |
-| Live on the App Store | `1.6.3 (18)` | Approved and released 2026-07-28 |
-| Rejected | `1.6.4 (19)` | Rejected 2026-08-01 on 5.1.2(i) and 2.1(a) |
-| **Waiting to upload** | `1.6.5 (23)` | Builds 20 (invalidated), 21 and 22 superseded before upload; **`build/RainyClock-1.6.5-23.xcarchive` is the one to upload** |
-| **In development** | `1.6.6 (24)` | Version numbers bumped 2026-08-09; on-route rain sampling and the Dynamic Type fix. Holds until 1.6.5 clears review |
+| **Live on the App Store** | `1.6.5` | **Released 2026-08-04.** Confirmed against the public listing, not against this file — see the warning below |
+| Superseded | `1.6.3 (18)` | Released 2026-07-28 |
+| Rejected, then resolved | `1.6.4 (19)` | Rejected 2026-08-01 on 5.1.2(i) and 2.1(a); both answered, and the fixes reached users in 1.6.5 |
+| **Ready to upload** | `1.6.6 (24)` | Archived as `build/RainyClock-1.6.6-24.xcarchive`. The next submission |
+
+> **This file said "1.6.5 waiting to upload" for nine days after 1.6.5 had already shipped.**
+> Nobody updated it after the upload, and an agent reading it repeated the claim back as
+> fact. The listing is the source of truth for what is live, and it is one command away
+> without any credentials:
+>
+> ```
+> curl -s "https://itunes.apple.com/lookup?bundleId=com.shukaihu.RainyClock&country=tw" | python3 -m json.tool | grep -E '"version"|currentVersionReleaseDate'
+> ```
+>
+> Check it before trusting any "what is live" line here, and update the table when a version
+> goes out.
 
 `1.6.3` is the AlarmKit release: alarms pierce silent mode and Focus on iOS 26+, snooze with
 a 1–15 minute interval, and the first shipped `RainyClockAlarmWidget` extension. It cleared
@@ -28,9 +40,9 @@ review on the first attempt, so AlarmKit's `NSAlarmKitUsageDescription` prompt a
 widget extension are both proven acceptable to App Review — nothing extra was asked for.
 
 Apple offered to approve `1.6.4` as a bug-fix submission if asked; we chose to fix both
-findings and resubmit as `1.6.5` instead. The resubmission also carries the English (U.S.)
-localization added for `1.6.4` — that metadata has still never been through review, since
-`1.6.4` never shipped.
+findings and resubmit as `1.6.5` instead, and that is the version that went out on
+2026-08-04. It carries everything `1.6.4` contained, so the interface redesign and the
+English (U.S.) localization reached users through it.
 
 ## The 1.6.4 rejection
 
@@ -77,7 +89,7 @@ The 使用者指標 / user metrics panel in AdMob reads all zeros because the ap
 or Google Analytics SDK. It is not a signal. Real download numbers are in App Store Connect
 under 分析 / Analytics.
 
-## 1.6.5 — in development
+## 1.6.5 — released 2026-08-04
 
 Everything `1.6.4` contained, plus the rejection fixes. Version numbers already bumped in both
 places (`Info.plist` → `1.6.5 (20)`, project file → `MARKETING_VERSION 1.6.5` /
@@ -114,11 +126,9 @@ places (`Info.plist` → `1.6.5 (20)`, project file → `MARKETING_VERSION 1.6.5
       Tracking section, the old "Track you across apps or websites" line is gone, and
       `support.html` describes the AlarmKit behaviour.
 - [x] Second cleanup pass, 2026-08-03 — the audit's smaller findings, listed below.
-- [ ] Upload build 23, attach it to the 1.6.5 version, and resubmit. The release notes, review
-      note and Resolution Center reply are already in place from the build-20 attempt — only
-      the build changes. **Upload the existing `build/RainyClock-1.6.5-23.xcarchive`** — source
-      moved on to `1.6.6 (24)` on 2026-08-09, so a fresh archive would no longer be build 23.
-- [ ] Wait for the verdict.
+- [x] **Uploaded, approved and released 2026-08-04.** 1.6.5 is the version live on the App
+      Store today; the 5.1.2(i) and 2.1(a) findings are closed. The build number that shipped
+      is not visible from the public listing — read it off App Store Connect if it matters.
 
 ## Pre-submission audit — what it found
 
@@ -263,11 +273,10 @@ build/RainyClock-1.6.6-24.xcarchive`, then Distribute App → App Store Connect 
 **Manage Version and Build Number unchecked**. `xcodebuild -exportArchive` cannot do it from
 here — the account grant lapse described in `docs/app-store-submission-checklist.md`.
 
-**If 1.6.6 is uploaded instead of 1.6.5:** the App Store Connect version record is currently
-named `1.6.5`, so it has to be renamed to `1.6.6` before build 24 can be attached to it, and
-the release notes swapped for the 1.6.6 ones. The Resolution Center reply and the App Review
-note written for the 1.6.4 rejection still apply unchanged — 1.6.6 contains everything 1.6.5
-did, including the ATT work that answers 5.1.2(i).
+In App Store Connect this needs a **new version record, `1.6.6`** — 1.6.5 is released, not
+pending, so there is nothing to rename. Create the version, paste the 1.6.6 notes from
+`docs/appstore-metadata.md`, attach build 24. No Resolution Center reply is involved: the
+1.6.4 rejection was closed by the 1.6.5 release.
 
 **Version numbers bumped 2026-08-09** to `1.6.6` / build `24`, in `Info.plist` *and* the
 project file, verified in a Debug build: app and `RainyClockAlarmWidget.appex` both report

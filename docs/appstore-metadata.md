@@ -82,33 +82,27 @@ rain alarm,weather alarm,commute alarm,smart alarm,rain,weather,alarm clock,comm
 
 ## Version 1.6.6 (24) “What’s New”
 
-Neither `1.6.4` nor `1.6.5` ever reached a user, so if `1.6.6` is the build that ships, these
-notes have to carry all three versions' changes. They do: the first two bullets are what
-`1.6.4`/`1.6.5` would have said, the rest is new in `1.6.6`. Drop the merged bullets if
-`1.6.5 (23)` goes out first.
+`1.6.5` is live (released 2026-08-04), so these notes cover **only what is new since it** —
+they must not repeat the round weekday buttons or the ads question, which users already have.
 
 ### English
 
 ```
-Rain checks along your whole route, and a clearer alarm screen:
+Rain checks along your whole route:
 
-• Rainy Clock now checks the forecast at points along your commute, not only at home and the office — if rain is expected anywhere on the way, your alarm still moves earlier.
-• Larger text is properly supported. If you use a bigger system font size, the weekday buttons and the route options no longer cut their labels off.
-• The weekday selector uses round buttons, with the days your alarm will ring highlighted in blue.
-• Each alarm morning is decided on its own forecast, re-checked before every scheduled day.
-• You are asked whether ads may be matched to your interests. Decline and the app works exactly the same.
+• Rainy Clock now checks the forecast at points along your commute, not only at home and the office. If rain is expected anywhere on the way, your alarm still moves earlier.
+• Route weather now names each point by where it is — halfway, a quarter of the way — instead of numbering them.
+• Larger text is properly supported. With a bigger system font size, the weekday buttons and the transport options no longer cut their labels off.
 ```
 
 ### 繁體中文
 
 ```
-整段通勤路線都查雨，鬧鐘畫面也更清楚：
+整段通勤路線都查雨：
 
-• 雨天鬧鐘現在會查詢通勤途中各點的預報，不再只看住家和公司——路上任何一段預報會下雨，鬧鐘一樣提前叫你。
-• 完整支援放大字級。系統字體調大時，星期按鈕和交通方式的文字不會再被截掉。
-• 星期選擇為圓形按鈕，鬧鐘會響的日子以藍色標示。
-• 每個鬧鐘日都依當天預報決定，排程日前會重新查詢天氣。
-• 會詢問是否允許廣告依你的興趣呈現。選擇不允許也不影響任何功能。
+• 雨天鬧鐘現在會查詢通勤途中各點的預報，不再只看住家和公司。路上任何一段預報會下雨，鬧鐘一樣提前叫你。
+• 路線天氣改用位置標示每個查詢點（路程一半、路程 ¼），不再只是編號。
+• 完整支援放大字級。系統字體調大時，星期按鈕與交通方式的文字不會再被截掉。
 ```
 
 ## Version 1.6.5 (22) “What’s New”
