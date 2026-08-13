@@ -131,8 +131,9 @@ default.
       Platform named, a Tracking section that states there is no ATT prompt on Android, and a
       new section on the WeatherKit relay — coordinates now leave the device to a service we
       operate, which nothing disclosed before. Rounded to ~1 km, no identifier, in memory for
-      ~15 minutes, never written down. **Only counts once pushed and live**, and the Play
-      Data safety answers have to agree with it.
+      ~15 minutes, never written down. **Live since the PR #2 merge, verified 2026-08-13** at
+      the published URL (WeatherKit, Maps and Android sections all present). The Play Data
+      safety answers still have to agree with it.
 - [ ] **Android screenshots** for the listing. `pics/20260729/` is iPhone-framed and the
       Android UI genuinely differs; retake on the emulator. The dark/blue restyle means the
       old shots are wrong twice over.
