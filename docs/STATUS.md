@@ -14,7 +14,7 @@ are true of *both* belong here.
 
 | Platform | State |
 | --- | --- |
-| **iOS** | `1.6.5` live on the App Store since 2026-08-04. `1.6.6 (24)` is archived and ready to upload as the next submission. |
+| **iOS** | `1.6.5` live on the App Store since 2026-08-04. `1.6.6 (24)` uploaded to App Store Connect 2026-08-13, not yet submitted for review. |
 | **Android** | Never shipped. The port builds, runs and matches the iOS behaviour, but a weather-provider licensing call and a Play developer account still block a first release. |
 
 ## Shared references

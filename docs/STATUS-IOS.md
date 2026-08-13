@@ -20,7 +20,7 @@ Last updated: 2026-08-13.
 | **Live on the App Store** | `1.6.5` | **Released 2026-08-04.** Confirmed against the public listing, not against this file — see the warning below |
 | Superseded | `1.6.3 (18)` | Released 2026-07-28 |
 | Rejected, then resolved | `1.6.4 (19)` | Rejected 2026-08-01 on 5.1.2(i) and 2.1(a); both answered, and the fixes reached users in 1.6.5 |
-| **Ready to upload** | `1.6.6 (24)` | Archived as `build/RainyClock-1.6.6-24.xcarchive`. The next submission |
+| **Uploaded, not submitted** | `1.6.6 (24)` | In App Store Connect since 2026-08-13. Still needs a `1.6.6` version record, the notes, the build attached, and a submission |
 
 > **This file said "1.6.5 waiting to upload" for nine days after 1.6.5 had already shipped.**
 > Nobody updated it after the upload, and an agent reading it repeated the claim back as
