@@ -8,38 +8,36 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Alarm
-import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.outlined.Alarm
+import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
 import com.shukaihu.rainyclock.R
 import com.shukaihu.rainyclock.ads.AdBanner
 import com.shukaihu.rainyclock.ads.ConsentManager
-import com.shukaihu.rainyclock.ui.theme.AppAccent
-import com.shukaihu.rainyclock.ui.theme.AppSecondaryLabel
+import com.shukaihu.rainyclock.ui.theme.AppBackground
 import com.shukaihu.rainyclock.ui.theme.RainyClockTheme
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
@@ -100,8 +98,13 @@ private fun MainScreen(
     val privacyOptionsRequired by consentManager.privacyOptionsRequired.collectAsState()
     val adRevision by consentManager.adConfigurationRevision.collectAsState()
 
-    var selectedTab by rememberSaveable { mutableIntStateOf(0) }
     var showPrivacyOptionsError by rememberSaveable { mutableStateOf(false) }
+
+    // iOS presents the two tabs as a paged TabView, so the strip is not the only
+    // way between them — the pages swipe. The pager owns the selection; the tab
+    // strip is a second control over the same state, not a parallel one.
+    val pagerState = rememberPagerState(pageCount = { 2 })
+    val scope = rememberCoroutineScope()
 
     Scaffold(
         bottomBar = {
@@ -109,56 +112,57 @@ private fun MainScreen(
             // window, so the tabs stay within thumb reach. The gesture-bar inset
             // moves to the Column, or it would pad above the ad and leave the ad
             // itself underneath the system handle.
-            Column(modifier = Modifier.navigationBarsPadding()) {
-                NavigationBar(windowInsets = WindowInsets(0, 0, 0, 0)) {
-                    NavigationBarItem(
-                        selected = selectedTab == 0,
-                        onClick = { selectedTab = 0 },
-                        icon = { Icon(Icons.Filled.Map, contentDescription = null) },
-                        label = { Text(stringResource(R.string.tab_route)) },
-                        colors = accentTabColors()
-                    )
-                    NavigationBarItem(
-                        selected = selectedTab == 1,
-                        onClick = { selectedTab = 1 },
-                        icon = { Icon(Icons.Filled.Alarm, contentDescription = null) },
-                        label = { Text(stringResource(R.string.tab_alarm)) },
-                        colors = accentTabColors()
-                    )
-                }
+            Column(
+                modifier = Modifier
+                    .background(AppBackground)
+                    .navigationBarsPadding()
+            ) {
+                IosCapsuleTabBar(
+                    tabs = listOf(0, 1),
+                    selected = pagerState.currentPage,
+                    onSelect = { page -> scope.launch { pagerState.animateScrollToPage(page) } },
+                    icon = { page -> if (page == 0) Icons.Outlined.Map else Icons.Outlined.Alarm },
+                    title = { page ->
+                        stringResource(if (page == 0) R.string.tab_route else R.string.tab_alarm)
+                    }
+                )
                 AdBanner(canRequestAds = canRequestAds, revision = adRevision)
             }
         }
     ) { innerPadding ->
-        val contentModifier = Modifier.padding(innerPadding)
-        when (selectedTab) {
-            0 -> RouteTab(
-                state = uiState,
-                modifier = contentModifier,
-                isRoutePreviewConfigured = viewModel.isRoutePreviewConfigured,
-                usesAppleWeather = viewModel.usesAppleWeather,
-                onHomeAddressChange = viewModel::updateHomeAddress,
-                onWorkAddressChange = viewModel::updateWorkAddress,
-                onConfirmHomeSuggestion = viewModel::confirmHomeSuggestion,
-                onConfirmWorkSuggestion = viewModel::confirmWorkSuggestion,
-                onCommuteModeChange = viewModel::setCommuteMode,
-                onRefreshRouteWeather = viewModel::refreshRouteWeather
-            )
-            else -> AlarmTab(
-                state = uiState,
-                modifier = contentModifier,
-                privacyOptionsRequired = privacyOptionsRequired,
-                onAlarmTimeChange = viewModel::setAlarmTime,
-                onWeekdayToggle = viewModel::toggleWeekday,
-                onLeadTimeChange = viewModel::setRainLeadTimeMinutes,
-                onThresholdChange = viewModel::setRainProbabilityThreshold,
-                onSoundChange = viewModel::setAlarmSound,
-                onPreviewSound = viewModel::previewSound,
-                onSnoozeEnabledChange = viewModel::setSnoozeEnabled,
-                onSnoozeDurationChange = viewModel::setSnoozeDurationMinutes,
-                onScheduleClick = onScheduleRequested,
-                onShowPrivacyOptions = { onShowPrivacyOptions { showPrivacyOptionsError = true } }
-            )
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) { page ->
+            when (page) {
+                0 -> RouteTab(
+                    state = uiState,
+                    isRoutePreviewConfigured = viewModel.isRoutePreviewConfigured,
+                    usesAppleWeather = viewModel.usesAppleWeather,
+                    onHomeAddressChange = viewModel::updateHomeAddress,
+                    onWorkAddressChange = viewModel::updateWorkAddress,
+                    onConfirmHomeSuggestion = viewModel::confirmHomeSuggestion,
+                    onConfirmWorkSuggestion = viewModel::confirmWorkSuggestion,
+                    onCommuteModeChange = viewModel::setCommuteMode,
+                    onRefreshRouteWeather = viewModel::refreshRouteWeather
+                )
+                else -> AlarmTab(
+                    state = uiState,
+                    privacyOptionsRequired = privacyOptionsRequired,
+                    onAlarmTimeChange = viewModel::setAlarmTime,
+                    onWeekdayToggle = viewModel::toggleWeekday,
+                    onLeadTimeChange = viewModel::setRainLeadTimeMinutes,
+                    onThresholdChange = viewModel::setRainProbabilityThreshold,
+                    onSoundChange = viewModel::setAlarmSound,
+                    onPreviewSound = viewModel::previewSound,
+                    onSnoozeEnabledChange = viewModel::setSnoozeEnabled,
+                    onSnoozeDurationChange = viewModel::setSnoozeDurationMinutes,
+                    onScheduleClick = onScheduleRequested,
+                    onShowPrivacyOptions = { onShowPrivacyOptions { showPrivacyOptionsError = true } }
+                )
+            }
         }
     }
 
@@ -175,17 +179,3 @@ private fun MainScreen(
         )
     }
 }
-
-/**
- * The selected-tab pill would otherwise read from the secondary container, which
- * is kept dark so sliders render an unfilled track. The tab strip asks for the
- * accent directly instead.
- */
-@Composable
-private fun accentTabColors() = NavigationBarItemDefaults.colors(
-    selectedIconColor = Color.White,
-    selectedTextColor = Color.White,
-    indicatorColor = AppAccent,
-    unselectedIconColor = AppSecondaryLabel,
-    unselectedTextColor = AppSecondaryLabel
-)

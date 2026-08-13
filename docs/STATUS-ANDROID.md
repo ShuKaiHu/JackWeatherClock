@@ -33,8 +33,18 @@ them over the threshold pulls the alarm earlier. iOS still samples endpoints onl
 the palette `ContentView.swift` defines — black canvas, `#1F1F21` cards, `#2E2E33` filled
 fields, iOS dark-mode system blue `#0091FF`, dark-only like iOS. The route-weather segments
 now sit side by side as gradient tiles the way the iOS `HStack` presents them, and the ad
-banner moved *below* the tab strip. Details and the two Material colour roles left
-deliberately untinted are in `docs/ANDROID.md`.
+banner moved *below* the tab strip.
+
+**Controls rebuilt to match iOS on 2026-08-13.** Recolouring Material components had fixed the
+palette and left the *shapes* Material, which is most of what still read as "an Android port":
+tick-marked sliders with bar handles, a full-width navigation bar, an outlined dropdown with a
+notched floating label. `ui/IosControls.kt` now draws the slider, switch, card, floating
+capsule tab bar, menu row, prominent button and status line, and both tabs were restructured
+into iOS's card layout (weekday grid + large time; settings; result). The values came from
+running the real `AlarmTabView` on an iOS 26.5 simulator and reading pixels, which is how the
+port learned that iOS 26 draws a **capsule** slider handle rather than the 28pt circle every
+reference chart still shows. Full list, and the three deliberate divergences, in
+`docs/ANDROID.md`.
 
 Decisions and deliberate gaps (no address autocomplete, Open-Meteo instead of WeatherKit —
 the WeatherKit REST key cannot ship in an APK; four options incl. a tiny signing proxy are
@@ -136,6 +146,8 @@ default.
       safety answers still have to agree with it.
 - [x] **Android screenshots retaken on the emulator, 2026-08-13** — `pics/20260813-android/`,
       six 1080×2160 captures, three per language (route + map, route weather tiles, alarm).
+      **Reshot the same day** after the iOS-parity control rewrite landed; the first set showed
+      Material sliders and a Material navigation bar and no longer matched the app.
       The ad banner and a dev status icon are cropped/blanked out, and the real home and work
       addresses were swapped for NCKU → the STSP Bureau while shooting so nothing personal
       ships; the 22 km demo commute also shows all five on-route sampling tiles. (Do not

@@ -49,11 +49,62 @@ window never flashes white. Weather tints are iOS's `.yellow` / `.cyan` / `.blue
 route-weather tiles carry the same top-to-bottom teal→blue gradient, laid out **side by side**
 the way the iOS `HStack` presents them.
 
-Two Material roles are deliberately *not* tinted. Sliders draw their inactive track from
-`secondaryContainer` and the navigation pill draws from it too, so it stays dark and the mode
-chips and tab strip ask for the accent explicitly. The ad banner sits **below** the tab strip
-at the very bottom of the window, with the gesture-bar inset moved onto the enclosing column
-so the banner is never drawn under the system handle.
+The ad banner sits **below** the tab strip at the very bottom of the window, with the
+gesture-bar inset moved onto the enclosing column so the banner is never drawn under the
+system handle.
+
+## The controls are drawn, not themed (2026-08-13)
+
+Recolouring Material components got the palette right and the *shapes* wrong, which turned out
+to be most of what makes an app look like it came from the other platform. `ui/IosControls.kt`
+replaces them: slider, switch, card, floating tab bar, menu row, prominent button, status line.
+
+**These numbers were measured, not looked up.** The iPhone app is built against the iOS 26 SDK
+with no `UIDesignRequiresCompatibility`, so every stock control renders in the Liquid Glass
+style, and no pre-iOS-26 reference describes what it actually draws. A harness transplanting
+the real `AlarmTabView` body was run on an iOS 26.5 simulator and probed pixel by pixel:
+
+- The slider handle and the switch knob are **wide capsules, 36 × 23pt with an 11.5pt radius**
+  — not the 28pt circle every chart shows.
+- The slider rail is **6pt tall**, and the half to the right of the handle is `#353537`, barely
+  visible against the card. Material's is 16dp with a strongly contrasting inactive half.
+- Stepped sliders draw **no tick marks**. All three here declare a step; Material dots every
+  one of them.
+- There is **no gap** where the handle meets the fill. Material 1.3 opens one on both sides.
+- The switch track is **63 × 28pt** and its off state is `#5C5C60`, not the widely quoted
+  `#39393D`.
+- `.borderedProminent` is a **full capsule** on iOS 26, not the 8pt rounded rectangle it drew
+  through iOS 18.
+- Status orange is `#FF9230`, not `#FF9F0A`.
+
+Two of those cost real drawing work. The rail is painted in a `Canvas` that deliberately
+overdraws half a thumb width past its own slot on each side, because Material insets the track
+so the handle can never overhang and iOS runs it edge to edge. And Material's gesture handling
+and accessibility semantics are kept — only the drawing is swapped — which leaves one
+deliberate behavioural difference: tapping the rail moves the handle here, where UIKit only
+tracks touches that begin on the handle. Android users expect the tap and it cannot be seen in
+a screenshot.
+
+**Menus must state their own background.** Material resolves a `DropdownMenu`'s container from
+`surfaceContainer`, which is pinned to pure black so the tab strip sits flat on the canvas —
+so the alarm-tone menu came out as an invisible black panel on a black page. `MenuBackground`
+exists for that.
+
+**The floating tab bar** is a capsule inset 34dp from both edges with a 1dp white-16% rim,
+replacing the full-width `NavigationBar`. iOS fills it with `.ultraThinMaterial`, which Compose
+cannot reproduce below API 31 — but it costs nothing here, because the bar sits on the app's
+own black canvas and the material has nothing to blur. The fill (`#242424`) and the selected
+pill (`#3F3F3F`) are sampled straight off a screenshot of the running iPhone app, and already
+include iOS's white-4% under-layer; stacking a second translucent layer on top comes out
+lighter than iOS. The two pages also **swipe**, because iOS presents them in a paged `TabView`
+and the strip is not its only affordance.
+
+Two things are deliberately *not* copied. The **big alarm time is not in a rounded typeface**:
+iOS sets it in SF Pro Rounded, Android has no rounded system face, and bundling one for a
+single string would add a font file and a licence to track for a face that is not SF Rounded
+anyway. And the Route tab **keeps its "Preview Route" button**, which iOS has no equivalent of
+— iOS re-runs the preview from every committed edit because MapKit is free, whereas this is a
+billable Routes API call capped at 300/day, so the refresh stays something the user asks for.
 
 ## Weather provider: moving to WeatherKit REST (decided 2026-08-09)
 

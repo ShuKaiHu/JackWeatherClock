@@ -1,37 +1,36 @@
 package com.shukaihu.rainyclock.ui
 
 import android.text.format.DateFormat
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.outlined.Alarm
+import androidx.compose.material.icons.outlined.RemoveCircleOutline
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.PlayCircle
+import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Slider
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -44,14 +43,37 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.Color
 import com.shukaihu.rainyclock.R
 import com.shukaihu.rainyclock.model.AlarmSound
 import com.shukaihu.rainyclock.model.ScheduledAlarmSummary
+import com.shukaihu.rainyclock.ui.theme.AppAccent
+import com.shukaihu.rainyclock.ui.theme.AppCard
+import com.shukaihu.rainyclock.ui.theme.SecondaryOnBlack
+import com.shukaihu.rainyclock.ui.theme.SecondaryOnCard
+import com.shukaihu.rainyclock.ui.theme.StatusPositive
+import com.shukaihu.rainyclock.ui.theme.StatusWarning
+import kotlin.math.roundToInt
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+
+/** The gap between the free-floating cards, and the page's side inset. */
+private val PageSpacing = 22.dp
+private val PageInset = 20.dp
 
 @Composable
 fun AlarmTab(
@@ -75,94 +97,107 @@ fun AlarmTab(
         modifier = modifier
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(horizontal = PageInset)
+            .padding(bottom = PageInset),
+        verticalArrangement = Arrangement.spacedBy(PageSpacing)
     ) {
-        Text(text = stringResource(R.string.alarm), style = MaterialTheme.typography.titleMedium)
-
-        // Normal alarm time — system-formatted, honoring 24-hour time
-        // (the iOS build once forced a 12-hour clock here; don't repeat it).
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { showTimePicker = true },
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(text = stringResource(R.string.normal_alarm), modifier = Modifier.weight(1f))
-            Text(
-                text = LocalTime.of(state.settings.alarmHour, state.settings.alarmMinute)
-                    .format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)),
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.primary
+        // No "Alarm" heading and no "Repeat" label: iOS hides its navigation bar
+        // on this tab and lets the two cards carry the structure instead.
+        IosCard(cornerRadius = 30.dp, contentPadding = 22.dp, spacing = 20.dp) {
+            WeekdaySelector(selected = state.settings.selectedWeekdays, onToggle = onWeekdayToggle)
+            AlarmTimeReadout(
+                hour = state.settings.alarmHour,
+                minute = state.settings.alarmMinute,
+                onClick = { showTimePicker = true }
             )
         }
 
-        WeekdaySelector(selected = state.settings.selectedWeekdays, onToggle = onWeekdayToggle)
-
-        LabeledSlider(
-            label = stringResource(R.string.rain_lead_time),
-            valueText = stringResource(R.string.rain_lead_time_value, state.settings.rainLeadTimeMinutes),
-            value = state.settings.rainLeadTimeMinutes.toFloat(),
-            valueRange = 1f..60f,
-            steps = 58,
-            onValueChange = { onLeadTimeChange(it.toInt()) }
-        )
-
-        LabeledSlider(
-            label = stringResource(R.string.rain_threshold),
-            valueText = "${(state.settings.rainProbabilityThreshold * 100).toInt()}%",
-            value = state.settings.rainProbabilityThreshold.toFloat(),
-            valueRange = 0.1f..0.9f,
-            steps = 15,
-            onValueChange = { onThresholdChange((Math.round(it * 20.0) / 20.0)) }
-        )
-
-        SoundPicker(
-            selected = state.settings.alarmSound,
-            onSoundChange = onSoundChange,
-            onPreviewSound = onPreviewSound
-        )
-
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(text = stringResource(R.string.snooze), modifier = Modifier.weight(1f))
-            Switch(
-                checked = state.settings.isSnoozeEnabled,
-                onCheckedChange = onSnoozeEnabledChange
+        IosCard(cornerRadius = 24.dp, contentPadding = 18.dp, spacing = 18.dp) {
+            IosSliderRow(
+                label = stringResource(R.string.rain_lead_time),
+                valueText = stringResource(
+                    R.string.rain_lead_time_value,
+                    state.settings.rainLeadTimeMinutes
+                ),
+                value = state.settings.rainLeadTimeMinutes.toFloat(),
+                valueRange = 1f..60f,
+                steps = 58,
+                onValueChange = { onLeadTimeChange(it.roundToInt()) }
             )
+
+            IosSliderRow(
+                label = stringResource(R.string.rain_threshold),
+                valueText = "${(state.settings.rainProbabilityThreshold * 100).toInt()}%",
+                value = state.settings.rainProbabilityThreshold.toFloat(),
+                valueRange = 0.1f..0.9f,
+                steps = 15,
+                onValueChange = { onThresholdChange(Math.round(it * 20.0) / 20.0) }
+            )
+
+            SoundRow(
+                selected = state.settings.alarmSound,
+                onSoundChange = onSoundChange,
+                onPreviewSound = onPreviewSound
+            )
+
+            IosRow(label = stringResource(R.string.snooze)) {
+                IosSwitch(
+                    checked = state.settings.isSnoozeEnabled,
+                    onCheckedChange = onSnoozeEnabledChange
+                )
+            }
+
+            if (state.settings.isSnoozeEnabled) {
+                IosSliderRow(
+                    label = stringResource(R.string.snooze_duration),
+                    valueText = stringResource(
+                        R.string.snooze_duration_value,
+                        state.settings.snoozeDurationMinutes
+                    ),
+                    value = state.settings.snoozeDurationMinutes.toFloat(),
+                    valueRange = 1f..15f,
+                    steps = 13,
+                    onValueChange = { onSnoozeDurationChange(it.roundToInt()) }
+                )
+            }
+
+            // Sits inside the settings card on iOS, not at the very bottom of
+            // the page, and is plain accent text rather than a bordered button.
+            if (privacyOptionsRequired) {
+                IosRow(label = stringResource(R.string.ad_privacy_options)) {
+                    Text(
+                        text = stringResource(R.string.ad_privacy_options_manage),
+                        color = AppAccent,
+                        fontSize = IosBody,
+                        lineHeight = IosBodyLine,
+                        modifier = Modifier
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                role = Role.Button,
+                                onClick = onShowPrivacyOptions
+                            )
+                            .padding(vertical = 12.dp)
+                    )
+                }
+            }
         }
 
-        if (state.settings.isSnoozeEnabled) {
-            LabeledSlider(
-                label = stringResource(R.string.snooze_duration),
-                valueText = stringResource(R.string.snooze_duration_value, state.settings.snoozeDurationMinutes),
-                value = state.settings.snoozeDurationMinutes.toFloat(),
-                valueRange = 1f..15f,
-                steps = 13,
-                onValueChange = { onSnoozeDurationChange(it.toInt()) }
-            )
-        }
-
-        Button(
+        IosProminentButton(
+            text = if (state.isScheduling) {
+                stringResource(R.string.checking_route)
+            } else {
+                stringResource(R.string.schedule_smart_alarm)
+            },
+            icon = Icons.Outlined.Alarm,
             onClick = onScheduleClick,
-            modifier = Modifier.fillMaxWidth(),
             enabled = !state.isScheduling
-        ) {
-            Text(stringResource(R.string.schedule_smart_alarm))
-        }
+        )
 
         StatusLineText(status = state.status)
 
         state.summary?.let { summary ->
             ScheduledResultCard(summary = summary)
-        }
-
-        if (privacyOptionsRequired) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = stringResource(R.string.ad_privacy_options), modifier = Modifier.weight(1f))
-                TextButton(onClick = onShowPrivacyOptions) {
-                    Text(stringResource(R.string.ad_privacy_options_manage))
-                }
-            }
         }
     }
 
@@ -177,6 +212,45 @@ fun AlarmTab(
             onDismiss = { showTimePicker = false }
         )
     }
+}
+
+/**
+ * The alarm time as iOS shows it: no label, no accent, just the time itself set
+ * huge and centred across the card, with the whole strip tappable.
+ *
+ * iOS sets it in SF Pro Rounded. Android has no rounded system face and
+ * bundling one for a single string would add a font file, a licence to track
+ * and a different typographic character anyway, so this uses the platform
+ * default. It is the one deliberate typographic difference between the two
+ * apps.
+ */
+@Composable
+private fun AlarmTimeReadout(hour: Int, minute: Int, onClick: () -> Unit) {
+    val time = LocalTime.of(hour, minute)
+        .format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT))
+    // Sighted users read "the alarm time" from the size and position; a screen
+    // reader would otherwise reach a bare time with nothing saying what it is
+    // or that it opens a picker. iOS drops the visible label, not the meaning.
+    val label = stringResource(R.string.normal_alarm)
+
+    Text(
+        text = time,
+        color = Color.White,
+        fontSize = 60.sp,
+        lineHeight = 72.sp,
+        fontWeight = FontWeight.Normal,
+        maxLines = 1,
+        textAlign = TextAlign.Center,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                role = Role.Button,
+                onClick = onClick
+            )
+            .semantics { contentDescription = "$label, $time" }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -207,8 +281,11 @@ private fun AlarmTimePickerDialog(
 }
 
 /**
- * Selected days are filled circles with contrasting text, unselected days
- * plain dim text — the 1.6.4 redesign, ported. Weekday 1 = Sunday.
+ * Seven day chips across the card. Selected days are accent discs with white
+ * labels; **unselected days show no disc at all** — their circle is filled with
+ * the card's own colour, so what remains is dim text floating on the card. That
+ * is the iOS design, not an oversight: adding a ring or a lighter fill to
+ * "correct" it is the most common way this row gets ported wrong.
  *
  * The circle grows with the system font scale rather than staying at 40dp. It
  * used to be fixed, so anyone who had enlarged their font saw seven ellipses
@@ -227,51 +304,43 @@ private fun WeekdaySelector(selected: Set<Int>, onToggle: (Int) -> Unit) {
         R.string.weekday_thursday_short,
         R.string.weekday_friday_short,
         R.string.weekday_saturday_short
-    )
+    ).map { stringResource(it) }
 
     val fontScale = LocalDensity.current.fontScale
     // Capped so the largest accessibility scale cannot produce a chip taller
     // than the alarm time it sits under.
-    val diameter = (40.dp * fontScale.coerceIn(1f, 1.9f))
-    val rows = if (fontScale > 1.3f) labels.chunked(4) else listOf(labels)
+    val rowHeight = 44.dp * fontScale.coerceIn(1f, 1.9f)
+    val columns = if (fontScale > 1.3f) 4 else 7
+    val rows = labels.chunked(columns)
+    val spacing = 12.dp
 
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(text = stringResource(R.string.repeat_days), style = MaterialTheme.typography.titleSmall)
-        rows.forEachIndexed { rowIndex, rowLabels ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = if (rows.size == 1) {
-                    Arrangement.SpaceBetween
-                } else {
-                    Arrangement.spacedBy(8.dp)
-                }
-            ) {
-                rowLabels.forEachIndexed { indexInRow, labelResId ->
-                    val weekday = rowIndex * 4 + indexInRow + 1
-                    val isSelected = selected.contains(weekday)
-                    Surface(
-                        shape = CircleShape,
-                        color = if (isSelected) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.surface
-                        },
-                        modifier = Modifier
-                            .size(diameter)
-                            .clickable { onToggle(weekday) }
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text(
-                                text = stringResource(labelResId),
-                                color = if (isSelected) {
-                                    MaterialTheme.colorScheme.onPrimary
-                                } else {
-                                    MaterialTheme.colorScheme.onSurfaceVariant
-                                },
-                                style = MaterialTheme.typography.bodyMedium,
-                                maxLines = 1
-                            )
-                        }
+    BoxWithConstraints {
+        val chipWidth = (maxWidth - spacing * (columns - 1)) / columns
+        // iOS inscribes the disc in the chip frame, so it is the narrower of the
+        // two dimensions that sets the diameter — usually the width, which is
+        // why the disc is ~35dp rather than the row's 44dp.
+        val diameter = if (chipWidth < rowHeight) chipWidth else rowHeight
+        val labelSize = fittedLabelSize(labels, chipWidth - 8.dp, 16.sp)
+
+        Column(verticalArrangement = Arrangement.spacedBy(spacing)) {
+            rows.forEachIndexed { rowIndex, rowLabels ->
+                Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
+                    rowLabels.forEachIndexed { indexInRow, label ->
+                        val weekday = rowIndex * columns + indexInRow + 1
+                        WeekdayChip(
+                            label = label,
+                            isSelected = selected.contains(weekday),
+                            width = chipWidth,
+                            height = rowHeight,
+                            diameter = diameter,
+                            labelSize = labelSize,
+                            onClick = { onToggle(weekday) }
+                        )
+                    }
+                    // Keep the short trailing row's chips the same width as the
+                    // full row's instead of letting them stretch.
+                    repeat(columns - rowLabels.size) {
+                        Box(Modifier.size(width = chipWidth, height = rowHeight))
                     }
                 }
             }
@@ -280,88 +349,144 @@ private fun WeekdaySelector(selected: Set<Int>, onToggle: (Int) -> Unit) {
 }
 
 @Composable
-private fun LabeledSlider(
+private fun WeekdayChip(
     label: String,
-    valueText: String,
-    value: Float,
-    valueRange: ClosedFloatingPointRange<Float>,
-    steps: Int,
-    onValueChange: (Float) -> Unit
+    isSelected: Boolean,
+    width: Dp,
+    height: Dp,
+    diameter: Dp,
+    labelSize: TextUnit,
+    onClick: () -> Unit
 ) {
-    Column {
-        Row {
-            Text(text = label, modifier = Modifier.weight(1f))
-            Text(text = valueText, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Box(
+        modifier = Modifier
+            .size(width = width, height = height)
+            // Selected days differ from unselected ones only by a fill that is
+            // invisible when off, so the state has to be spoken rather than
+            // shown. `toggleable` is what says it; a plain `clickable` would
+            // announce seven identical buttons.
+            .toggleable(
+                value = isSelected,
+                onValueChange = { onClick() },
+                role = Role.Checkbox,
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .size(diameter)
+                .background(if (isSelected) AppAccent else AppCard, CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = label,
+                color = if (isSelected) Color.White else Color.White.copy(alpha = 0.45f),
+                fontSize = labelSize,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1
+            )
         }
-        Slider(
-            value = value,
-            onValueChange = onValueChange,
-            valueRange = valueRange,
-            steps = steps
-        )
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * One type size shared by all seven chips, shrunk until the widest label fits.
+ * Sizing each chip independently would leave the row with seven different type
+ * sizes; picking a constant would clip "Wed" in English and every label at a
+ * large font scale.
+ */
 @Composable
-private fun SoundPicker(
+private fun fittedLabelSize(labels: List<String>, available: Dp, base: TextUnit): TextUnit {
+    val measurer = rememberTextMeasurer()
+    val availablePx = with(LocalDensity.current) { available.toPx() }
+    if (availablePx <= 0f) return base
+    val style = TextStyle(fontSize = base, fontWeight = FontWeight.SemiBold)
+    val widest = labels.maxOf { measurer.measure(AnnotatedString(it), style).size.width }
+    if (widest <= 0) return base
+    return base * (availablePx / widest).coerceIn(0.5f, 1f)
+}
+
+/**
+ * iOS renders the tone name as a bare `Menu` label — no box, no chevron — in a
+ * dim desaturated blue, and pairs it with a filled play disc.
+ *
+ * Unlike iOS, the play button stays visible for the system default tone:
+ * `AlarmViewModel` falls back to the platform's default alarm sound, so there
+ * genuinely is something to preview. iOS hides it because there is no bundled
+ * file behind that choice.
+ */
+@Composable
+private fun SoundRow(
     selected: AlarmSound,
     onSoundChange: (AlarmSound) -> Unit,
     onPreviewSound: (AlarmSound) -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { expanded = it },
-            modifier = Modifier.weight(1f)
+    IosMenuRow(
+        label = stringResource(R.string.alarm_sound),
+        selected = selected,
+        options = AlarmSound.entries,
+        optionLabel = { stringResource(it.labelResId()) },
+        onSelect = onSoundChange
+    ) {
+        Box(Modifier.size(width = 8.dp, height = 1.dp))
+        // The disc stays iOS's 22dp while the tappable box overflows to the 44dp
+        // the replaced `IconButton` guaranteed — `requiredSize` is what keeps the
+        // bigger target from stretching the row.
+        Box(
+            modifier = Modifier.size(22.dp),
+            contentAlignment = Alignment.Center
         ) {
-            OutlinedTextField(
-                value = stringResource(selected.labelResId()),
-                onValueChange = {},
-                readOnly = true,
-                label = { Text(stringResource(R.string.alarm_sound)) },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            Box(
                 modifier = Modifier
-                    .menuAnchor(MenuAnchorType.PrimaryNotEditable)
-                    .fillMaxWidth()
-            )
-            ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                AlarmSound.entries.forEach { sound ->
-                    DropdownMenuItem(
-                        text = { Text(stringResource(sound.labelResId())) },
-                        onClick = {
-                            onSoundChange(sound)
-                            expanded = false
-                        }
-                    )
-                }
+                    .requiredSize(44.dp)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        role = Role.Button
+                    ) { onPreviewSound(selected) },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.PlayCircle,
+                    contentDescription = stringResource(R.string.preview_alarm_sound),
+                    tint = AppAccent,
+                    modifier = Modifier.size(22.dp)
+                )
             }
-        }
-        IconButton(onClick = { onPreviewSound(selected) }) {
-            Icon(
-                imageVector = Icons.Filled.PlayArrow,
-                contentDescription = stringResource(R.string.preview_alarm_sound)
-            )
         }
     }
 }
 
 @Composable
 private fun StatusLineText(status: StatusLine) {
-    val color = when (status.tone) {
-        StatusTone.POSITIVE -> com.shukaihu.rainyclock.ui.theme.StatusPositive
-        StatusTone.WARNING -> com.shukaihu.rainyclock.ui.theme.StatusWarning
-        StatusTone.ERROR -> MaterialTheme.colorScheme.error
-        StatusTone.NEUTRAL -> MaterialTheme.colorScheme.onSurfaceVariant
-    }
     val text = when (status.args.size) {
         0 -> stringResource(status.textResId)
         1 -> stringResource(status.textResId, status.args[0])
         else -> stringResource(status.textResId, status.args[0], status.args[1])
     }
-    Text(text = text, color = color, style = MaterialTheme.typography.bodyMedium)
+    val colour = when (status.tone) {
+        StatusTone.POSITIVE -> StatusPositive
+        StatusTone.WARNING -> StatusWarning
+        StatusTone.ERROR -> MaterialTheme.colorScheme.error
+        StatusTone.NEUTRAL -> SecondaryOnBlack
+    }
+    // Colour answers "is an alarm actually armed right now?" at a glance, and
+    // the icon says the same thing again for anyone who cannot separate the
+    // greens from the oranges.
+    val icon = when (status.tone) {
+        StatusTone.POSITIVE -> Icons.Rounded.CheckCircle
+        StatusTone.WARNING, StatusTone.ERROR -> Icons.Rounded.Warning
+        StatusTone.NEUTRAL -> Icons.Outlined.RemoveCircleOutline
+    }
+
+    IosStatusLine(
+        icon = icon,
+        text = text,
+        colour = colour,
+        emphasised = status.tone != StatusTone.NEUTRAL
+    )
 }
 
 @Composable
@@ -370,49 +495,67 @@ private fun ScheduledResultCard(summary: ScheduledAlarmSummary) {
     val dateTimeFormatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
     val zone = ZoneId.systemDefault()
 
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(text = stringResource(R.string.scheduled_result), style = MaterialTheme.typography.titleSmall)
-            MetricRow(
-                title = stringResource(R.string.normal_alarm),
-                value = timeFormatter.format(summary.normalAlarmDate.atZone(zone))
-            )
-            MetricRow(
-                title = stringResource(R.string.scheduled_alarm),
-                value = dateTimeFormatter.format(summary.scheduledAlarmDate.atZone(zone))
-            )
-            MetricRow(
-                title = stringResource(R.string.weather_refresh),
-                value = dateTimeFormatter.format(summary.weatherRefreshDate.atZone(zone))
-            )
-            MetricRow(
-                title = stringResource(R.string.rain_threshold),
-                value = "${(summary.rainProbabilityThreshold * 100).toInt()}%"
-            )
-            MetricRow(
-                title = stringResource(R.string.route_max),
-                value = "${(summary.maximumPrecipitationProbability * 100).toInt()}%"
-            )
-            MetricRow(
-                title = stringResource(R.string.rain_adjustment),
-                value = if (summary.exceedsRainThreshold) {
-                    stringResource(R.string.minutes_earlier, summary.leadTimeMinutes)
-                } else {
-                    stringResource(R.string.not_applied)
-                }
-            )
-        }
+    IosCard(cornerRadius = 24.dp, contentPadding = 18.dp, spacing = 12.dp) {
+        Text(
+            text = stringResource(R.string.scheduled_result),
+            color = Color.White,
+            fontSize = IosBody,
+            lineHeight = IosBodyLine,
+            fontWeight = FontWeight.SemiBold
+        )
+        // iOS repeats its stale warning inside this card, but its status line
+        // carries a *different* sentence. Here `AlarmViewModel` already sets the
+        // status line to `schedule_stale_notice` on every path that sets
+        // `isStale`, so adding it again would print the same paragraph twice.
+        MetricRow(
+            title = stringResource(R.string.normal_alarm),
+            value = timeFormatter.format(summary.normalAlarmDate.atZone(zone))
+        )
+        MetricRow(
+            title = stringResource(R.string.scheduled_alarm),
+            value = dateTimeFormatter.format(summary.scheduledAlarmDate.atZone(zone))
+        )
+        MetricRow(
+            title = stringResource(R.string.weather_refresh),
+            value = dateTimeFormatter.format(summary.weatherRefreshDate.atZone(zone))
+        )
+        MetricRow(
+            title = stringResource(R.string.rain_threshold),
+            value = "${(summary.rainProbabilityThreshold * 100).toInt()}%"
+        )
+        MetricRow(
+            title = stringResource(R.string.route_max),
+            value = "${(summary.maximumPrecipitationProbability * 100).toInt()}%"
+        )
+        MetricRow(
+            title = stringResource(R.string.rain_adjustment),
+            value = if (summary.exceedsRainThreshold) {
+                stringResource(R.string.minutes_earlier, summary.leadTimeMinutes)
+            } else {
+                stringResource(R.string.not_applied)
+            }
+        )
     }
 }
 
+/** Grey title flush left, white value flush right — iOS's `MetricRow`. */
 @Composable
 private fun MetricRow(title: String, value: String) {
-    Row {
-        Text(text = title, modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(text = value)
+    Row(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = title,
+            color = SecondaryOnCard,
+            fontSize = IosBody,
+            lineHeight = IosBodyLine,
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            text = value,
+            color = Color.White,
+            fontSize = IosBody,
+            lineHeight = IosBodyLine,
+            textAlign = TextAlign.End
+        )
     }
 }
 

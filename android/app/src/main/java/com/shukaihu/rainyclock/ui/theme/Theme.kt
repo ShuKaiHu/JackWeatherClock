@@ -26,6 +26,45 @@ val AppAccent = Color(0xFF0091FF)
 /** iOS secondary label over black. */
 val AppSecondaryLabel = Color(0xFF98989E)
 
+/**
+ * iOS's `.secondary` is `#EBEBF5` at 60%, so what it composites to depends on
+ * what is behind it. Both surfaces it lands on here are pinned rather than
+ * derived, because Compose has no equivalent of resolving a semantic colour
+ * against its backdrop.
+ */
+val SecondaryOnCard = Color(0xFF9999A0)
+val SecondaryOnBlack = Color(0xFF8D8D93)
+
+// The stock-control colours, measured off the running iOS 26 app. Every one of
+// these differs from both the Material default and the pre-iOS-26 reference
+// value, which is why they are pinned here rather than derived from the scheme.
+/** Slider rail to the right of the handle — barely visible against the card. */
+val AppSliderTrackOff = Color(0xFF353537)
+/** Switch track when off. The widely-quoted #39393D is the pre-iOS-26 value. */
+val AppSwitchTrackOff = Color(0xFF5C5C60)
+val DisabledButtonFill = Color(0xFF262629)
+val DisabledButtonLabel = Color(0xFF525257)
+
+/**
+ * The floating tab bar. iOS fills it with `.ultraThinMaterial`, which Compose
+ * cannot reproduce — there is no backdrop blur below API 31 and `minSdk` is 26.
+ * It costs nothing here: the bar sits on the app's own black canvas, so the
+ * material has nothing to blur and collapses to a flat tint. These two values
+ * are sampled from a screenshot of the running iPhone app rather than estimated,
+ * and they already include iOS's white-4% under-layer — do not stack a second
+ * translucent layer on top or the bar comes out lighter than iOS.
+ */
+val AppTabBarFill = Color(0xFF242424)
+val AppTabBarSelected = Color(0xFF3F3F3F)
+val AppTabBarRim = Color(0x29FFFFFF)
+
+/**
+ * Pop-over menus. They cannot take their background from the scheme: Material
+ * resolves it from `surfaceContainer`, which is pinned to black below so the tab
+ * strip sits flat on the canvas, and a black menu on a black page has no edge.
+ */
+val MenuBackground = Color(0xFF2C2C2E)
+
 // The weather marks. iOS renders these as multicolour SF Symbols, so what
 // shows is the symbol's own palette rather than the condition tint: a white
 // cloud with a yellow sun or blue rain. Clear and rain are measured from the
@@ -39,7 +78,9 @@ val WeatherCardTop = Color(0xFF051F26)
 val WeatherCardBottom = Color(0xFF05476B)
 
 val StatusPositive = Color(0xFF30D158)
-val StatusWarning = Color(0xFFFF9F0A)
+
+/** Measured on iOS 26; `#FF9F0A` is the orange every older reference gives. */
+val StatusWarning = Color(0xFFFF9230)
 
 private val RainyClockColorScheme = darkColorScheme(
     primary = AppAccent,
