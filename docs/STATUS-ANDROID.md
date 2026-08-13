@@ -134,10 +134,22 @@ default.
       ~15 minutes, never written down. **Live since the PR #2 merge, verified 2026-08-13** at
       the published URL (WeatherKit, Maps and Android sections all present). The Play Data
       safety answers still have to agree with it.
-- [ ] **Android screenshots** for the listing. `pics/20260729/` is iPhone-framed and the
-      Android UI genuinely differs; retake on the emulator. The dark/blue restyle means the
-      old shots are wrong twice over.
-- [ ] Feature graphic 1024×500 and a 512×512 icon.
+- [x] **Android screenshots retaken on the emulator, 2026-08-13** — `pics/20260813-android/`,
+      six 1080×2160 captures, three per language (route + map, route weather tiles, alarm).
+      The ad banner and a dev status icon are cropped/blanked out, and the real home and work
+      addresses were swapped for NCKU → the STSP Bureau while shooting so nothing personal
+      ships; the 22 km demo commute also shows all five on-route sampling tiles. (Do not
+      confuse with `pics/20260813/` — those C/E images are App Store *text cards*, not
+      Android UI.) The emulator was restored to the real addresses afterwards.
+- [x] **Launcher icon and Play 512×512 now use the iOS artwork, 2026-08-13** — the adaptive
+      icon's foreground is `AppIcon-1024.png` scaled so its rounded square always covers the
+      mask (the source sits on white; showing a corner would show white), background
+      `#3A4156` sampled from the art's edge, and the old white-cloud vector kept only as the
+      monochrome/themed layer. Play icon at `pics/play-assets/icon-512.png` (overscaled and
+      center-cropped to full bleed for the same reason). Verified on the emulator — a stale
+      launcher icon cache shows a pale ring around the old disc until the app is
+      uninstalled/reinstalled once.
+- [ ] Feature graphic 1024×500.
 - [x] **`WeekdaySelector` font scaling fixed 2026-08-09.** The circle now grows with the
       system font scale (capped at 1.9x) and the row wraps to four per line above 1.3x, since
       seven circles wide enough for scaled text do not fit across a phone. Verified at
