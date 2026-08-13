@@ -13,7 +13,7 @@ own branch. Same repository and same history — two checkouts of it:
 
 | Platform | Directory | Branch |
 | --- | --- | --- |
-| iOS | `Jack_Waether_Clock_MM/` (this one) | `ios/main` |
+| iOS | `RainyClock-iOS/` (this one) | `ios/main` |
 | Android | `RainyClock-Android/`, alongside it | `claude/android-play-store-release-jykw59` |
 
 **Work on the platform whose worktree you are in, and commit to its branch.** Both checkouts
@@ -25,8 +25,15 @@ shared files.
 Shared files (`docs/`, `CLAUDE.md`, `.gitignore`) drift between the two branches. Merge in the
 direction of whoever needs the change; both branches are meant to land on `main` eventually.
 
-`git worktree list` shows the current layout. Android's `android/local.properties` is
-gitignored, so a newly created worktree needs it written by hand — see `docs/ANDROID.md`.
+`git worktree list` shows the current layout. Two things do not survive being created or
+moved, because both are gitignored and hold absolute paths:
+
+- Android's `android/local.properties` — a new worktree needs it written by hand, see
+  `docs/ANDROID.md`.
+- `DerivedData/SourcePackages` — Swift Package Manager records the *absolute* path of each
+  resolved binary XCFramework, so renaming the checkout fails the build with "There is no
+  XCFramework found at &lt;old path&gt;". `rm -rf DerivedData/SourcePackages` and build again;
+  it re-resolves. This bit the rename to `RainyClock-iOS` on 2026-08-13.
 
 ## Read first
 
