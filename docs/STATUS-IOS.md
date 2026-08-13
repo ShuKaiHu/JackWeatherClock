@@ -249,9 +249,25 @@ simulators in English and zh-Hant, 58 unit tests passing:
    as a W that reads home → office left to right.
 4. Card labels rewritten: 住家 / 公司, Home / Office, and 路程 ¼ ½ ¾ / ¼ way, Halfway, ¾ way.
 
-Each of those has its own section below. Before archiving: run the test suite, confirm the
-app *and* the widget extension both report `1.6.6 (24)`, and write release notes covering the
-on-route sampling behaviour change in `docs/appstore-metadata.md`.
+Each of those has its own section below.
+
+**Archived 2026-08-09 as `build/RainyClock-1.6.6-24.xcarchive`** and checked: app and
+`RainyClockAlarmWidget.appex` both report `1.6.6 (24)`, the ATT usage string is present,
+`NSPrivacyTracking` is `false` (the combination ITMS-91064 accepts), and the binary carries
+the production ad unit rather than Google's test one. Release notes for `1.6.6` are written in
+`docs/appstore-metadata.md`, in both languages, and merge the `1.6.4`/`1.6.5` bullets because
+neither of those ever reached a user.
+
+**The upload itself is still open, and it is a manual step**: `open -a Xcode
+build/RainyClock-1.6.6-24.xcarchive`, then Distribute App → App Store Connect → Upload, with
+**Manage Version and Build Number unchecked**. `xcodebuild -exportArchive` cannot do it from
+here — the account grant lapse described in `docs/app-store-submission-checklist.md`.
+
+**If 1.6.6 is uploaded instead of 1.6.5:** the App Store Connect version record is currently
+named `1.6.5`, so it has to be renamed to `1.6.6` before build 24 can be attached to it, and
+the release notes swapped for the 1.6.6 ones. The Resolution Center reply and the App Review
+note written for the 1.6.4 rejection still apply unchanged — 1.6.6 contains everything 1.6.5
+did, including the ATT work that answers 5.1.2(i).
 
 **Version numbers bumped 2026-08-09** to `1.6.6` / build `24`, in `Info.plist` *and* the
 project file, verified in a Debug build: app and `RainyClockAlarmWidget.appex` both report
