@@ -268,15 +268,28 @@ the production ad unit rather than Google's test one. Release notes for `1.6.6` 
 `docs/appstore-metadata.md`, in both languages, and merge the `1.6.4`/`1.6.5` bullets because
 neither of those ever reached a user.
 
-**The upload itself is still open, and it is a manual step**: `open -a Xcode
-build/RainyClock-1.6.6-24.xcarchive`, then Distribute App → App Store Connect → Upload, with
-**Manage Version and Build Number unchecked**. `xcodebuild -exportArchive` cannot do it from
-here — the account grant lapse described in `docs/app-store-submission-checklist.md`.
+**Build 24 was uploaded to App Store Connect on 2026-08-13** and accepted — "Upload
+succeeded", then processing. It went up from the command line, which the checklist said was
+impossible here:
 
-In App Store Connect this needs a **new version record, `1.6.6`** — 1.6.5 is released, not
-pending, so there is nothing to rename. Create the version, paste the 1.6.6 notes from
-`docs/appstore-metadata.md`, attach build 24. No Resolution Center reply is involved: the
-1.6.4 rejection was closed by the 1.6.5 release.
+```bash
+xcodebuild -exportArchive -archivePath build/RainyClock-1.6.6-24.xcarchive \
+  -exportOptionsPlist build/ExportOptions-AppStoreUpload.plist \
+  -exportPath build/export-1.6.6-24 -allowProvisioningUpdates
+```
+
+The Apple Account grant that lapsed around `1.6.2 (17)` is evidently valid again, so the
+Organizer detour is no longer needed — try the CLI first and keep Organizer as the fallback.
+The two dSYM warnings for `GoogleMobileAds` and `UserMessagingPlatform` appeared as always;
+they are expected and do not block the upload.
+
+**Uploading is not submitting.** Build 24 is only sitting in App Store Connect. Still to do
+there, by hand: create a new **`1.6.6` version record**, paste the 1.6.6 notes from
+`docs/appstore-metadata.md` (both languages), attach build 24 once it finishes processing,
+then submit for review.
+
+No Resolution Center reply is involved this time: the 1.6.4 rejection was closed by the
+1.6.5 release.
 
 **Version numbers bumped 2026-08-09** to `1.6.6` / build `24`, in `Info.plist` *and* the
 project file, verified in a Debug build: app and `RainyClockAlarmWidget.appex` both report

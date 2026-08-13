@@ -229,6 +229,7 @@ xcodebuild -project RainyClock.xcodeproj -scheme RainyClock -configuration Relea
 ```
 
 - `xcodebuild -exportArchive` with `build/ExportOptions-AppStoreUpload.plist` uploads straight to App Store Connect, but it needs an Apple Account signed in under Xcode → Settings → Accounts. Without one it fails with `Failed to Use Accounts` / "Failed to find an account with App Store Connect access for team MQJ88U9NAJ", and the local keychain holds only Apple Development certificates — the Apple Distribution certificate is created during export.
+- **The CLI upload worked again on 2026-08-13** for `1.6.6 (24)` — plain `xcodebuild -exportArchive` with `ExportOptions-AppStoreUpload.plist`, no Organizer, no credentials entered by hand. Try it first; the fallback below is only needed when the account grant is not valid.
 - The account grant lapsed after the Xcode 26.6 upgrade for `1.6.2 (17)`. The fallback that works without CLI credentials is `open -a Xcode build/<archive>.xcarchive`, then Distribute App → App Store Connect → Upload in Organizer, leaving **Manage Version and Build Number** unchecked so Xcode does not bump the build number.
 
 ## After Release
