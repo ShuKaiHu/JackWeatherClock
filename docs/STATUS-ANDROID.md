@@ -11,7 +11,7 @@ sessions writing over each other. Anything true of both platforms goes in `docs/
 - Play Store submission runbook → `docs/play-store-submission-checklist.md`
 - Product reasoning and rejected alternatives (both platforms) → `docs/PRODUCT_DECISIONS.md`
 
-Last updated: 2026-08-09.
+Last updated: 2026-08-13.
 
 ## Android port — in development
 
@@ -141,8 +141,9 @@ default.
       system font scale (capped at 1.9x) and the row wraps to four per line above 1.3x, since
       seven circles wide enough for scaled text do not fit across a phone. Verified at
       `font_scale 1.8`: all seven day names render in full, no ellipses.
-- [ ] Commit and merge the work sitting uncommitted on
-      `claude/android-play-store-release-jykw59` (PR #2 is still a draft).
+- [x] **Branch merged to `main` via PR #2, 2026-08-13.** Nothing sits uncommitted. Later
+      Android work keeps landing on `claude/android-play-store-release-jykw59` and reaches
+      `main` through new PRs.
 
 **5. Play Console declarations and rollout** — all in the checklist doc: data safety form,
 ads declaration, the **`USE_EXACT_ALARM`** permission declaration (mandatory; the release is
