@@ -80,6 +80,31 @@ rain alarm,weather alarm,commute alarm,smart alarm,rain,weather,alarm clock,comm
 
 雨天鬧鐘,天氣鬧鐘,通勤鬧鐘,智慧鬧鐘,降雨,天氣,鬧鐘,通勤
 
+## Version 1.6.6 (24) “What’s New”
+
+`1.6.5` is live (released 2026-08-04), so these notes cover **only what is new since it** —
+they must not repeat the round weekday buttons or the ads question, which users already have.
+
+### English
+
+```
+Rain checks along your whole route:
+
+• Rainy Clock now checks the forecast at points along your commute, not only at home and the office. If rain is expected anywhere on the way, your alarm still moves earlier.
+• Route weather now names each point by where it is — halfway, a quarter of the way — instead of numbering them.
+• Larger text is properly supported. With a bigger system font size, the weekday buttons and the transport options no longer cut their labels off.
+```
+
+### 繁體中文
+
+```
+整段通勤路線都查雨：
+
+• 雨天鬧鐘現在會查詢通勤途中各點的預報，不再只看住家和公司。路上任何一段預報會下雨，鬧鐘一樣提前叫你。
+• 路線天氣改用位置標示每個查詢點（路程一半、路程 ¼），不再只是編號。
+• 完整支援放大字級。系統字體調大時，星期按鈕與交通方式的文字不會再被截掉。
+```
+
 ## Version 1.6.5 (22) “What’s New”
 
 `1.6.4` was rejected before release, so these notes carry its interface changes as well — from

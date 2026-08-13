@@ -6,6 +6,8 @@
 
 Rainy Clock focuses on one commute profile: home to work. Users choose a commute mode, set a normal alarm time, select weekdays, set a rain lead time, and set a rain probability threshold. If weather around the next scheduled alarm check time meets the rain threshold, the app schedules an earlier local-notification alarm.
 
+**The commute modes differ by platform, on purpose (2026-08-09).** iOS offers Car, Scooter, Walking and Transit; Android offers Car, Walking and Transit only. Google prices two-wheeler routing as an Enterprise-tier Routes API feature, outside the free Essentials allowance, while every other mode stays inside it. Scooters are the most common commute in this app's home market, so shipping the mode would have sent the majority of real traffic down the only billable path — on a free, ad-supported app currently earning US$0. Apple Maps has no two-wheeler mode and charges nothing, so iOS keeps the pill and quietly shows a driving estimate; there is no equivalent trick available on Android, where the honest choice is to not offer what we would be guessing at. Revisit if the app ever earns enough to absorb per-call routing costs.
+
 ### Weather Strategy
 
 The app is structured around a `RouteWeatherService` protocol. The current release path uses `MapKitRouteWeatherService` with Apple Weather / WeatherKit.
@@ -19,6 +21,15 @@ The production implementation should:
 5. Return whether either endpoint meets or exceeds the chosen rain probability threshold.
 
 Open-Meteo is not part of the active release path.
+
+**On-route sampling (queued for the next version, not in the shipped `1.6.5`):** the rain
+check also covers interior points along the MapKit route — none under 4 km, the midpoint
+from 4–20 km, quarter/mid/three-quarter points beyond — and *any* sampled point (home, en
+route, office) over the threshold pulls the alarm earlier. Sampling is distance-based
+because weather-model cells are a few km wide. Transit has no MKDirections geometry, and any
+route failure silently degrades to the endpoint-only check: the alarm decision must never
+depend on the routing infrastructure. The Android port ships the same rule
+(`RouteSampler`), so both platforms decide identically.
 
 ### Address Strategy
 
@@ -56,6 +67,8 @@ All user-facing UI text should be backed by localized string resources. Document
 
 Rainy Clock 聚焦在單一通勤設定：住家到公司。使用者可以選擇通勤方式、設定平常鬧鐘時間、選擇星期、設定雨天提前時間與降雨機率門檻。若下一次鬧鐘判斷時間附近的天氣達到降雨門檻，App 就會提前安排本機通知鬧鐘。
 
+**兩個平台的通勤方式刻意不同（2026-08-09 決定）。** iOS 提供開車、騎車、步行、大眾交通；Android 只提供開車、步行、大眾交通。Google 把兩輪路線（`TWO_WHEELER`）歸類為 Routes API 的 Enterprise 等級功能，不在 Essentials 的免費額度內，而其他三種模式都在額度內。機車是本產品主力市場最常見的通勤方式，保留這個選項等於讓**多數**真實流量走上唯一要付費的路徑——而這是一款目前收入為 US$0 的免費含廣告 App。Apple Maps 沒有兩輪模式且不收費，所以 iOS 保留這個選項、實際顯示的是開車的時間估計；Android 沒有這種取巧空間，誠實的做法就是不提供我們只能用猜的功能。若日後廣告收入足以吸收每次呼叫的路線費用，可以重新評估。
+
 ### 天氣策略
 
 App 以 `RouteWeatherService` protocol 作為路線天氣抽象層。目前上架版本流程使用 `MapKitRouteWeatherService` 與 Apple Weather / WeatherKit。
@@ -69,6 +82,12 @@ App 以 `RouteWeatherService` protocol 作為路線天氣抽象層。目前上�
 5. 回傳任一端點是否達到或超過使用者設定的降雨門檻。
 
 Open-Meteo 已不在目前上架版本的主要流程中。
+
+**路線途中取樣（排入下一版，未包含在已送審的 `1.6.5`）：** 降雨判斷同時涵蓋 MapKit 路線
+上的內部取樣點——4 公里以下不取、4–20 公里取中點、更長取 1/4、1/2、3/4 三點——住家、
+途中任一點、公司**任一處**超過門檻就提前響鈴。以距離為基準是因為天氣模型的網格本來就有
+數公里寬。大眾運輸拿不到 MKDirections 路線幾何；任何路線查詢失敗都靜默退回只查兩端點，
+鬧鐘判斷絕不依賴路線基礎設施。Android 版用同一套規則（`RouteSampler`），兩平台判斷一致。
 
 ### 地址策略
 

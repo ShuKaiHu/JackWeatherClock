@@ -1,5 +1,96 @@
+import CoreLocation
 import XCTest
 @testable import RainyClock
+
+final class RoutePolylineSamplerTests: XCTestCase {
+    func testDegenerateRoutesProduceNoInteriorSamples() {
+        // The sampler deleted in the 1.6.5 cleanup trapped on these.
+        XCTAssertEqual(RoutePolylineSampler.interiorSamplePoints(along: []).count, 0)
+        XCTAssertEqual(
+            RoutePolylineSampler.interiorSamplePoints(along: [
+                CLLocationCoordinate2D(latitude: 25.0, longitude: 121.5)
+            ]).count,
+            0
+        )
+        XCTAssertEqual(
+            RoutePolylineSampler.interiorSamplePoints(along: [
+                CLLocationCoordinate2D(latitude: 25.0, longitude: 121.5),
+                CLLocationCoordinate2D(latitude: 25.0, longitude: 121.5)
+            ]).count,
+            0
+        )
+    }
+
+    func testShortCommutesRelyOnTheEndpointsAlone() {
+        // ~2.2 km straight line: below the 4 km floor.
+        let samples = RoutePolylineSampler.interiorSamplePoints(along: [
+            CLLocationCoordinate2D(latitude: 25.03, longitude: 121.50),
+            CLLocationCoordinate2D(latitude: 25.05, longitude: 121.50)
+        ])
+        XCTAssertEqual(samples.count, 0)
+    }
+
+    func testMediumCommutesSampleTheMidpoint() {
+        // ~11 km straight line north: one interior sample at the midpoint.
+        let samples = RoutePolylineSampler.interiorSamplePoints(along: [
+            CLLocationCoordinate2D(latitude: 25.0, longitude: 121.5),
+            CLLocationCoordinate2D(latitude: 25.1, longitude: 121.5)
+        ])
+        XCTAssertEqual(samples.count, 1)
+        XCTAssertEqual(samples[0].latitude, 25.05, accuracy: 1e-6)
+        XCTAssertEqual(samples[0].longitude, 121.5, accuracy: 1e-6)
+    }
+
+    func testLongCommutesSampleQuarterPoints() {
+        // ~33 km: quarter, mid, three-quarter.
+        let samples = RoutePolylineSampler.interiorSamplePoints(along: [
+            CLLocationCoordinate2D(latitude: 25.0, longitude: 121.5),
+            CLLocationCoordinate2D(latitude: 25.3, longitude: 121.5)
+        ])
+        XCTAssertEqual(samples.count, 3)
+        XCTAssertEqual(samples[0].latitude, 25.075, accuracy: 1e-6)
+        XCTAssertEqual(samples[1].latitude, 25.15, accuracy: 1e-6)
+        XCTAssertEqual(samples[2].latitude, 25.225, accuracy: 1e-6)
+    }
+
+    func testMidpointInterpolatesWithinTheContainingSegment() {
+        // Uneven vertices: 0 → 8 km → 10 km. The midpoint (5 km) sits inside
+        // the first segment, not on a vertex.
+        let samples = RoutePolylineSampler.interiorSamplePoints(along: [
+            CLLocationCoordinate2D(latitude: 25.0, longitude: 121.5),
+            CLLocationCoordinate2D(latitude: 25.072, longitude: 121.5),
+            CLLocationCoordinate2D(latitude: 25.09, longitude: 121.5)
+        ])
+        XCTAssertEqual(samples.count, 1)
+        XCTAssertEqual(samples[0].latitude, 25.045, accuracy: 1e-3)
+    }
+
+    func testInteriorSegmentNamesDescribeThePositionAlongTheRoute() {
+        XCTAssertEqual(
+            MapKitRouteWeatherService.interiorSegmentName(index: 0, total: 1),
+            String(localized: "segment_route_half")
+        )
+
+        let names = (0..<3).map { MapKitRouteWeatherService.interiorSegmentName(index: $0, total: 3) }
+        XCTAssertEqual(names, [
+            String(localized: "segment_route_quarter"),
+            String(localized: "segment_route_half"),
+            String(localized: "segment_route_three_quarter")
+        ])
+    }
+
+    /// The labels above are derived from the position, so they only stay true
+    /// while the sampler keeps spacing its points evenly.
+    func testSampleFractionsAreEvenlySpacedSoTheNamesStayTrue() {
+        for length in [10_000.0, 40_000.0] {
+            let fractions = RoutePolylineSampler.interiorSampleFractions(forRouteLength: length)
+            let expected = (0..<fractions.count).map { Double($0 + 1) / Double(fractions.count + 1) }
+            XCTAssertEqual(fractions, expected, "route length \(length)")
+        }
+
+        XCTAssertTrue(RoutePolylineSampler.interiorSampleFractions(forRouteLength: 3_000).isEmpty)
+    }
+}
 
 final class WeatherSampleMapperTests: XCTestCase {
     func testConditionMappingUsesRainThreshold() {

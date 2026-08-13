@@ -17,3 +17,8 @@ DerivedData/
 *.dSYM.zip
 *.dSYM
 build/
+
+# Private keys must never reach this repo — it is public, and the Apple
+# WeatherKit .p8 can only be downloaded once. Belt as well as braces: the key
+# itself lives in ~/.config/rainyclock/, outside the working tree.
+*.p8

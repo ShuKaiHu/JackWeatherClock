@@ -100,11 +100,13 @@
 "alarm_alert_title_adjusted" = "Rain ahead — up early today";
 "alarm_snooze_button" = "Snooze";
 "alarm_snoozing_title" = "Snoozing";
-"segment_home_area" = "Home area";
-"segment_office_area" = "Office area";
-"segment_route_placeholder" = "Commute";
+"segment_home_area" = "Home";
+"segment_office_area" = "Office";
 "segment_route_format" = "%@ route";
-"segment_route_sample_format" = "%@ sample %d";
+"segment_route_quarter" = "¼ way";
+"segment_route_half" = "Halfway";
+"segment_route_three_quarter" = "¾ way";
+"segment_route_fraction_format" = "%1$d/%2$d of the way";
 "weather_data_attribution" = "Weather data provided by Apple Weather.";
 "address_not_found_inline" = "Address or route not found. Re-enter it or choose a suggested address.";
 "clear_address" = "Clear address";

@@ -17,14 +17,14 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.6.5</string>
+	<string>1.6.6</string>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
 		<string>com.shukaihu.RainyClock.weatherRefresh</string>
 		<string>com.shukaihu.RainyClock.alarmMaintenance</string>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>23</string>
+	<string>24</string>
 	<key>GADApplicationIdentifier</key>
 	<string>ca-app-pub-2920259088304022~6773413597</string>
 	<key>GooglePlacesAPIKey</key>

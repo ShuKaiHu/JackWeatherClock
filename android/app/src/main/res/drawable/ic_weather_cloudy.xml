@@ -1,0 +1,54 @@
+<!--
+  Stands in for SF Symbol `cloud.sun.fill`: the sun sits behind the cloud's
+  upper right, so it must be drawn first and let the white cloud overlap it.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <path
+        android:fillColor="#FFD600"
+        android:pathData="M14.6,7.4a3.2,3.2 0 1,0 6.4,0a3.2,3.2 0 1,0 -6.4,0z" />
+    <path
+        android:strokeColor="#FFD600"
+        android:strokeWidth="1.7"
+        android:strokeLineCap="round"
+        android:pathData="M17.8,1.8V3.1" />
+    <path
+        android:strokeColor="#FFD600"
+        android:strokeWidth="1.7"
+        android:strokeLineCap="round"
+        android:pathData="M22.6,7.4H21.3" />
+    <path
+        android:strokeColor="#FFD600"
+        android:strokeWidth="1.7"
+        android:strokeLineCap="round"
+        android:pathData="M21.2,4L20.3,4.9" />
+    <path
+        android:strokeColor="#FFD600"
+        android:strokeWidth="1.7"
+        android:strokeLineCap="round"
+        android:pathData="M14.4,4L15.3,4.9" />
+    <path
+        android:strokeColor="#FFD600"
+        android:strokeWidth="1.7"
+        android:strokeLineCap="round"
+        android:pathData="M21.2,10.8L20.3,9.9" />
+
+    <!-- One cloud, drawn as overlapping discs plus the slab that joins them;
+         same fill colour, so the seams disappear. -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M3.4,15.4a4.2,4.2 0 1,0 8.4,0a4.2,4.2 0 1,0 -8.4,0z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M7.3,13a5.3,5.3 0 1,0 10.6,0a5.3,5.3 0 1,0 -10.6,0z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M13.4,15.9a3.7,3.7 0 1,0 7.4,0a3.7,3.7 0 1,0 -7.4,0z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M7.6,13.2H17.1V19.6H7.6z" />
+</vector>
