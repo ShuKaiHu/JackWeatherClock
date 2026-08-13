@@ -13,14 +13,24 @@ own branch. Same repository and same history — two checkouts of it:
 
 | Platform | Directory | Branch |
 | --- | --- | --- |
-| iOS | `Jack_Waether_Clock_MM/` (this one) | `ios/main` |
-| Android | `RainyClock-Android/`, alongside it | `claude/android-play-store-release-jykw59` |
+| iOS | `Jack_Waether_Clock_MM/` | `ios/main` |
+| Android | `RainyClock-Android/` (this one) | `claude/android-play-store-release-jykw59` |
 
 **Work on the platform whose worktree you are in, and commit to its branch.** Both checkouts
 contain the whole repo — a worktree splits branches, not directories — so nothing stops you
 editing `android/` from the iOS worktree. Don't: that is the collision this arrangement
 exists to end, after a day of iOS commits kept sweeping up the Android session's edits to
 shared files.
+
+**The other platform's files cannot be hidden**, so this rule is kept by hand rather than by
+tooling: sparse-checkout would take `RainyClock/*.wav` out of the Android worktree, and the
+Android build copies those alarm tones out of the iOS target at build time. Hide them and the
+build stops working.
+
+A session that finds itself in the wrong worktree has lost nothing — work lives in the branch,
+not the directory. Confirm with `git branch -a --contains <sha>` before assuming otherwise:
+right after a split both worktrees sit on the *same* commit, which looks like the branch was
+reset when in fact every commit is still an ancestor of both tips.
 
 Shared files (`docs/`, `CLAUDE.md`, `.gitignore`) drift between the two branches. Merge in the
 direction of whoever needs the change; both branches are meant to land on `main` eventually.
