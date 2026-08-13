@@ -81,13 +81,21 @@ function createDailyBudget({ limit }) {
 }
 
 /**
- * Per-caller throttle, so one client cannot burn the daily budget alone. Held
- * in memory per instance, which is imprecise across a scaled-out service — but
- * the instance cap is low and the daily budget is the real backstop, so
- * approximate is enough. Being exact here would mean adding a datastore, and a
- * weather proxy is not worth an extra moving part.
+ * Per-caller throttle. Deliberately generous, because "caller" here means a
+ * public IP, and a public IP is not a person: carrier-grade NAT puts thousands
+ * of mobile subscribers behind one address, which is the normal case in this
+ * app's home market. A tight limit does not stop a determined actor — the daily
+ * budget already caps the worst case — it just locks out a whole carrier's
+ * users at 7am. This exists to stop runaway loops, so it is set well above any
+ * plausible shared-address load and left there.
+ *
+ * Cache hits never reach it, so only genuine upstream misses count against it.
+ *
+ * Held in memory per instance, so it is approximate across a scaled-out
+ * service. That is fine: the daily budget is the real backstop, and being exact
+ * would mean adding a datastore to a proxy that otherwise has no state.
  */
-function createRateLimiter({ limit = 60, windowMs = 5 * 60_000, maxClients = 10_000 } = {}) {
+function createRateLimiter({ limit = 600, windowMs = 5 * 60_000, maxClients = 10_000 } = {}) {
   const seen = new Map()
 
   return {
