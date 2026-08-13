@@ -6,6 +6,28 @@ Google AdMob banner. The Android port lives in `android/` (Kotlin + Jetpack Comp
 platform substitutions and its own gotchas are in `docs/ANDROID.md`, and the Play Store
 runbook is `docs/play-store-submission-checklist.md`.
 
+## One worktree per platform
+
+The two platforms are worked on at the same time, so each has its own git worktree and its
+own branch. Same repository and same history — two checkouts of it:
+
+| Platform | Directory | Branch |
+| --- | --- | --- |
+| iOS | `Jack_Waether_Clock_MM/` (this one) | `ios/main` |
+| Android | `RainyClock-Android/`, alongside it | `claude/android-play-store-release-jykw59` |
+
+**Work on the platform whose worktree you are in, and commit to its branch.** Both checkouts
+contain the whole repo — a worktree splits branches, not directories — so nothing stops you
+editing `android/` from the iOS worktree. Don't: that is the collision this arrangement
+exists to end, after a day of iOS commits kept sweeping up the Android session's edits to
+shared files.
+
+Shared files (`docs/`, `CLAUDE.md`, `.gitignore`) drift between the two branches. Merge in the
+direction of whoever needs the change; both branches are meant to land on `main` eventually.
+
+`git worktree list` shows the current layout. Android's `android/local.properties` is
+gitignored, so a newly created worktree needs it written by hand — see `docs/ANDROID.md`.
+
 ## Read first
 
 The two platforms keep **separate logs** — they ship on different schedules and are often

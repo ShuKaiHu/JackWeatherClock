@@ -10,6 +10,12 @@ Write platform state into its own log, never into this page. Split on 2026-08-09
 shared file kept collecting both platforms' edits from two sessions at once. Only facts that
 are true of *both* belong here.
 
+The same split now exists on disk: **one git worktree per platform**, one branch each, so the
+two sessions no longer share a working tree either. `Jack_Waether_Clock_MM/` is iOS on
+`ios/main`; `RainyClock-Android/` beside it is Android on
+`claude/android-play-store-release-jykw59`. `git worktree list` confirms it. Both checkouts
+hold the whole repo — the separation is by branch, not by directory.
+
 ## Where things stand — 2026-08-13
 
 | Platform | State |
