@@ -123,7 +123,7 @@ default.
       Signing opted in at first upload. Its SHA-1 (and Play's) then go into the Maps key.
 - [ ] **(you) AdMob: register a new Android app** and one anchored adaptive banner unit; pass
       both as Gradle properties at build time. `app-ads.txt` needs no change — it is
-      per-account and already verified. **Blocked since 2026-08-23: the publisher account
+      per-account and already verified. **Blocked since 2026-08-22: the publisher account
       was disabled for invalid traffic** (`docs/admob-invalid-traffic-appeal.md`); nothing
       can be registered under it until the appeal resolves, and a replacement account must
       not be opened. If the disablement sticks, the Android release ships ad-free or on a

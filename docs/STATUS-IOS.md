@@ -61,14 +61,14 @@ app ships no Home Screen widget at all: the widget extension holds only the Alar
 Activity, which is why it exists. And on an iPad the app runs in iPhone compatibility mode,
 where iOS offers no third-party widgets whatever the app contains.
 
-## Monetization: AdMob account disabled 2026-08-23
+## Monetization: AdMob account disabled 2026-08-22
 
 Google disabled the publisher account (`pub-2920259088304022`) for invalid traffic on
-2026-08-23. **Read `docs/admob-invalid-traffic-appeal.md` before touching anything
+2026-08-22. **Read `docs/admob-invalid-traffic-appeal.md` before touching anything
 ad-related** — it holds the incident record, the root-cause assessment (developer traffic
 against the production unit before the 07-28/08-03 test-unit guards), the appeal draft, and
 the do/don't list. The short version: do not open a new AdMob account, appeal once with the
-full traffic analysis, and check `www.google.com/adsense` after ~2026-09-22 for whatever
+full traffic analysis, and check `www.google.com/adsense` after ~2026-09-21 for whatever
 survives the 30-day payment hold. No emergency release is needed — a banner that gets no
 fill renders at height 0, so `1.6.5` users see nothing change. As of 2026-08-23 the
 production unit is also unreachable from any install that carries a provisioning profile
@@ -431,7 +431,7 @@ Ordered by value, not urgency. None of these block a release.
 3. **Refresh `SKAdNetworkItems` occasionally.** 50 identifiers were declared in `1.6.2 (17)`;
    Google adds buyers to its list over time.
 4. **Confirm the AdMob payments and tax profile is complete.** Now about the *final*
-   payment: the account was disabled 2026-08-23 and whatever survives the 30-day hold
+   payment: the account was disabled 2026-08-22 and whatever survives the 30-day hold
    (likely nothing — revenue was US$0.00 at the last read report) only pays out to a
    completed profile. See `docs/admob-invalid-traffic-appeal.md`.
 5. **Google Places fallback is dormant.** `GooglePlacesAPIKey` is empty in

@@ -3,7 +3,7 @@ import Foundation
 enum AppEnvironment {
     /// Google requires test ads during development. Requesting production ads from
     /// developer devices counts as invalid traffic, and the account was disabled for
-    /// invalid traffic on 2026-08-23 — see `docs/admob-invalid-traffic-appeal.md`.
+    /// invalid traffic on 2026-08-22 — see `docs/admob-invalid-traffic-appeal.md`.
     /// Only an App Store install may return the production unit; every other channel
     /// gets Google's always-filling test unit.
     static let adMobBannerAdUnitID: String = {

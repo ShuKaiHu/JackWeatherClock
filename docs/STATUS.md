@@ -34,7 +34,7 @@ hold the whole repo — the separation is by branch, not by directory.
 ## True on both sides
 
 - **The AdMob publisher account is disabled** — Google disabled `pub-2920259088304022` for
-  invalid traffic on 2026-08-23. One account serves both platforms, so iOS serves no ads
+  invalid traffic on 2026-08-22. One account serves both platforms, so iOS serves no ads
   until an appeal succeeds and an Android release cannot monetize under it either. Incident
   record, root cause, and the appeal draft: `docs/admob-invalid-traffic-appeal.md`. Do not
   open a replacement account — that forecloses the appeal.

@@ -1,6 +1,6 @@
-# AdMob account disabled — incident record and appeal (2026-08-23)
+# AdMob account disabled — incident record and appeal (2026-08-22)
 
-On 2026-08-23 Google disabled the publisher account `pub-2920259088304022` for
+On 2026-08-22 Google disabled the publisher account `pub-2920259088304022` for
 「無效流量和/或其他違反發布商政策」. The notice is the standard invalid-traffic
 disablement: all ad serving stops (AdMob included), a 30-day payment hold starts, and the
 only recourse is one well-prepared appeal. This file is the working record: what we know,
@@ -16,7 +16,7 @@ disabled account simply return no ad.
 - **Do not open a new AdSense/AdMob account**, and do not route the app through anyone
   else's account. Google treats that as 規避停權處分 (circumventing the disablement); it
   gets the new account banned and forecloses the appeal.
-- **Confirmed real, 2026-08-23:** the AdMob console itself shows 「您目前無法使用 AdMob —
+- **Confirmed real, 2026-08-23 (notice dated 08-22):** the AdMob console itself shows 「您目前無法使用 AdMob —
   帳戶已關閉,但您可以提交這份表單申訴」, linking to the 無效流量申訴 form. Not phishing,
   and console access is gone.
 - **Report exports are no longer possible** — the console is closed. The only surviving
@@ -42,7 +42,8 @@ disabled account simply return no ad.
 | 2026-08-03 | Test-unit switch extended to `targetEnvironment(simulator)`, closing the Release-on-simulator smoke-test path (`3750c86747e6c316dc25879cadbe4a3bd98dbf50`). **Developer-side traffic against the production unit ends here.** |
 | 2026-08-04 | `1.6.5 (23)` live on the App Store — organic user traffic begins in earnest. |
 | 2026-08-13 | `1.6.6 (24)` uploaded, never submitted. `1.6.5` is still the live build at disablement. |
-| 2026-08-23 | Disablement notice received; console confirms the closure. This branch closes the last non-store channel: a Release build installed by Xcode or ad-hoc carries `embedded.mobileprovision`, and `AppEnvironment` now returns the test unit whenever that file is present, so **only genuine App Store installs can request the production unit** (`72dc9219b0f3eeec069e4fe0da79bac1080a3f17`). |
+| 2026-08-22 | Disablement notice received: invalid traffic, account closed. |
+| 2026-08-23 | Console confirms the closure. This branch closes the last non-store channel: a Release build installed by Xcode or ad-hoc carries `embedded.mobileprovision`, and `AppEnvironment` now returns the test unit whenever that file is present, so **only genuine App Store installs can request the production unit** (`72dc9219b0f3eeec069e4fe0da79bac1080a3f17`). |
 
 ## Root-cause assessment
 
@@ -92,12 +93,9 @@ strongest card the appeal holds. The repo is public, so the commits are citable 
 
 The form is the 無效流量申訴 (Invalid Traffic appeal), reached from the closed console's
 「這份表單」link. Located and mapped 2026-08-23. Before submitting, fill every 【】:
-real name, the App Store URL, the App Store Connect numbers, and the tapped-or-not
-sentence choice. The App Store URL comes from the App Store share sheet, or:
-
-```
-curl -s "https://itunes.apple.com/lookup?bundleId=com.shukaihu.RainyClock&country=tw" | python3 -m json.tool | grep trackViewUrl
-```
+real name, the App Store Connect numbers, and the tapped-or-not sentence choice. The App
+Store URL is `https://apps.apple.com/hk/app/rainy-clock/id6780500386` (owner-provided,
+2026-08-23).
 
 > **請輸入您的姓名**
 > 【真實姓名,與 AdMob 帳戶付款資料一致】
@@ -110,12 +108,13 @@ curl -s "https://itunes.apple.com/lookup?bundleId=com.shukaihu.RainyClock&countr
 >
 > **您刊登廣告的範例網址或應用程式 ID**
 > iOS 應用程式「雨天鬧鐘 Rainy Clock」
+> https://apps.apple.com/hk/app/rainy-clock/id6780500386
 > AdMob 應用程式 ID:ca-app-pub-2920259088304022~6773413597
-> Bundle ID:com.shukaihu.RainyClock
-> App Store:【App Store 連結】
 >
 > **您想要刊登廣告的網址或應用程式 ID(必須是運作中)**
-> 【App Store 連結】
+> https://apps.apple.com/hk/app/rainy-clock/id6780500386
+> (a store URL, not the bundle ID — the field wants something a reviewer can open and see
+> is live)
 >
 > **您是否曾為網站、行動應用程式和/或 YouTube 頻道購買流量?**
 > 否
@@ -184,9 +183,10 @@ curl -s "https://itunes.apple.com/lookup?bundleId=com.shukaihu.RainyClock&countr
 
 ## Money
 
-The 30-day hold started with the notice: **on or after ~2026-09-22**, log in at
+The 30-day hold started with the notice: **on or after ~2026-09-21**, log in at
 `www.google.com/adsense` to see whether a final balance survived the invalid-activity
-clawback. Given US$0.00 revenue as of the last read report, expect nothing — but the
+clawback (30 days from the 2026-08-22 notice). Given US$0.00 revenue as of the last read
+report, expect nothing — but the
 payments/tax profile must be complete for even a nonzero remainder to pay out.
 
 ## If the appeal is finally rejected
