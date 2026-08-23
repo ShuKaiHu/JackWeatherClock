@@ -67,8 +67,9 @@ Google disabled the publisher account (`pub-2920259088304022`) for invalid traff
 2026-08-22. **Read `docs/admob-invalid-traffic-appeal.md` before touching anything
 ad-related** — it holds the incident record, the root-cause assessment (developer traffic
 against the production unit before the 07-28/08-03 test-unit guards), the appeal draft, and
-the do/don't list. The short version: do not open a new AdMob account, appeal once with the
-full traffic analysis, and check `www.google.com/adsense` after ~2026-09-21 for whatever
+the do/don't list. The short version: do not open a new AdMob account, the appeal was
+submitted 2026-08-23 (review takes ~72 business hours to a week or more, one shot only),
+and check `www.google.com/adsense` after ~2026-09-21 for whatever
 survives the 30-day payment hold. No emergency release is needed — a banner that gets no
 fill renders at height 0, so `1.6.5` users see nothing change. As of 2026-08-23 the
 production unit is also unreachable from any install that carries a provisioning profile

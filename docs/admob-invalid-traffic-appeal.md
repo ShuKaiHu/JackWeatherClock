@@ -7,6 +7,13 @@ only recourse is one well-prepared appeal. This file is the working record: what
 what caused it as far as the repo can prove, what was already fixed and when, and the
 appeal answers mapped onto the real form.
 
+**Status: appeal SUBMITTED 2026-08-23.** The confirmation page says most appeals are
+reviewed within 72 business hours but can take a week or longer, repeat appeals may get no
+reply, and reinstatement is not guaranteed. One follow-up check: a confirmation email must
+arrive at the contact address (inbox or spam) — if none does, the address was invalid, and
+that is the *only* sanctioned reason to re-send the form. Next dates: reply window opens
+~2026-08-26; final-payment check at `www.google.com/adsense` on/after ~2026-09-21.
+
 **The live app needs no emergency release.** A banner that gets no fill renders at height 0
 and opacity 0 (`AdMobBannerView`), so users of `1.6.5` see nothing change. Requests to a
 disabled account simply return no ad.
