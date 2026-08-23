@@ -33,6 +33,11 @@ hold the whole repo — the separation is by branch, not by directory.
 
 ## True on both sides
 
+- **The AdMob publisher account is disabled** — Google disabled `pub-2920259088304022` for
+  invalid traffic on 2026-08-23. One account serves both platforms, so iOS serves no ads
+  until an appeal succeeds and an Android release cannot monetize under it either. Incident
+  record, root cause, and the appeal draft: `docs/admob-invalid-traffic-appeal.md`. Do not
+  open a replacement account — that forecloses the appeal.
 - **The published website is this repo.** `docs/` is served at `shukaihu.github.io/RainyClock/`
   and carries the support and privacy-policy pages linked from the live App Store listing —
   and the privacy-policy page is what a Play listing will have to point at too. **This repo
