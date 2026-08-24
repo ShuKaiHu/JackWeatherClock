@@ -7,12 +7,14 @@ only recourse is one well-prepared appeal. This file is the working record: what
 what caused it as far as the repo can prove, what was already fixed and when, and the
 appeal answers mapped onto the real form.
 
-**Status: appeal SUBMITTED 2026-08-23.** The confirmation page says most appeals are
-reviewed within 72 business hours but can take a week or longer, repeat appeals may get no
-reply, and reinstatement is not guaranteed. One follow-up check: a confirmation email must
-arrive at the contact address (inbox or spam) — if none does, the address was invalid, and
-that is the *only* sanctioned reason to re-send the form. Next dates: reply window opens
-~2026-08-26; final-payment check at `www.google.com/adsense` on/after ~2026-09-21.
+**Status: appeal REJECTED 2026-08-24 — this is final.** Submitted 2026-08-23, answered
+the next morning by `adsense-adclicks@google.com`, case `[0-8759000041641]`: 「在考量您提供
+的資訊後,我們還是決定不將您的發布商帳戶復權」, and the terms are absolute —
+「您的帳戶不會再收到任何款項。您無法繼續參加我們的發布商計畫,也不得建立新的帳戶。」
+No second appeal exists, the ~2026-09-21 payment check is moot (no payment will issue), and
+**no replacement account may ever be opened** — not under a family member, not a company,
+not by serving this app through someone else's publisher account. Where monetization goes
+from here: `docs/monetization-after-admob.md`.
 
 **The live app needs no emergency release.** A banner that gets no fill renders at height 0
 and opacity 0 (`AdMobBannerView`), so users of `1.6.5` see nothing change. Requests to a
@@ -168,15 +170,36 @@ Identity fields, as submitted by the owner (fine as filled):
 
 ## Money
 
-The 30-day hold started with the notice: **on or after ~2026-09-21**, log in at
-`www.google.com/adsense` to see whether a final balance survived the invalid-activity
-clawback (30 days from the 2026-08-22 notice). Given US$0.00 revenue as of the last read
-report, expect nothing — but the payments/tax profile must be complete for even a nonzero
-remainder to pay out.
+Moot. The rejection states the account will receive no further payment, so the 30-day hold
+that would have ended ~2026-09-21 has nothing to release. Last known balance was US$0.00
+anyway. No action.
 
-## If the appeal is finally rejected
+## Why the appeal failed (assessment, 2026-08-24)
 
-Decide then, not now. The realistic paths: ship ad-free (the app is fully functional
-without the banner), a tip-jar IAP, or a non-Google ad network. Nothing in the current
-code blocks any of these; removing the banner is deleting one `if` block in
-`ContentView.swift` plus the two Google SDK dependencies.
+Google never explains, and the reply is a template, so this is inference — but the shape is
+clear enough to be worth writing down:
+
+- **Nothing legitimate to reinstate.** The account's entire life was 2026-07-27 (verified)
+  to 2026-08-22 (disabled), and its whole request history is the traffic that got flagged:
+  168 requests, 0 impressions, US$0.00. Appeals that succeed generally belong to accounts
+  with a long legitimate record where the invalid slice is the anomaly. Here the anomaly
+  *was* the record, so reinstating carries all risk and no upside for Google.
+- **Turnaround under 24 hours** against a promised 72 business hours suggests little or no
+  human weighing of the evidence links.
+- **The admission was still correct.** Denying developer traffic would have been a lie
+  against Google's own logs, and the honest version at least cost nothing — there was no
+  winning answer available, only a truthful one and a dishonest one.
+- **Not caused by the appeal's wording.** Mentioning 2026-08-04 (own-device use of the live
+  app) was the completeness the form demanded; omitting it would not plausibly have flipped
+  a decision made this fast on an account with zero legitimate history.
+
+The lesson worth carrying, for this app and any future one: **a brand-new ad account is
+fragile.** Wire the test-unit switch before the first line of production ad code, not two
+weeks in. `AppEnvironment.swift` now does this by build channel; whatever network comes
+next should be wired the same way on day one.
+
+## Where monetization goes now
+
+See `docs/monetization-after-admob.md` — what the ban does and does not foreclose (Apple,
+Google Cloud/Maps and Play are unaffected), the non-Google ad networks worth considering,
+what an SDK swap actually costs, and the recommendation given this app's real numbers.

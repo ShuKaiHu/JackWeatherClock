@@ -11,7 +11,7 @@ sessions writing over each other. Anything true of both platforms goes in `docs/
 - Store copy, release notes, review notes → `docs/appstore-metadata.md`
 - Product reasoning and rejected alternatives (both platforms) → `docs/PRODUCT_DECISIONS.md`
 
-Last updated: 2026-08-23.
+Last updated: 2026-08-24.
 
 ## Where things stand
 
@@ -61,19 +61,22 @@ app ships no Home Screen widget at all: the widget extension holds only the Alar
 Activity, which is why it exists. And on an iPad the app runs in iPhone compatibility mode,
 where iOS offers no third-party widgets whatever the app contains.
 
-## Monetization: AdMob account disabled 2026-08-22
+## Monetization: AdMob gone for good (2026-08-24)
 
 Google disabled the publisher account (`pub-2920259088304022`) for invalid traffic on
-2026-08-22. **Read `docs/admob-invalid-traffic-appeal.md` before touching anything
-ad-related** — it holds the incident record, the root-cause assessment (developer traffic
-against the production unit before the 07-28/08-03 test-unit guards), the appeal draft, and
-the do/don't list. The short version: do not open a new AdMob account, the appeal was
-submitted 2026-08-23 (review takes ~72 business hours to a week or more, one shot only),
-and check `www.google.com/adsense` after ~2026-09-21 for whatever
-survives the 30-day payment hold. No emergency release is needed — a banner that gets no
-fill renders at height 0, so `1.6.5` users see nothing change. As of 2026-08-23 the
-production unit is also unreachable from any install that carries a provisioning profile
-(`AppEnvironment.swift`); only App Store installs can request it.
+2026-08-22, and **the appeal was rejected 2026-08-24 — final**: no second appeal, no
+payment, and **no replacement account may ever be opened**. The app can no longer serve ads
+through any Google product.
+
+- Incident record, root cause (developer traffic on the production unit before the 07-28 and
+  08-03 test-unit guards) and why the appeal failed → `docs/admob-invalid-traffic-appeal.md`
+- What to do instead — ad-free, a StoreKit tip jar, or a non-Google network, with what an
+  SDK swap actually costs → `docs/monetization-after-admob.md`
+
+No emergency release is needed: a banner that gets no fill renders at height 0, so `1.6.5`
+users see nothing change. The ad code is now dead weight rather than a hazard — whenever it
+is removed, `SKAdNetworkItems`, `PrivacyInfo.xcprivacy`, the App Privacy answers, the ATT
+string and the privacy policy all come out with it.
 
 Everything below stands as the pre-disablement record, kept because the appeal cites it.
 
