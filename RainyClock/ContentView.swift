@@ -10,7 +10,6 @@ struct ContentView: View {
     }
 
     @StateObject var viewModel: AlarmViewModel
-    @ObservedObject private var consentManager = ConsentManager.shared
     @Environment(\.scenePhase) private var scenePhase
     @State private var selectedTab: AppTab = .route
     var showsWeatherAttribution = false
@@ -32,10 +31,7 @@ struct ContentView: View {
         }
         .background(Color.appBackground.ignoresSafeArea())
         .preferredColorScheme(.dark)
-        // Runs once the view hierarchy exists: the consent form needs a view
-        // controller to present from, which is not available during app `init()`.
         .task {
-            consentManager.requestConsentThenStartAds()
             // The armed alarm repeats weekly with the rain decision that was current
             // when it was scheduled; opening the app is what brings that decision up
             // to date. No-op when it is still fresh.
@@ -46,9 +42,6 @@ struct ContentView: View {
                 return
             }
 
-            // A launch that failed the consent update (no network, typically) left
-            // the latch open; this is the retry.
-            consentManager.requestConsentThenStartAds()
             Task {
                 await viewModel.refreshScheduledAlarmIfWeatherIsStale()
             }
@@ -80,21 +73,6 @@ struct ContentView: View {
             .padding(.horizontal, 34)
             .padding(.top, 12)
             .padding(.bottom, 22)
-
-            // Kept out of the hierarchy until UMP reports consent, so no ad request
-            // can precede it.
-            if !AppEnvironment.isRunningTests, consentManager.canRequestAds {
-                AdMobBannerView(
-                    adUnitID: AppEnvironment.adMobBannerAdUnitID,
-                    allowsPersonalizedAds: consentManager.isTrackingAuthorized
-                )
-                    // The banner configures its `BannerView` once, so a changed answer
-                    // — a late ATT grant, a revised consent choice — only reaches the
-                    // ad request by rebuilding it under a new identity.
-                    .id(consentManager.adConfigurationRevision)
-                    .frame(maxWidth: .infinity)
-                    .background(Color.appBackground)
-            }
         }
         .background(Color.appBackground)
     }
@@ -482,7 +460,6 @@ private struct AlarmTabView: View {
     private let weekdayOrder = [1, 2, 3, 4, 5, 6, 7]
 
     @ObservedObject var viewModel: AlarmViewModel
-    @ObservedObject private var consentManager = ConsentManager.shared
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     // Only consulted at accessibility text sizes, where the row wraps and the
     // chip finally has room to grow. Capped so AX5 doesn't produce a chip
@@ -610,30 +587,6 @@ private struct AlarmTabView: View {
                                     in: Double(CommuteAlarmSettings.snoozeDurationRange.lowerBound)...Double(CommuteAlarmSettings.snoozeDurationRange.upperBound),
                                     step: 1
                                 )
-                            }
-                        }
-
-                        // Only regulated regions require this entry point, so UMP
-                        // decides whether it appears at all.
-                        if consentManager.showsPrivacyOptions {
-                            HStack {
-                                Text("ad_privacy_options")
-                                Spacer()
-                                Button("ad_privacy_options_manage") {
-                                    consentManager.presentPrivacyOptions()
-                                }
-                                .buttonStyle(.plain)
-                                .foregroundStyle(Color.accentColor)
-                            }
-                            // UMP loads the form lazily, so an early tap is a
-                            // documented no-op. Say so instead of looking broken.
-                            .alert(
-                                Text("ad_privacy_options_failed_title"),
-                                isPresented: $consentManager.privacyOptionsFailed
-                            ) {
-                                Button("ok_button", role: .cancel) {}
-                            } message: {
-                                Text("ad_privacy_options_failed_body")
                             }
                         }
                     }

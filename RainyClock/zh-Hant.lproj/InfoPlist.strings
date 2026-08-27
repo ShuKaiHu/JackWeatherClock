@@ -1,3 +1,2 @@
 "CFBundleDisplayName" = "雨天鬧鐘";
 "NSAlarmKitUsageDescription" = "雨天鬧鐘需要排程通勤鬧鐘，這樣即使手機處於靜音或專注模式也能叫醒你。";
-"NSUserTrackingUsageDescription" = "允許追蹤後，雨天鬧鐘顯示的廣告會更貼近你的興趣。不允許也沒關係，App 的功能完全不受影響。";

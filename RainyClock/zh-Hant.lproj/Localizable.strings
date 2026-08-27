@@ -121,8 +121,4 @@
 "error_address_not_found" = "找不到這個地址：%@";
 "error_weather_unavailable" = "目前無法取得天氣資料。請確認網路連線後稍後再試。";
 "error_route_not_found" = "找不到這段通勤路線。";
-"ad_privacy_options" = "廣告隱私設定";
-"ad_privacy_options_manage" = "管理";
-"ad_privacy_options_failed_title" = "無法開啟廣告隱私設定";
-"ad_privacy_options_failed_body" = "設定選項仍在載入中，請稍候再試一次。";
 "ok_button" = "好";

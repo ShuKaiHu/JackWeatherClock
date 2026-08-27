@@ -116,3 +116,46 @@ Google Places fallback 可在未來加入，但只應在 Apple 地址解析失�
 ### 本地化策略
 
 所有使用者可見的 UI 文字都應由本地化字串資源提供。文件應同時提供英文與繁體中文，確保產品與技術決策在兩種語言中保持一致。
+
+## Ads removed entirely (2026-08-27)
+
+The AdMob publisher account was disabled for invalid traffic on 2026-08-22 and the appeal
+was rejected on 2026-08-24 — final, with no replacement account permitted
+(`docs/admob-invalid-traffic-appeal.md`). Rather than immediately adopt another network,
+`1.7.0` ships with the ad code deleted. Reasoning and the alternatives in full:
+`docs/monetization-after-admob.md`.
+
+The deciding numbers: 168 ad requests, 0 impressions, **US$0.00** over the account's entire
+life. Against that, the banner cost an ATT prompt on first launch, a privacy manifest and 50
+`SKAdNetworkItems` to keep in sync, two SPM dependencies, and the enforcement exposure that
+had just cost the account. Users see no visual change — a banner with no fill already
+rendered at height 0.
+
+**Rejected: two banners from two networks on one screen.** Considered as a way to raise
+revenue, rejected on three grounds. Placement policies at essentially every network allow
+one banner per screen view, so two visible banners would breach both networks at once; ad
+stacking — overlapping placements where the hidden one still counts an impression — is
+outright fraud, and this account had just been terminated for traffic quality, making a
+policy-edgy layout the worst available move. It also does not achieve the goal: competition
+between networks comes from **mediation** (one slot, many bidders — Unity LevelPlay,
+AppLovin MAX, Appodeal), not from more slots. And two banners on a two-tab phone-sized
+utility would crowd the content enough to invite an App Review finding.
+
+**Deferred, not rejected: a paid unlock.** A one-time non-consumable is worth far more per
+user than banners at this scale, but three things have to be settled first, and none of
+them is settled yet:
+
+- **StoreKit has no native "7-day trial then buy once".** Introductory offers exist only for
+  auto-renewable subscriptions. A time-limited trial for a non-subscription app has to be
+  implemented in the app, with the start date in the **Keychain** rather than `UserDefaults`,
+  or deleting and reinstalling resets it.
+- **This is an alarm clock.** A trial that expires and stops waking someone up is a real
+  harm, not just a bad review. Whatever gets gated, the core alarm keeps ringing.
+- **`1.6.5` already shipped free.** Anyone who downloaded before a paywall must be
+  grandfathered — `AppTransaction.originalAppVersion` (StoreKit 2) identifies them — or the
+  change reads as taking away what they already had.
+
+There is also little to sell today: `CommuteAlarmSettings` holds exactly one route and one
+alarm, and all ten tones are already free. A paid tier needs a feature built for it (multiple
+routes/alarms, or the on-route rain sampling the Android port already has) rather than
+existing functionality withdrawn.

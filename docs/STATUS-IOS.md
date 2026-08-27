@@ -11,7 +11,7 @@ sessions writing over each other. Anything true of both platforms goes in `docs/
 - Store copy, release notes, review notes → `docs/appstore-metadata.md`
 - Product reasoning and rejected alternatives (both platforms) → `docs/PRODUCT_DECISIONS.md`
 
-Last updated: 2026-08-24.
+Last updated: 2026-08-27.
 
 ## Where things stand
 
@@ -20,7 +20,8 @@ Last updated: 2026-08-24.
 | **Live on the App Store** | `1.6.5` | **Released 2026-08-04.** Confirmed against the public listing, not against this file — see the warning below |
 | Superseded | `1.6.3 (18)` | Released 2026-07-28 |
 | Rejected, then resolved | `1.6.4 (19)` | Rejected 2026-08-01 on 5.1.2(i) and 2.1(a); both answered, and the fixes reached users in 1.6.5 |
-| **Uploaded, not submitted** | `1.6.6 (24)` | In App Store Connect since 2026-08-13. Still needs a `1.6.6` version record, the notes, the build attached, and a submission |
+| **Superseded before submission** | `1.6.6 (24)` | Uploaded to App Store Connect 2026-08-13, never submitted. `1.7.0` replaces it — do not submit this build |
+| **In the working tree, unbuilt** | `1.7.0 (25)` | Google ads removed entirely (see Monetization below). Written on a runner with no Xcode: **build it on the Mac before anything else** |
 
 > **This file said "1.6.5 waiting to upload" for nine days after 1.6.5 had already shipped.**
 > Nobody updated it after the upload, and an agent reading it repeated the claim back as
@@ -73,10 +74,35 @@ through any Google product.
 - What to do instead — ad-free, a StoreKit tip jar, or a non-Google network, with what an
   SDK swap actually costs → `docs/monetization-after-admob.md`
 
-No emergency release is needed: a banner that gets no fill renders at height 0, so `1.6.5`
-users see nothing change. The ad code is now dead weight rather than a hazard — whenever it
-is removed, `SKAdNetworkItems`, `PrivacyInfo.xcprivacy`, the App Privacy answers, the ATT
-string and the privacy policy all come out with it.
+**The ad code is gone as of `1.7.0 (25)`** (2026-08-27), decided after weighing the
+alternatives in `docs/monetization-after-admob.md`. What came out, in one commit:
+
+- `AdMobBannerView.swift` and `Services/ConsentManager.swift` deleted; the banner, the UMP
+  consent flow, the ATT prompt and the privacy-options settings row with them
+- `AppEnvironment.adMobBannerAdUnitID`, `GADApplicationIdentifier`,
+  `NSUserTrackingUsageDescription` and all 50 `SKAdNetworkItems`
+- the `swift-package-manager-google-mobile-ads` SPM package, its product dependency and
+  `Package.resolved` (which also pinned UserMessagingPlatform transitively)
+- the four `ad_privacy_options*` strings and the ATT purpose string, both languages
+- the Advertising and Tracking sections of `docs/privacy-policy.html`, both languages; the
+  "what this app does not do" list now denies ads and the advertising identifier outright
+
+`PrivacyInfo.xcprivacy` needed no change — `NSPrivacyTracking` was already `false` after the
+ITMS-91064 revert, and that is now simply true.
+
+**Not built or run** — the change was made on a remote Linux runner with no Xcode. Build and
+smoke-test on the Mac before doing anything else with it. Three things to confirm in App
+Store Connect at submission time: **App Privacy must be changed back to "no tracking"**
+(Device ID, Advertising Data, Product Interaction and Coarse Location were set to "yes" for
+tracking on 2026-08-02), the export-compliance answers are unchanged, and `1.6.6 (24)` —
+still sitting uploaded and unsubmitted — is superseded by this build rather than submitted.
+
+Publishing note: `docs/` only goes live when this branch reaches `main`. The privacy policy
+in it describes `1.7.0`, while the store still serves `1.6.5`, which does show an ATT prompt
+— so **merge/publish alongside the release**, not before it.
+
+No emergency release is needed either way: a banner that gets no fill renders at height 0,
+so `1.6.5` users already see nothing.
 
 Everything below stands as the pre-disablement record, kept because the appeal cites it.
 
