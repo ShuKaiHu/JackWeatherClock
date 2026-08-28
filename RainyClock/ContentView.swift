@@ -80,21 +80,6 @@ struct ContentView: View {
             .padding(.horizontal, 34)
             .padding(.top, 12)
             .padding(.bottom, 22)
-
-            // Kept out of the hierarchy until UMP reports consent, so no ad request
-            // can precede it.
-            if !AppEnvironment.isRunningTests, consentManager.canRequestAds {
-                AdMobBannerView(
-                    adUnitID: AppEnvironment.adMobBannerAdUnitID,
-                    allowsPersonalizedAds: consentManager.isTrackingAuthorized
-                )
-                    // The banner configures its `BannerView` once, so a changed answer
-                    // — a late ATT grant, a revised consent choice — only reaches the
-                    // ad request by rebuilding it under a new identity.
-                    .id(consentManager.adConfigurationRevision)
-                    .frame(maxWidth: .infinity)
-                    .background(Color.appBackground)
-            }
         }
         .background(Color.appBackground)
     }

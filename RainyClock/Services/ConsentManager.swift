@@ -1,5 +1,4 @@
 import AppTrackingTransparency
-import GoogleMobileAds
 import UIKit
 import UserMessagingPlatform
 
@@ -7,13 +6,12 @@ import UserMessagingPlatform
 /// Apple's App Tracking Transparency prompt.
 ///
 /// Google requires consent to be collected from users in the EEA, the UK and
-/// Switzerland *before* the Mobile Ads SDK is initialised, so ad loading waits
-/// until `ConsentInformation` reports that ads may be requested. Users outside
+/// Switzerland before anything ad-related runs, so ad loading waits until
+/// `ConsentInformation` reports that ads may be requested. Users outside
 /// those regions are never shown a form and reach `canRequestAds` immediately.
 ///
 /// ATT comes after the UMP form, per Google's documented ordering, and applies
-/// everywhere rather than only in regulated regions. Ads stay non-personalized
-/// until it is granted — see `AdMobBannerView`.
+/// everywhere rather than only in regulated regions.
 ///
 /// The published GDPR message also promises users an in-app way to change or
 /// withdraw their choice; `presentPrivacyOptions()` is that entry point.
@@ -29,12 +27,11 @@ final class ConsentManager: ObservableObject {
     /// Only regulated regions require the entry point, so it stays hidden elsewhere.
     @Published private(set) var showsPrivacyOptions = false
 
-    /// Whether the user allowed tracking through the ATT prompt. Personalized ad
-    /// requests are gated on this; everyone else gets `npa=1`.
+    /// Whether the user allowed tracking through the ATT prompt.
     @Published private(set) var isTrackingAuthorized = false
 
-    /// Bumped whenever an answer that shapes the ad request changes. A `BannerView`
-    /// is configured once in `makeUIView`, so the banner has to be rebuilt to pick up
+    /// Bumped whenever an answer that shapes the ad request changes. The banner
+    /// view is configured once when it is built, so it has to be rebuilt to pick up
     /// a new answer — a late ATT grant, or a consent choice the user just revised.
     @Published private(set) var adConfigurationRevision = 0
 
@@ -43,7 +40,6 @@ final class ConsentManager: ObservableObject {
     @Published var privacyOptionsFailed = false
 
     private var hasRequestedConsent = false
-    private var hasStartedMobileAds = false
     private var hasFinishedConsentFlow = false
 
     private init() {}
@@ -152,10 +148,6 @@ final class ConsentManager: ObservableObject {
         showsPrivacyOptions = ConsentInformation.shared.privacyOptionsRequirementStatus == .required
 
         let allowsAdRequests = ConsentInformation.shared.canRequestAds
-        if allowsAdRequests, !hasStartedMobileAds {
-            hasStartedMobileAds = true
-            MobileAds.shared.start()
-        }
 
         // Two-way on purpose. This used to only ever latch true, so a user who
         // withdrew consent through the privacy options form kept seeing ads for the

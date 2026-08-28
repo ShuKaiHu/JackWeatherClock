@@ -30,7 +30,6 @@
 		0A1000B12C00000000000003 /* RainyClock.wav in Resources */ = {isa = PBXBuildFile; fileRef = 0A1000B02C00000000000003 /* RainyClock.wav */; };
 		0A1000B32C00000000000003 /* MorningBell.wav in Resources */ = {isa = PBXBuildFile; fileRef = 0A1000B22C00000000000003 /* MorningBell.wav */; };
 		0A1000B52C00000000000003 /* SoftPiano.wav in Resources */ = {isa = PBXBuildFile; fileRef = 0A1000B42C00000000000003 /* SoftPiano.wav */; };
-		0A1000C12C00000000000004 /* AdMobBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1000C02C00000000000004 /* AdMobBannerView.swift */; };
 		0A1000C42C00000000000004 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 0A1000C32C00000000000004 /* GoogleMobileAds */; };
 		0A1000D12C00000000000005 /* BrightChime.wav in Resources */ = {isa = PBXBuildFile; fileRef = 0A1000D02C00000000000005 /* BrightChime.wav */; };
 		0A1000D32C00000000000005 /* GentleWaves.wav in Resources */ = {isa = PBXBuildFile; fileRef = 0A1000D22C00000000000005 /* GentleWaves.wav */; };
@@ -114,7 +113,6 @@
 		0A1000B02C00000000000003 /* RainyClock.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = RainyClock.wav; sourceTree = "<group>"; };
 		0A1000B22C00000000000003 /* MorningBell.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = MorningBell.wav; sourceTree = "<group>"; };
 		0A1000B42C00000000000003 /* SoftPiano.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = SoftPiano.wav; sourceTree = "<group>"; };
-		0A1000C02C00000000000004 /* AdMobBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdMobBannerView.swift; sourceTree = "<group>"; };
 		0A1000D02C00000000000005 /* BrightChime.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = BrightChime.wav; sourceTree = "<group>"; };
 		0A1000D22C00000000000005 /* GentleWaves.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = GentleWaves.wav; sourceTree = "<group>"; };
 		0A1000D42C00000000000005 /* DigitalBeep.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = DigitalBeep.wav; sourceTree = "<group>"; };
@@ -182,7 +180,6 @@
 				0A1000112C00000000000001 /* RainyClockApp.swift */,
 				0A1000922C00000000000002 /* AppEnvironment.swift */,
 				0A1000122C00000000000001 /* ContentView.swift */,
-				0A1000C02C00000000000004 /* AdMobBannerView.swift */,
 				0A1000A02C00000000000003 /* PrivacyInfo.xcprivacy */,
 				0A1000A72C00000000000003 /* RoutePreviewMapView.swift */,
 				0A1000A22C00000000000003 /* WeatherAttributionView.swift */,
@@ -467,7 +464,6 @@
 				0A1000A42C00000000000003 /* RoutePreviewService.swift in Sources */,
 				0A1000A52C00000000000003 /* RoutePreviewMapView.swift in Sources */,
 				0A1000A32C00000000000003 /* WeatherAttributionView.swift in Sources */,
-				0A1000C12C00000000000004 /* AdMobBannerView.swift in Sources */,
 				16908840039C92EF6FDD7931 /* CommuteAlarmMetadata.swift in Sources */,
 				672140296105B2FF93129911 /* AlarmKitScheduler.swift in Sources */,
 				6721402961A0B2FF93129B01 /* BackgroundWeatherRefresh.swift in Sources */,
