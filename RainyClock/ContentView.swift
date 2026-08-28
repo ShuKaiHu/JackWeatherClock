@@ -80,6 +80,18 @@ struct ContentView: View {
             .padding(.horizontal, 34)
             .padding(.top, 12)
             .padding(.bottom, 22)
+
+            // Kept out of the hierarchy until UMP allows requests and MAX has
+            // finished initialising, so no ad request can precede either.
+            if !AppEnvironment.isRunningTests, consentManager.canRequestAds {
+                MaxBannerView(adUnitID: AppEnvironment.maxBannerAdUnitID)
+                    // The banner configures its `MAAdView` once, so a revised consent
+                    // choice or a late ATT grant only reaches the ad request stream
+                    // by rebuilding it under a new identity.
+                    .id(consentManager.adConfigurationRevision)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.appBackground)
+            }
         }
         .background(Color.appBackground)
     }

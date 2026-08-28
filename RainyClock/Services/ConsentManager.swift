@@ -1,3 +1,4 @@
+import AppLovinSDK
 import AppTrackingTransparency
 import UIKit
 import UserMessagingPlatform
@@ -6,9 +7,12 @@ import UserMessagingPlatform
 /// Apple's App Tracking Transparency prompt.
 ///
 /// Google requires consent to be collected from users in the EEA, the UK and
-/// Switzerland before anything ad-related runs, so ad loading waits until
-/// `ConsentInformation` reports that ads may be requested. Users outside
-/// those regions are never shown a form and reach `canRequestAds` immediately.
+/// Switzerland *before* the ad SDK is initialised, so AppLovin MAX waits until
+/// `ConsentInformation` reports that ads may be requested. Users outside those
+/// regions are never shown a form and start the SDK immediately. UMP writes the
+/// IAB TCF consent string to user defaults, the AppLovin SDK picks it up from
+/// there by itself and forwards it to Google and every other bidder, so no
+/// per-request consent plumbing is needed on this side.
 ///
 /// ATT comes after the UMP form, per Google's documented ordering, and applies
 /// everywhere rather than only in regulated regions.
@@ -19,8 +23,9 @@ import UserMessagingPlatform
 final class ConsentManager: ObservableObject {
     static let shared = ConsentManager()
 
-    /// Whether ads may be requested for this user. The banner stays out of the
-    /// view hierarchy until this turns true, so no ad request can precede consent.
+    /// Whether ads may be requested for this user: UMP has allowed requests *and*
+    /// MAX finished initialising. The banner stays out of the view hierarchy until
+    /// this turns true, so no ad request can precede consent or race SDK startup.
     @Published private(set) var canRequestAds = false
 
     /// Whether this user must be offered a way back into the consent form.
@@ -40,6 +45,8 @@ final class ConsentManager: ObservableObject {
     @Published var privacyOptionsFailed = false
 
     private var hasRequestedConsent = false
+    private var hasStartedAdSdk = false
+    private var isAdSdkReady = false
     private var hasFinishedConsentFlow = false
 
     private init() {}
@@ -140,14 +147,26 @@ final class ConsentManager: ObservableObject {
 
         isTrackingAuthorized = authorized
         // A grant that arrives through the deferred path lands after the banner was
-        // built; without this the whole session would stay non-personalized.
+        // built; rebuilding it puts the new answer on the next request right away
+        // instead of whenever the auto-refresh cycle next comes around.
         adConfigurationRevision &+= 1
     }
 
     private func refreshConsentState() {
         showsPrivacyOptions = ConsentInformation.shared.privacyOptionsRequirementStatus == .required
 
-        let allowsAdRequests = ConsentInformation.shared.canRequestAds
+        if ConsentInformation.shared.canRequestAds, !hasStartedAdSdk {
+            hasStartedAdSdk = true
+            startMaxSdk()
+        }
+
+        updateCanRequestAds()
+    }
+
+    private func updateCanRequestAds() {
+        // Both gates: UMP's answer can go false again through the privacy options
+        // form, while the SDK gate turns true exactly once, when `initialize` lands.
+        let allowsAdRequests = ConsentInformation.shared.canRequestAds && isAdSdkReady
 
         // Two-way on purpose. This used to only ever latch true, so a user who
         // withdrew consent through the privacy options form kept seeing ads for the
@@ -157,6 +176,43 @@ final class ConsentManager: ObservableObject {
         }
 
         canRequestAds = allowsAdRequests
+    }
+
+    /// Starts AppLovin MAX once consent allows it. AdMob is not gone — it serves
+    /// through `AppLovinMediationGoogleAdapter` under MAX, which is why the Google
+    /// SDK stays linked and `GADApplicationIdentifier` stays in Info.plist: the
+    /// Google SDK still crashes at launch without that key.
+    private func startMaxSdk() {
+        let sdkKey = Bundle.main.object(forInfoDictionaryKey: "AppLovinSdkKey") as? String ?? ""
+        guard !sdkKey.isEmpty, sdkKey != "YOUR-APPLOVIN-SDK-KEY" else {
+            // Skipping instead of crashing inside the SDK: with the placeholder key
+            // the app just runs ad-free, and this line says why in the console.
+            print("[RainyClock] AppLovinSdkKey is still the placeholder, so MAX never initialises and no ads load.")
+            return
+        }
+
+        let initConfig = ALSdkInitializationConfiguration(sdkKey: sdkKey) { builder in
+            builder.mediationProvider = ALMediationProviderMAX
+        }
+
+        ALSdk.shared().initialize(with: initConfig) { [weak self] _ in
+            Task { @MainActor in
+                self?.isAdSdkReady = true
+                self?.updateCanRequestAds()
+                self?.presentMediationDebuggerIfRequested()
+            }
+        }
+    }
+
+    private func presentMediationDebuggerIfRequested() {
+        #if DEBUG
+        // Launch with `-showMediationDebugger` to check the adapter wiring — the
+        // same rehearsal pattern as `-forceEEAConsentGeography` below. It hangs off
+        // the init completion because the debugger needs an initialised SDK.
+        if ProcessInfo.processInfo.arguments.contains("-showMediationDebugger") {
+            ALSdk.shared().showMediationDebugger()
+        }
+        #endif
     }
 
     private static func requestParameters() -> RequestParameters {

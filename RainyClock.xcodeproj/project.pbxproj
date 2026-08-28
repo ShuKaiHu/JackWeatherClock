@@ -31,6 +31,9 @@
 		0A1000B32C00000000000003 /* MorningBell.wav in Resources */ = {isa = PBXBuildFile; fileRef = 0A1000B22C00000000000003 /* MorningBell.wav */; };
 		0A1000B52C00000000000003 /* SoftPiano.wav in Resources */ = {isa = PBXBuildFile; fileRef = 0A1000B42C00000000000003 /* SoftPiano.wav */; };
 		0A1000C42C00000000000004 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 0A1000C32C00000000000004 /* GoogleMobileAds */; };
+		0A1000F42C00000000000005 /* AppLovinSDK in Frameworks */ = {isa = PBXBuildFile; productRef = 0A1000F32C00000000000005 /* AppLovinSDK */; };
+		0A1000F72C00000000000005 /* AppLovinMediationGoogleAdapter in Frameworks */ = {isa = PBXBuildFile; productRef = 0A1000F62C00000000000005 /* AppLovinMediationGoogleAdapter */; };
+		0A1000F12C00000000000005 /* MaxBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1000F02C00000000000005 /* MaxBannerView.swift */; };
 		0A1000D12C00000000000005 /* BrightChime.wav in Resources */ = {isa = PBXBuildFile; fileRef = 0A1000D02C00000000000005 /* BrightChime.wav */; };
 		0A1000D32C00000000000005 /* GentleWaves.wav in Resources */ = {isa = PBXBuildFile; fileRef = 0A1000D22C00000000000005 /* GentleWaves.wav */; };
 		0A1000D52C00000000000005 /* DigitalBeep.wav in Resources */ = {isa = PBXBuildFile; fileRef = 0A1000D42C00000000000005 /* DigitalBeep.wav */; };
@@ -88,6 +91,7 @@
 /* Begin PBXFileReference section */
 		0A1000112C00000000000001 /* RainyClockApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RainyClockApp.swift; sourceTree = "<group>"; };
 		0A1000122C00000000000001 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		0A1000F02C00000000000005 /* MaxBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MaxBannerView.swift; sourceTree = "<group>"; };
 		0A1000132C00000000000001 /* CommuteAlarmSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommuteAlarmSettings.swift; sourceTree = "<group>"; };
 		0A1000142C00000000000001 /* AlarmTimeCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmTimeCalculator.swift; sourceTree = "<group>"; };
 		0A1000152C00000000000001 /* NotificationScheduling.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationScheduling.swift; sourceTree = "<group>"; };
@@ -142,6 +146,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				0A1000C42C00000000000004 /* GoogleMobileAds in Frameworks */,
+				0A1000F42C00000000000005 /* AppLovinSDK in Frameworks */,
+				0A1000F72C00000000000005 /* AppLovinMediationGoogleAdapter in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -180,6 +186,7 @@
 				0A1000112C00000000000001 /* RainyClockApp.swift */,
 				0A1000922C00000000000002 /* AppEnvironment.swift */,
 				0A1000122C00000000000001 /* ContentView.swift */,
+				0A1000F02C00000000000005 /* MaxBannerView.swift */,
 				0A1000A02C00000000000003 /* PrivacyInfo.xcprivacy */,
 				0A1000A72C00000000000003 /* RoutePreviewMapView.swift */,
 				0A1000A22C00000000000003 /* WeatherAttributionView.swift */,
@@ -308,6 +315,8 @@
 			name = RainyClock;
 			packageProductDependencies = (
 				0A1000C32C00000000000004 /* GoogleMobileAds */,
+				0A1000F32C00000000000005 /* AppLovinSDK */,
+				0A1000F62C00000000000005 /* AppLovinMediationGoogleAdapter */,
 			);
 			productName = RainyClock;
 			productReference = 0A1000192C00000000000001 /* RainyClock.app */;
@@ -379,6 +388,8 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				0A1000C22C00000000000004 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */,
+				0A1000F22C00000000000005 /* XCRemoteSwiftPackageReference "AppLovin-MAX-Swift-Package" */,
+				0A1000F52C00000000000005 /* XCRemoteSwiftPackageReference "AppLovin-MAX-Swift-Package-Google" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 0A1000322C00000000000001 /* Products */;
@@ -449,6 +460,7 @@
 			files = (
 				0A1000012C00000000000001 /* RainyClockApp.swift in Sources */,
 				0A1000022C00000000000001 /* ContentView.swift in Sources */,
+				0A1000F12C00000000000005 /* MaxBannerView.swift in Sources */,
 				0A1000032C00000000000001 /* CommuteAlarmSettings.swift in Sources */,
 				0A1000042C00000000000001 /* AlarmTimeCalculator.swift in Sources */,
 				0A1000052C00000000000001 /* NotificationScheduling.swift in Sources */,
@@ -846,6 +858,22 @@
 				minimumVersion = 13.5.0;
 			};
 		};
+		0A1000F22C00000000000005 /* XCRemoteSwiftPackageReference "AppLovin-MAX-Swift-Package" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/AppLovin/AppLovin-MAX-Swift-Package.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 13.6.4;
+			};
+		};
+		0A1000F52C00000000000005 /* XCRemoteSwiftPackageReference "AppLovin-MAX-Swift-Package-Google" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/AppLovin/AppLovin-MAX-Swift-Package-Google.git";
+			requirement = {
+				kind = exactVersion;
+				version = 13090000.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -853,6 +881,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 0A1000C22C00000000000004 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */;
 			productName = GoogleMobileAds;
+		};
+		0A1000F32C00000000000005 /* AppLovinSDK */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0A1000F22C00000000000005 /* XCRemoteSwiftPackageReference "AppLovin-MAX-Swift-Package" */;
+			productName = AppLovinSDK;
+		};
+		0A1000F62C00000000000005 /* AppLovinMediationGoogleAdapter */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0A1000F52C00000000000005 /* XCRemoteSwiftPackageReference "AppLovin-MAX-Swift-Package-Google" */;
+			productName = AppLovinMediationGoogleAdapter;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
