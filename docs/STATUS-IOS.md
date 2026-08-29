@@ -17,10 +17,56 @@ Last updated: 2026-08-13.
 
 | | Version | State |
 | --- | --- | --- |
-| **Live on the App Store** | `1.6.5` | **Released 2026-08-04.** Confirmed against the public listing, not against this file — see the warning below |
+| **Live on the App Store** | `1.6.6` | **Released 2026-08-18.** Confirmed 2026-08-29 against the public listing with the `itunes.apple.com/lookup` command below — this file had still been claiming 正在等待審查, the same staleness it warns about |
+| Superseded | `1.6.5` | Released 2026-08-04 |
 | Superseded | `1.6.3 (18)` | Released 2026-07-28 |
 | Rejected, then resolved | `1.6.4 (19)` | Rejected 2026-08-01 on 5.1.2(i) and 2.1(a); both answered, and the fixes reached users in 1.6.5 |
-| **Uploaded, not submitted** | `1.6.6 (24)` | In App Store Connect since 2026-08-13. Still needs a `1.6.6` version record, the notes, the build attached, and a submission |
+| **In development** | `1.6.7 (26)` | The ad-provider migration, below. Version bumped in `Info.plist` and the project file; nothing archived or uploaded yet |
+
+**Ships with 1.6.6 (edited in ASC 2026-08-13):** both app names change — 繁體中文
+`RainyClock` → `Rainy Clock`, English `Rainy Clock: Rain Alarm` → `Rainy-Clock`. Plain
+"Rainy Clock" is still name-squatted in the English locale (409 on rename), but the
+hyphenated variant was accepted (details in `docs/appstore-metadata.md`).
+
+## 1.6.7 — off Google ads, onto Unity LevelPlay
+
+**The AdMob account was terminated and the appeal was denied (2026-08-29).** Every Google
+advertising component is gone on purpose — `GoogleMobileAds`, the UMP consent flow,
+`GADApplicationIdentifier` — and must not come back: Google demand needs a live AdMob
+account under any mediator, and UMP's forms are configured in that same dead console. A
+same-day AppLovin MAX detour was re-pointed to LevelPlay once the ad unit turned out to live
+in the Unity dashboard; the MAX code survives in git history if it is ever needed.
+
+What ships:
+
+- **Unity LevelPlay 9.6.0** (ironSource SDK via SPM, product `UnityMediationSDK`), one
+  anchored adaptive banner, ad unit `kay9cneaxvesx4p4`, app key `27d81ff8d` in `Info.plist`.
+- **The app's own GDPR consent sheet** (`AdConsentSheet`) feeding
+  `LPMPrivacySettings.setGDPRConsent`. The device region decides who is a GDPR user, and an
+  unanswered GDPR user keeps the SDK from initialising at all — stricter than the UMP flow,
+  which only gated the ad request.
+- Order restored to **consent → ATT → SDK start**, as the AdMob build had it.
+
+Two traps worth remembering:
+
+- **`OTHER_LDFLAGS = -ObjC` is mandatory.** IronSource is a static framework; without it the
+  app dies at launch inside the SDK's own init on a missing `ISAES256EncryptWithKey:`
+  selector. It only reproduces once a real app key is set, because a placeholder key skips
+  init entirely.
+- The **iOS ad unit and app key are iOS-only**. LevelPlay keys and units are per app, so
+  Android needs its own of both.
+
+Verified on the simulator on 2026-08-29: real creatives serve, a fresh one per launch.
+
+Still owed before submitting:
+
+- [ ] `app-ads.txt` on `shukaihu.github.io` needs `ironsrc.com, <publisher id>, DIRECT` plus
+      `ownerdomain=shukaihu.github.io`. The file is prepared in that repo with the publisher
+      id left as a placeholder — it comes from ironSource → Account → API tab. **This is not
+      optional housekeeping:** the live file still authorises only the dead AdMob account, so
+      DSPs checking it will see LevelPlay as unauthorised and can withhold bids.
+- [ ] Archive `1.6.7 (26)`, upload, attach, submit. Notes and the App Review text are in
+      `docs/appstore-metadata.md`.
 
 > **This file said "1.6.5 waiting to upload" for nine days after 1.6.5 had already shipped.**
 > Nobody updated it after the upload, and an agent reading it repeated the claim back as

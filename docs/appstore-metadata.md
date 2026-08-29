@@ -1,12 +1,14 @@
 # Rainy Clock App Store Metadata
 
 > **English (U.S.) was added with the `1.6.4 (19)` submission** and goes live when that version is released. Two gotchas discovered while adding it on 2026-07-29: (1) the English app names "Rainy Clock" and "RainyClock" are **taken by other accounts**, so the English listing name is `Rainy Clock: Rain Alarm`; (2) App Store Connect's version page has a UI bug — when adding a localization fails (e.g. because of the name conflict), the 儲存 button just shows a red error icon with no message and retries a doomed create forever. The real error is only visible on the `POST /iris/v1/appStoreVersionLocalizations` response (409). The workaround that worked: create the `appInfoLocalizations` record (name + subtitle) via the iris API from the logged-in browser session, then PATCH the auto-created `appStoreVersionLocalizations` with the copy below.
+>
+> **Re-checked 2026-08-13:** English "Rainy Clock" is still taken — `PATCH /iris/v1/appInfoLocalizations` returns 409. The App 資訊 page now shows a proper inline error for this (the silent-red-icon bug seems specific to the version page), including a name-release request link (`apple.com/legal/internet-services/itunes/appnamenotices/`) — trademark holders only, so not an option for us. No live app anywhere uses the name; it is squatted by an unreleased app. The **繁體中文 name had actually been live as `RainyClock` (no space)**, not `Rainy Clock` as this table used to claim; renamed to `Rainy Clock` in ASC on 2026-08-13, publishing with the next release. Same day, the English name was changed to **`Rainy-Clock`** (hyphen) — that variant was accepted, so the squat covers only the exact strings "Rainy Clock"/"RainyClock". The `: Rain Alarm` suffix is gone; "rain alarm" stays in the keyword field either way.
 
 ## App Information
 
 | Field | English | 繁體中文 |
 | --- | --- | --- |
-| App Name | Rainy Clock: Rain Alarm | Rainy Clock |
+| App Name | Rainy-Clock（1.6.5 以前是 Rainy Clock: Rain Alarm）| Rainy Clock（1.6.5 以前是 RainyClock，無空格）|
 | Subtitle | Rain-aware commute alarm | 雨天鬧鐘 |
 | Category | Weather | 天氣 |
 | Secondary Category | Utilities | 工具程式 |
@@ -16,7 +18,7 @@
 | Privacy Policy URL | `https://shukaihu.github.io/RainyClock/privacy-policy.html` | `https://shukaihu.github.io/RainyClock/privacy-policy.html` |
 | Marketing URL | `https://shukaihu.github.io/RainyClock/` | `https://shukaihu.github.io/RainyClock/` |
 
-The marketing URL is what AdMob reads to locate `app-ads.txt`; it must stay on the `shukaihu.github.io` domain. See the app-ads.txt section of `docs/app-store-submission-checklist.md`.
+The marketing URL is what the ad network reads to locate `app-ads.txt` — AdMob used to, Unity LevelPlay does now; it must stay on the `shukaihu.github.io` domain. See the app-ads.txt section of `docs/app-store-submission-checklist.md`.
 
 ## Promotional Text
 
@@ -79,6 +81,31 @@ rain alarm,weather alarm,commute alarm,smart alarm,rain,weather,alarm clock,comm
 ### 繁體中文
 
 雨天鬧鐘,天氣鬧鐘,通勤鬧鐘,智慧鬧鐘,降雨,天氣,鬧鐘,通勤
+
+## Version 1.6.7 “What’s New”
+
+The ad provider changed and nothing else did, so these notes say that plainly rather than
+inventing user-facing changes — the same rule `1.6.2` followed. **Confirm the version and
+build numbers before pasting:** they assume `1.6.6 (25)` cleared review, which was still
+`正在等待審查` when it was last checked on 2026-08-13.
+
+### English
+
+```
+A behind-the-scenes change to advertising:
+
+• Rainy Clock now works with a different advertising provider. Nothing about the app itself changes — alarms, commute routes, and weather work exactly as before.
+• In the European Economic Area, the UK, and Switzerland, the ad consent question is now asked by Rainy Clock itself, so it appears once more after this update. It can still be changed at any time from "Ad privacy options" in Settings.
+```
+
+### 繁體中文
+
+```
+廣告投放方式的幕後更新：
+
+• 雨天鬧鐘改用另一家廣告服務商。App 本身完全不變——鬧鐘、通勤路線與天氣功能維持原樣。
+• 歐洲經濟區、英國與瑞士的廣告同意選項改由雨天鬧鐘自行詢問，因此更新後會再出現一次。之後仍可隨時在設定的「廣告隱私設定」中重新調整。
+```
 
 ## Version 1.6.6 (24) “What’s New”
 
@@ -229,11 +256,46 @@ Everywhere else the experience is unchanged — alarms, commute routes, and weat
 ## App Review Notes
 
 **Never paste from the historical blocks below.** The only current note is the
-version-specific one for `1.6.5`. The two older blocks are kept as a record of what was
-told to App Review at the time, and both are now false: they say alarm scheduling uses
-local notifications only (untrue since `1.6.3` adopted AlarmKit — and it undercuts the
+version-specific one for `1.6.7`. The older blocks are kept as a record of what was told to
+App Review at the time, and several are now false: the pre-`1.6.2` ones say alarm scheduling
+uses local notifications only (untrue since `1.6.3` adopted AlarmKit — and it undercuts the
 2.1(a) reply, which rests on AlarmKit requiring the widget extension) and that the app does
-not track (untrue since `1.6.5` added ATT).
+not track (untrue since `1.6.5` added ATT), while everything up to `1.6.6` describes Google
+AdMob and `npa=1`, which `1.6.7` replaced with Unity LevelPlay.
+
+### Version-specific note prepared for 1.6.7 — CURRENT
+
+The only note to paste. Update the build number if it moves.
+
+```
+This build changes how ads are served. They were previously served by Google AdMob; they are
+now served by Unity LevelPlay (the ironSource mediation SDK). No user-facing feature changed,
+and nothing outside the advertising code was touched.
+
+App Tracking Transparency is unchanged. On first launch the ATT permission request appears on
+the Route tab, which is the app's first screen, in every region. There is no login and nothing
+to configure. If the prompt does not appear, please check that "Allow Apps to Request to Track"
+is enabled in Settings > Privacy & Security > Tracking. Until tracking is allowed, the
+advertising identifier is not used and ads are requested as non-personalized.
+
+In the European Economic Area, the UK, and Switzerland, an ad-consent dialog is shown before
+the advertising SDK starts. It is now the app's own dialog: Google's User Messaging Platform
+was removed together with the Google advertising SDK. Users can revisit that choice at any
+time from "Ad privacy options" on the Alarm tab.
+
+The privacy policy at https://shukaihu.github.io/RainyClock/privacy-policy.html has been
+updated to name Unity LevelPlay as the advertising provider.
+
+Background modes: the app declares Background App Refresh and Background Processing. It uses
+them for one purpose — re-checking the weather forecast shortly before a scheduled alarm, so
+that each morning's alarm is moved earlier only if rain is actually forecast for that morning.
+The app has no server and sends nothing anywhere; the background task calls Apple Weather /
+WeatherKit and re-registers the local alarm.
+```
+
+If 2.1(a) (Home Screen widgets) is raised again, append the iPhone-only/AlarmKit paragraph
+from the `1.6.5` block below verbatim; it is left out here because that rejection was
+answered and cleared, and re-arguing a settled point invites a fresh look at it.
 
 ### Historical — the generic note used up to 1.6.2
 
@@ -258,9 +320,10 @@ link remain in the Route tab weather section, as reviewed in 1.6.1 (16).
 
 The "Sign-in required" checkbox in App Review Information was also found checked with a demo account, even though the app has no login. It should be cleared.
 
-### Version-specific note prepared for 1.6.5 — CURRENT
+### Historical — version-specific note prepared for 1.6.5
 
-The only note to paste. Replaces everything above. Update the build number if it moves again:
+Superseded by the `1.6.7` note above; kept for the 2.1(a) paragraph, which is still the best
+statement of that argument.
 
 ```
 This build adds App Tracking Transparency.
@@ -288,7 +351,7 @@ iPhone compatibility mode, where iOS does not offer third-party widgets at all. 
 that this be reviewed on an iPhone running iOS 26.
 ```
 
-### Follow-up reply sent for build 23 — CURRENT
+### Historical — follow-up reply sent for build 23
 
 The reply below named build 20, which ITMS-91064 invalidated before review saw it. This
 follow-up is what points App Review at the build that actually exists, and covers the two
@@ -354,9 +417,9 @@ Final answers should be verified in App Store Connect before submission.
 | Location data | Used for app functionality when resolving route/weather locations |
 | Contact info | Not collected by the app |
 | Backend server | None |
-| Third-party SDKs | Google Mobile Ads SDK, Google User Messaging Platform |
-| Advertising | Google AdMob banner ads |
-| Tracking | Yes, from `1.6.5 (20)`: ATT is implemented, so Device ID and advertising/usage data must be checked as "Used to Track You" |
+| Third-party SDKs | Unity LevelPlay (ironSource) SDK. **Changed in `1.6.7`** — the Google Mobile Ads SDK and Google User Messaging Platform were removed |
+| Advertising | Unity LevelPlay banner ads (one banner, no Google demand behind it — the AdMob account is terminated) |
+| Tracking | Yes, from `1.6.5 (20)`: ATT is implemented, so Device ID and advertising/usage data must be checked as "Used to Track You". From `1.6.7` the third party receiving that data is Unity, not Google — update the partner named in the declaration |
 
 ## Screenshots Still Needed
 
