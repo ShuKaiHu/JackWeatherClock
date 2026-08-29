@@ -67,6 +67,12 @@ Supporting docs:
   `shukaihu.github.io/` and serves `app-ads.txt`. This repo's `docs/` folder is published at
   `shukaihu.github.io/RainyClock/` and carries the support and privacy-policy pages linked
   from the live App Store listing — so **this repo must stay public**.
+- **`OTHER_LDFLAGS = -ObjC` is load-bearing.** IronSource ships as a *static* framework whose
+  Objective-C categories are not loaded without it, and the app then dies at launch with
+  `-[NSConcreteMutableData ISAES256EncryptWithKey:]: unrecognized selector` — inside the SDK's
+  own init, so nothing in this repo appears in the crash. It only reproduces once a real
+  `LevelPlayAppKey` is set (a placeholder key skips init entirely), which is exactly when it
+  is least expected. Do not remove the flag.
 - **The banner is Unity LevelPlay, with no Google demand behind it.** The AdMob account is
   terminated (appeal denied, 2026-08), so the Google adapter, the Google Mobile Ads SDK,
   `GADApplicationIdentifier` and the UMP consent flow were all removed on purpose — do not

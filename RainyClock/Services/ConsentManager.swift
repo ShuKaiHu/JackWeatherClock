@@ -81,7 +81,6 @@ final class ConsentManager: ObservableObject {
             return
         }
 
-        startAdSdk()
         Task {
             await finishConsentFlow()
         }
@@ -105,13 +104,8 @@ final class ConsentManager: ObservableObject {
     }
 
     /// Runs when the consent sheet closes, answered or dismissed. An answer
-    /// releases the SDK start; a dismissal leaves this launch ad-free. Either
-    /// way ATT follows, preserving the consent-then-tracking order.
+    /// releases the SDK start; a dismissal leaves this launch ad-free.
     func consentSheetDidClose() {
-        if storedConsent != nil {
-            startAdSdk()
-        }
-
         Task {
             await finishConsentFlow()
         }
@@ -185,9 +179,20 @@ final class ConsentManager: ObservableObject {
         presentTestSuiteIfRequested()
     }
 
+    /// Consent, then ATT, then the SDK — the order the AdMob build used and
+    /// the one Apple's guidance implies. Starting the SDK first is not fatal,
+    /// but the session's opening requests then go out without the advertising
+    /// identifier even when the user would have allowed tracking.
     private func finishConsentFlow() async {
         hasFinishedConsentFlow = true
         await requestTrackingAuthorizationIfNeeded()
+
+        // A GDPR user who closed the sheet without answering stays ad-free for
+        // this launch and is asked again next time.
+        if !isGDPRUser || storedConsent != nil {
+            startAdSdk()
+        }
+
         updateCanRequestAds()
     }
 
