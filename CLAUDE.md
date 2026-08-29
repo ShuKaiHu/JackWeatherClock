@@ -67,6 +67,18 @@ Supporting docs:
   `shukaihu.github.io/` and serves `app-ads.txt`. This repo's `docs/` folder is published at
   `shukaihu.github.io/RainyClock/` and carries the support and privacy-policy pages linked
   from the live App Store listing — so **this repo must stay public**.
+- **Never point a real app key at a simulator or emulator.** Impressions from a build running
+  a production key are real impressions on the account, and ironSource's terms put
+  "non-human traffic" and manipulation under Forbidden Activity — which it judges at its
+  sole discretion, and which lets it withhold *and claw back* payments. This is the same rule
+  the AdMob build had, and the reason that account is gone. Register the device under
+  **Setup → Test devices** in the LevelPlay dashboard, or verify with a blank key (the SDK
+  then skips init and logs why).
+- **The consent sheet's wording is not free copy.** ironSource's Data Protection Addendum
+  requires it to name ironSource — and, for the personalised tier, its advertising partners —
+  as controllers, and to reach ironSource's privacy policy from inside the app. It also
+  requires that an unanswered or withdrawn consent leaves the SDK *uninitialised*, which is
+  why `ConsentManager` gates SDK startup rather than just the ad request.
 - **`OTHER_LDFLAGS = -ObjC` is load-bearing.** IronSource ships as a *static* framework whose
   Objective-C categories are not loaded without it, and the app then dies at launch with
   `-[NSConcreteMutableData ISAES256EncryptWithKey:]: unrecognized selector` — inside the SDK's

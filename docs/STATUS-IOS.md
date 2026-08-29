@@ -56,7 +56,19 @@ Two traps worth remembering:
 - The **iOS ad unit and app key are iOS-only**. LevelPlay keys and units are per app, so
   Android needs its own of both.
 
-Verified on the simulator on 2026-08-29: real creatives serve, a fresh one per launch.
+Verified on the simulator on 2026-08-29: real creatives serve, a fresh one per launch. Those
+were real impressions on a real key — see the test-device rule in `CLAUDE.md`; do it through
+**Setup → Test devices** next time.
+
+**Consent wording reworked 2026-08-30** after reading the platform terms. The Data Protection
+Addendum requires the consent to name ironSource, and its advertising partners for the
+personalised tier, as controllers, and to carry a link to ironSource's privacy policy. The
+sheet now does all three, with both policy links pinned above the buttons rather than inside
+the scrolling prose — a link nobody scrolls to is not "included". The addendum's URLs for
+ironSource's privacy policy and its advertising-partner list are both dead (they redirect to
+Unity's generic legal and docs indexes); the app links Unity's live Game Player and App User
+Privacy Policy instead. **Ask ironSource support for the canonical URLs** and swap them in —
+it is one constant per platform.
 
 Still owed before submitting:
 

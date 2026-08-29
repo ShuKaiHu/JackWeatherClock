@@ -124,7 +124,8 @@
 "ad_privacy_options" = "廣告隱私設定";
 "ad_privacy_options_manage" = "管理";
 "ad_consent_title" = "雨天鬧鐘的廣告";
-"ad_consent_body" = "在你所在的地區，顯示廣告前需要先取得你的選擇。你可以允許個人化廣告，或維持非個人化廣告——兩種選擇下 App 功能完全相同，之後也隨時可以在鬧鐘設定裡更改。";
+"ad_consent_body" = "在你所在的地區，顯示廣告前需要先取得你的選擇。\n\n廣告由 Unity LevelPlay（ironSource）提供；對於用來顯示與衡量廣告的裝置與互動資料，Unity 是資料控管者。若你允許個人化廣告，Unity 還會把這些資料分享給它的廣告夥伴（同樣是資料控管者），讓廣告更貼近你的興趣。\n\n兩種選擇下 App 功能完全相同，之後也隨時可以在鬧鐘設定裡更改。";
+"ad_consent_provider_privacy_link" = "Unity／ironSource 隱私權政策";
 "ad_consent_accept" = "允許個人化廣告";
 "ad_consent_decline" = "維持非個人化廣告";
 "ad_consent_privacy_link" = "隱私權政策";

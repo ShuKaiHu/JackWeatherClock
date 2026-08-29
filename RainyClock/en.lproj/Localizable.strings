@@ -124,7 +124,8 @@
 "ad_privacy_options" = "Ad privacy options";
 "ad_privacy_options_manage" = "Manage";
 "ad_consent_title" = "Ads in Rainy Clock";
-"ad_consent_body" = "Before showing ads in your region, Rainy Clock needs your choice. Allow personalized ads, or keep them non-personalized — the app works exactly the same either way, and you can change this anytime from the alarm settings.";
+"ad_consent_body" = "Before showing ads in your region, Rainy Clock needs your choice.\n\nAds are delivered by Unity LevelPlay (ironSource), which acts as a data controller for the device and ad-interaction data used to serve and measure them. Allowing personalized ads also lets Unity share that data with its advertising partners, who act as controllers too, so ads can be matched to your interests.\n\nThe app works exactly the same either way, and you can change this anytime from the alarm settings.";
+"ad_consent_provider_privacy_link" = "Unity / ironSource Privacy Policy";
 "ad_consent_accept" = "Allow personalized ads";
 "ad_consent_decline" = "Keep non-personalized ads";
 "ad_consent_privacy_link" = "Privacy Policy";
