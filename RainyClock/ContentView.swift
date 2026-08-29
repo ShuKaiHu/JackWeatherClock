@@ -34,11 +34,17 @@ struct ContentView: View {
         .preferredColorScheme(.dark)
         // A GDPR user answers once before the first ad request; the same sheet
         // reopens from the Alarm tab's privacy row to change the answer later.
-        .sheet(
-            isPresented: $consentManager.isConsentSheetPresented,
-            onDismiss: { consentManager.consentSheetDidClose() }
-        ) {
+        .sheet(isPresented: $consentManager.isConsentSheetPresented) {
             AdConsentSheet()
+        }
+        // Deliberately not `onDismiss`: the continuation (SDK start, then ATT)
+        // hangs off our own state flipping false — produced only by an answer
+        // or a real swipe-down — instead of UIKit's presentation callbacks,
+        // whose timing around launch is not worth trusting.
+        .onChange(of: consentManager.isConsentSheetPresented) { wasPresented, isPresented in
+            if wasPresented, !isPresented {
+                consentManager.consentSheetDidClose()
+            }
         }
         .task {
             consentManager.requestConsentThenStartAds()
@@ -87,13 +93,13 @@ struct ContentView: View {
             .padding(.top, 12)
             .padding(.bottom, 22)
 
-            // Kept out of the hierarchy until UMP allows requests and MAX has
-            // finished initialising, so no ad request can precede either.
+            // Kept out of the hierarchy until consent is settled and LevelPlay
+            // has finished initialising, so no ad request can precede either.
             if !AppEnvironment.isRunningTests, consentManager.canRequestAds {
-                MaxBannerView(adUnitID: AppEnvironment.maxBannerAdUnitID)
-                    // The banner configures its `MAAdView` once, so a revised consent
-                    // choice or a late ATT grant only reaches the ad request stream
-                    // by rebuilding it under a new identity.
+                LevelPlayBannerView(adUnitID: AppEnvironment.levelPlayBannerAdUnitID)
+                    // The banner configures its `LPMBannerAdView` once, so a revised
+                    // consent choice or a late ATT grant only reaches the ad request
+                    // stream by rebuilding it under a new identity.
                     .id(consentManager.adConfigurationRevision)
                     .frame(maxWidth: .infinity)
                     .background(Color.appBackground)

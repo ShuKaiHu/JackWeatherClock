@@ -1,21 +1,23 @@
-import AppLovinSDK
 import AppTrackingTransparency
+import IronSource
 import UIKit
 
 /// Drives the app's ad consent and, behind it, Apple's App Tracking
 /// Transparency prompt.
 ///
 /// GDPR consent is collected by the app's own sheet (`AdConsentSheet`) and
-/// handed to AppLovin through `ALPrivacySettings.setHasUserConsent`. Google's
-/// UMP used to own this job, but its forms are configured in the AdMob console
-/// and that account is terminated, so the whole Google layer is gone — and
-/// AppLovin's built-in consent flow is no substitute, because its GDPR leg is
-/// Google UMP again.
+/// handed to Unity LevelPlay through `LPMPrivacySettings.setGDPRConsent`.
+/// Google's UMP used to own this job, but its forms live in the terminated
+/// AdMob account's console, and LevelPlay bundles no consent UI of its own —
+/// so the sheet is ours.
 ///
-/// MAX initialises on first activation; AppLovin resolves the user's geography
-/// during that handshake. GDPR users then keep ads gated until they answer the
-/// sheet — either answer allows ads, the answer only decides personalisation.
-/// Everyone else reaches `canRequestAds` as soon as the SDK is ready.
+/// LevelPlay reports nothing about the user's location, so the device region
+/// decides who is a GDPR user — and that is known before any SDK call, which
+/// buys a stricter ordering than the MAX setup this replaced: a GDPR user who
+/// has never answered sees the sheet first, and the SDK does not initialise
+/// (no traffic at all) until an answer exists. Either answer allows ads; the
+/// answer only decides personalisation. Everyone else initialises immediately
+/// and reaches `canRequestAds` when the SDK is ready.
 ///
 /// ATT comes after the consent decision, preserving the UMP-era ordering, and
 /// applies everywhere rather than only in regulated regions.
@@ -23,10 +25,10 @@ import UIKit
 final class ConsentManager: ObservableObject {
     static let shared = ConsentManager()
 
-    /// Whether ads may be requested for this user: MAX finished initialising,
-    /// and a GDPR user has an answer on file. The banner stays out of the view
-    /// hierarchy until this turns true, so no ad request can precede consent or
-    /// race SDK startup.
+    /// Whether ads may be requested for this user: LevelPlay finished
+    /// initialising, and a GDPR user has an answer on file. The banner stays
+    /// out of the view hierarchy until this turns true, so no ad request can
+    /// precede consent or race SDK startup.
     @Published private(set) var canRequestAds = false
 
     /// Whether the user must be offered a way back into the consent sheet.
@@ -46,10 +48,11 @@ final class ConsentManager: ObservableObject {
     @Published var isConsentSheetPresented = false
 
     /// User-defaults key for the stored GDPR answer; missing means "never
-    /// answered", which keeps ads off for GDPR users until the sheet is dealt
-    /// with.
+    /// answered", which keeps ads (and the SDK itself) off for GDPR users
+    /// until the sheet is dealt with.
     private static let consentDefaultsKey = "gdprPersonalizedAdsConsent"
 
+    private var hasStartedConsentFlow = false
     private var hasStartedAdSdk = false
     private var isAdSdkReady = false
     private var isGDPRUser = false
@@ -57,29 +60,31 @@ final class ConsentManager: ObservableObject {
 
     private init() {}
 
-    /// Starts the ad SDK, and with it the consent flow. Safe to call on every
-    /// activation — the SDK starts at most once per launch, and AppLovin retries
-    /// a failed handshake internally, so no retry latch is needed here.
+    /// Runs the consent flow and starts the ad SDK behind it. Safe to call on
+    /// every activation — the work happens at most once per launch, and a
+    /// failed SDK handshake unlatches it so the next foreground can retry.
     func requestConsentThenStartAds() {
-        guard !AppEnvironment.isRunningTests, !hasStartedAdSdk else {
+        guard !AppEnvironment.isRunningTests, !hasStartedConsentFlow else {
             return
         }
-        hasStartedAdSdk = true
-        startMaxSdk()
+        hasStartedConsentFlow = true
 
-        #if DEBUG
-        // Launch with `-forceGDPRConsentGeography` to rehearse the regulated-
-        // region flow from anywhere — the successor of UMP's old
-        // `-forceEEAConsentGeography`. It skips the init handshake on purpose,
-        // so the sheet can be exercised even while the SDK key is a placeholder.
-        if ProcessInfo.processInfo.arguments.contains("-forceGDPRConsentGeography") {
-            isGDPRUser = true
-            showsPrivacyOptions = true
-            if storedConsent == nil {
-                isConsentSheetPresented = true
-            }
+        isGDPRUser = Self.isGDPRRegion()
+        showsPrivacyOptions = isGDPRUser
+
+        if isGDPRUser, storedConsent == nil {
+            // The SDK is deliberately not started yet: the answer must reach
+            // `LPMPrivacySettings` *before* init, and an unanswered GDPR user
+            // stays entirely traffic-free. The flow continues from
+            // `consentSheetDidClose()`.
+            isConsentSheetPresented = true
+            return
         }
-        #endif
+
+        startAdSdk()
+        Task {
+            await finishConsentFlow()
+        }
     }
 
     /// Reopens the consent sheet so the user can change their choice — the
@@ -89,19 +94,24 @@ final class ConsentManager: ObservableObject {
     }
 
     /// Records the sheet's answer. Both answers allow ads; the value only
-    /// decides whether AppLovin may personalise them.
+    /// decides whether LevelPlay may personalise them.
     func recordConsent(personalized: Bool) {
         UserDefaults.standard.set(personalized, forKey: Self.consentDefaultsKey)
-        ALPrivacySettings.setHasUserConsent(personalized)
-        // The banner configures its `MAAdView` once, so a revised answer only
-        // reaches the request stream by rebuilding it under a new identity.
+        LPMPrivacySettings.setGDPRConsent(personalized)
+        // The banner configures its `LPMBannerAdView` once, so a revised answer
+        // only reaches the request stream by rebuilding it under a new identity.
         adConfigurationRevision &+= 1
         isConsentSheetPresented = false
     }
 
-    /// Runs when the consent sheet closes, answered or dismissed. The first
-    /// close finishes this launch's consent flow: ATT next, then the ad gate.
+    /// Runs when the consent sheet closes, answered or dismissed. An answer
+    /// releases the SDK start; a dismissal leaves this launch ad-free. Either
+    /// way ATT follows, preserving the consent-then-tracking order.
     func consentSheetDidClose() {
+        if storedConsent != nil {
+            startAdSdk()
+        }
+
         Task {
             await finishConsentFlow()
         }
@@ -117,55 +127,62 @@ final class ConsentManager: ObservableObject {
         await requestTrackingAuthorizationIfNeeded()
     }
 
-    /// Starts AppLovin MAX. There is no Google demand behind it: the AdMob
-    /// account is terminated (appeal denied), so the Google adapter, the Google
-    /// SDK and `GADApplicationIdentifier` were removed on purpose — do not
-    /// bring them back. AppLovin's own exchange is the demand.
-    private func startMaxSdk() {
-        // A stored answer reaches AppLovin before `initialize`, so even the
-        // first request of the session carries the right consent bit.
+    /// Starts Unity LevelPlay. There is no Google demand behind it: the AdMob
+    /// account is terminated (appeal denied), so the Google SDK, its adapter
+    /// and `GADApplicationIdentifier` are gone on purpose — do not bring them
+    /// back. Unity's own demand fills through LevelPlay.
+    private func startAdSdk() {
+        guard !hasStartedAdSdk else {
+            return
+        }
+        hasStartedAdSdk = true
+
+        // A stored answer reaches LevelPlay before `init`, per its ordering
+        // guidance, so even the first request of the session carries it.
         if let storedConsent {
-            ALPrivacySettings.setHasUserConsent(storedConsent)
+            LPMPrivacySettings.setGDPRConsent(storedConsent)
         }
 
-        let sdkKey = Bundle.main.object(forInfoDictionaryKey: "AppLovinSdkKey") as? String ?? ""
-        guard !sdkKey.isEmpty, sdkKey != "YOUR-APPLOVIN-SDK-KEY" else {
+        let appKey = Bundle.main.object(forInfoDictionaryKey: "LevelPlayAppKey") as? String ?? ""
+        guard !appKey.isEmpty, appKey != "YOUR-LEVELPLAY-APP-KEY" else {
             // Skipping instead of crashing inside the SDK: with the placeholder
             // key the app just runs ad-free, and this line says why.
-            print("[RainyClock] AppLovinSdkKey is still the placeholder, so MAX never initialises and no ads load.")
+            print("[RainyClock] LevelPlayAppKey is still the placeholder, so LevelPlay never initialises and no ads load.")
             return
         }
 
-        let initConfig = ALSdkInitializationConfiguration(sdkKey: sdkKey) { builder in
-            builder.mediationProvider = ALMediationProviderMAX
+        #if DEBUG
+        // Launch with `-showLevelPlayTestSuite` to open LevelPlay's Test Suite
+        // once init lands. The flag must be set before init to take effect.
+        if ProcessInfo.processInfo.arguments.contains("-showLevelPlayTestSuite") {
+            LevelPlay.setMetaDataWithKey("is_test_suite", value: "enable")
         }
+        #endif
 
-        ALSdk.shared().initialize(with: initConfig) { [weak self] sdkConfig in
-            // Only the geography value crosses into the main-actor task; the
-            // config object itself is not Sendable.
-            let geography = sdkConfig.consentFlowUserGeography
+        let initRequest = LPMInitRequestBuilder(appKey: appKey).build()
+        LevelPlay.initWith(initRequest) { [weak self] _, error in
             Task { @MainActor in
-                self?.adSdkDidInitialize(userGeography: geography)
+                self?.adSdkDidInitialize(error: error)
             }
         }
     }
 
-    private func adSdkDidInitialize(userGeography: ALConsentFlowUserGeography) {
-        isAdSdkReady = true
-        isGDPRUser = Self.isGDPRGeography(userGeography)
-        showsPrivacyOptions = isGDPRUser
-        presentMediationDebuggerIfRequested()
-
-        if isGDPRUser, storedConsent == nil {
-            // The gate stays closed until the sheet is dealt with; the rest of
-            // the flow continues from `consentSheetDidClose()`.
-            isConsentSheetPresented = true
+    private func adSdkDidInitialize(error: Error?) {
+        if let error {
+            // Unlatch so the next foreground activation retries — LevelPlay
+            // recommends re-initialising after a failure, and a cold start with
+            // no network must not cost ads for the whole launch.
+            hasStartedAdSdk = false
+            hasStartedConsentFlow = false
+            #if DEBUG
+            print("[RainyClock] LevelPlay failed to initialise: \(error.localizedDescription)")
+            #endif
             return
         }
 
-        Task {
-            await finishConsentFlow()
-        }
+        isAdSdkReady = true
+        updateCanRequestAds()
+        presentTestSuiteIfRequested()
     }
 
     private func finishConsentFlow() async {
@@ -224,41 +241,45 @@ final class ConsentManager: ObservableObject {
         UserDefaults.standard.object(forKey: Self.consentDefaultsKey) as? Bool
     }
 
-    private func presentMediationDebuggerIfRequested() {
+    private func presentTestSuiteIfRequested() {
         #if DEBUG
-        // Launch with `-showMediationDebugger` to check the SDK wiring. It hangs
-        // off the init completion because the debugger needs a live SDK.
-        if ProcessInfo.processInfo.arguments.contains("-showMediationDebugger") {
-            ALSdk.shared().showMediationDebugger()
+        if ProcessInfo.processInfo.arguments.contains("-showLevelPlayTestSuite"),
+           let viewController = UIApplication.shared.rainyClockRootViewController {
+            LevelPlay.launchTestSuite(viewController)
         }
         #endif
     }
 
-    /// AppLovin resolves geography server-side during init. `.unknown` — an
-    /// offline first launch, a lookup hiccup — falls back to the device region,
-    /// erring toward asking: a false positive costs one extra sheet, a false
-    /// negative serves ads without a legal basis.
-    private static func isGDPRGeography(_ geography: ALConsentFlowUserGeography) -> Bool {
+    /// LevelPlay's init reports nothing about the user's location (unlike the
+    /// MAX handshake this replaced), so the device region decides. Erring
+    /// toward asking: a false positive costs one extra sheet, a false negative
+    /// serves ads without a legal basis.
+    private static func isGDPRRegion() -> Bool {
         #if DEBUG
+        // Launch with `-forceGDPRConsentGeography` to rehearse the regulated-
+        // region flow from anywhere, stored answer permitting.
         if ProcessInfo.processInfo.arguments.contains("-forceGDPRConsentGeography") {
             return true
         }
         #endif
 
-        switch geography {
-        case .GDPR:
-            return true
-        case .unknown:
-            return Self.gdprFallbackRegions.contains(Locale.current.region?.identifier ?? "")
-        default:
-            return false
-        }
+        return Self.gdprRegions.contains(Locale.current.region?.identifier ?? "")
     }
 
-    /// EEA members plus the UK — consulted only when AppLovin's lookup fails.
-    private static let gdprFallbackRegions: Set<String> = [
+    /// EEA members plus the UK.
+    private static let gdprRegions: Set<String> = [
         "AT", "BE", "BG", "HR", "CY", "CZ", "DE", "DK", "EE", "ES", "FI", "FR",
         "GB", "GR", "HU", "IE", "IS", "IT", "LI", "LT", "LU", "LV", "MT", "NL",
         "NO", "PL", "PT", "RO", "SE", "SI", "SK",
     ]
+}
+
+extension UIApplication {
+    var rainyClockRootViewController: UIViewController? {
+        connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap(\.windows)
+            .first { $0.isKeyWindow }?
+            .rootViewController
+    }
 }

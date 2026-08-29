@@ -2,7 +2,7 @@
 
 Rain-aware commute alarm. No backend. The iPhone app (repo root) is SwiftUI with Apple Maps
 for routes, Apple Weather / WeatherKit for forecasts, AlarmKit for alarms on iOS 26+, and one
-AppLovin MAX banner. The Android port lives in `android/` (Kotlin + Jetpack Compose) —
+Unity LevelPlay banner. The Android port lives in `android/` (Kotlin + Jetpack Compose) —
 platform substitutions and its own gotchas are in `docs/ANDROID.md`, and the Play Store
 runbook is `docs/play-store-submission-checklist.md`.
 
@@ -67,13 +67,14 @@ Supporting docs:
   `shukaihu.github.io/` and serves `app-ads.txt`. This repo's `docs/` folder is published at
   `shukaihu.github.io/RainyClock/` and carries the support and privacy-policy pages linked
   from the live App Store listing — so **this repo must stay public**.
-- **The banner is AppLovin MAX, with no Google demand behind it.** The AdMob account is
+- **The banner is Unity LevelPlay, with no Google demand behind it.** The AdMob account is
   terminated (appeal denied, 2026-08), so the Google adapter, the Google Mobile Ads SDK,
   `GADApplicationIdentifier` and the UMP consent flow were all removed on purpose — do not
-  reintroduce them. GDPR consent is the app's own `AdConsentSheet` feeding
-  `ALPrivacySettings.setHasUserConsent`. The MAX SDK key lives in `Info.plist` under
-  `AppLovinSdkKey`. MAX has no always-fill test unit id: register a test device or flip test
-  mode in the Mediation Debugger before exercising ads.
+  reintroduce them. (A same-day AppLovin MAX detour was re-pointed here: the ad unit lives
+  in the LevelPlay dashboard, not AppLovin's.) GDPR consent is the app's own
+  `AdConsentSheet` feeding `LPMPrivacySettings.setGDPRConsent`. The app key lives in
+  `Info.plist` under `LevelPlayAppKey`. There is no always-fill test unit id: use the Test
+  Suite (`-showLevelPlayTestSuite`) or a dashboard test device before exercising ads.
 - **Confirm which `.app` you are installing.** `DerivedData/Build/Products/` holds stale
   bundles; check `CFBundleShortVersionString` before installing to a simulator.
 

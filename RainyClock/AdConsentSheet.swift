@@ -1,10 +1,10 @@
 import SwiftUI
 
 /// The GDPR consent sheet. This is the app's own UI on purpose: Google UMP went
-/// away with the terminated AdMob account, and AppLovin's built-in flow would
-/// route straight back to UMP for its GDPR leg. Both buttons allow ads — the
-/// choice only decides personalisation — and the answer feeds
-/// `ConsentManager.recordConsent`, which forwards it to AppLovin.
+/// away with the terminated AdMob account, and Unity LevelPlay bundles no
+/// consent UI of its own. Both buttons allow ads — the choice only decides
+/// personalisation — and the answer feeds `ConsentManager.recordConsent`,
+/// which forwards it to LevelPlay.
 struct AdConsentSheet: View {
     @ObservedObject private var consentManager = ConsentManager.shared
 

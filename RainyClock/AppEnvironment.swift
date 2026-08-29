@@ -1,10 +1,11 @@
 import Foundation
 
 enum AppEnvironment {
-    /// The MAX banner unit. There is no separate always-fill test unit id:
-    /// development fill comes from MAX test mode — the Mediation Debugger
-    /// toggle, or a test device registered in the AppLovin dashboard.
-    static let maxBannerAdUnitID = "kay9cneaxvesx4p4"
+    /// The LevelPlay banner unit — created in the Unity LevelPlay dashboard,
+    /// and iOS-only: LevelPlay ad units are per-platform. There is no separate
+    /// always-fill test unit id; development fill comes from the Test Suite
+    /// (`-showLevelPlayTestSuite`) or a test device registered in the dashboard.
+    static let levelPlayBannerAdUnitID = "kay9cneaxvesx4p4"
 
     static var googlePlacesAPIKey: String {
         Bundle.main.object(forInfoDictionaryKey: "GooglePlacesAPIKey") as? String ?? ""
