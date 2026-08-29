@@ -60,11 +60,16 @@ Verified on the simulator on 2026-08-29: real creatives serve, a fresh one per l
 
 Still owed before submitting:
 
-- [ ] `app-ads.txt` on `shukaihu.github.io` needs `ironsrc.com, <publisher id>, DIRECT` plus
-      `ownerdomain=shukaihu.github.io`. The file is prepared in that repo with the publisher
-      id left as a placeholder — it comes from ironSource → Account → API tab. **This is not
-      optional housekeeping:** the live file still authorises only the dead AdMob account, so
-      DSPs checking it will see LevelPlay as unauthorised and can withhold bids.
+- [x] **`app-ads.txt` published 2026-08-29** and verified live at
+      `https://shukaihu.github.io/app-ads.txt`: `OWNERDOMAIN=shukaihu.github.io` plus
+      `ironsrc.com, 679093, DIRECT`. The publisher id came from ironSource → Account → API
+      tab; the terminated AdMob line is gone. This was not optional housekeeping — a file
+      that lists no current seller reads as "LevelPlay is unauthorised" to any DSP that
+      checks it. The optional certification-authority field is deliberately omitted: it is
+      optional, and real-world files carrying it disagree on the value. The id is also the
+      account's `seller_id` in `ironsrc.com/sellers.json`, which is how a future check can
+      confirm it without logging in — the account was not listed there yet on 2026-08-29,
+      since sellers.json only carries accounts that have started transacting.
 - [ ] Archive `1.6.7 (26)`, upload, attach, submit. Notes and the App Review text are in
       `docs/appstore-metadata.md`.
 
