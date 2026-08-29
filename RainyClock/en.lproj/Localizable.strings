@@ -121,4 +121,8 @@
 "error_address_not_found" = "Could not find this address: %@";
 "error_weather_unavailable" = "Weather data is currently unavailable. Please check your network connection and try again later.";
 "error_route_not_found" = "Could not find a route for this commute.";
+"ad_privacy_options" = "Ad privacy options";
+"ad_privacy_options_manage" = "Manage";
+"ad_privacy_options_failed_title" = "Could not open ad privacy options";
+"ad_privacy_options_failed_body" = "The options are still loading. Please try again in a moment.";
 "ok_button" = "OK";

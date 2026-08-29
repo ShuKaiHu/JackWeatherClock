@@ -122,7 +122,7 @@ Google Places fallback 可在未來加入，但只應在 Apple 地址解析失�
 The AdMob publisher account was disabled for invalid traffic on 2026-08-22 and the appeal
 was rejected on 2026-08-24 — final, with no replacement account permitted
 (`docs/admob-invalid-traffic-appeal.md`). Rather than immediately adopt another network,
-`1.7.0` ships with the ad code deleted. Reasoning and the alternatives in full:
+`1.6.6` ships with the ad code deleted. Reasoning and the alternatives in full:
 `docs/monetization-after-admob.md`.
 
 The deciding numbers: 168 ad requests, 0 impressions, **US$0.00** over the account's entire
