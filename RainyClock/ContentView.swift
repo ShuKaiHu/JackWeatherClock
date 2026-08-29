@@ -32,8 +32,14 @@ struct ContentView: View {
         }
         .background(Color.appBackground.ignoresSafeArea())
         .preferredColorScheme(.dark)
-        // Runs once the view hierarchy exists: the consent form needs a view
-        // controller to present from, which is not available during app `init()`.
+        // A GDPR user answers once before the first ad request; the same sheet
+        // reopens from the Alarm tab's privacy row to change the answer later.
+        .sheet(
+            isPresented: $consentManager.isConsentSheetPresented,
+            onDismiss: { consentManager.consentSheetDidClose() }
+        ) {
+            AdConsentSheet()
+        }
         .task {
             consentManager.requestConsentThenStartAds()
             // The armed alarm repeats weekly with the rain decision that was current
@@ -46,8 +52,8 @@ struct ContentView: View {
                 return
             }
 
-            // A launch that failed the consent update (no network, typically) left
-            // the latch open; this is the retry.
+            // Harmless after the first activation: the SDK starts only once,
+            // and AppLovin retries a failed handshake on its own.
             consentManager.requestConsentThenStartAds()
             Task {
                 await viewModel.refreshScheduledAlarmIfWeatherIsStale()
@@ -610,8 +616,8 @@ private struct AlarmTabView: View {
                             }
                         }
 
-                        // Only regulated regions require this entry point, so UMP
-                        // decides whether it appears at all.
+                        // Only GDPR regions require this entry point — the
+                        // geography answer from MAX init decides.
                         if consentManager.showsPrivacyOptions {
                             HStack {
                                 Text("ad_privacy_options")
@@ -621,16 +627,6 @@ private struct AlarmTabView: View {
                                 }
                                 .buttonStyle(.plain)
                                 .foregroundStyle(Color.accentColor)
-                            }
-                            // UMP loads the form lazily, so an early tap is a
-                            // documented no-op. Say so instead of looking broken.
-                            .alert(
-                                Text("ad_privacy_options_failed_title"),
-                                isPresented: $consentManager.privacyOptionsFailed
-                            ) {
-                                Button("ok_button", role: .cancel) {}
-                            } message: {
-                                Text("ad_privacy_options_failed_body")
                             }
                         }
                     }

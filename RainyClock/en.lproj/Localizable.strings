@@ -123,6 +123,9 @@
 "error_route_not_found" = "Could not find a route for this commute.";
 "ad_privacy_options" = "Ad privacy options";
 "ad_privacy_options_manage" = "Manage";
-"ad_privacy_options_failed_title" = "Could not open ad privacy options";
-"ad_privacy_options_failed_body" = "The options are still loading. Please try again in a moment.";
+"ad_consent_title" = "Ads in Rainy Clock";
+"ad_consent_body" = "Before showing ads in your region, Rainy Clock needs your choice. Allow personalized ads, or keep them non-personalized — the app works exactly the same either way, and you can change this anytime from the alarm settings.";
+"ad_consent_accept" = "Allow personalized ads";
+"ad_consent_decline" = "Keep non-personalized ads";
+"ad_consent_privacy_link" = "Privacy Policy";
 "ok_button" = "OK";

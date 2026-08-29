@@ -123,6 +123,9 @@
 "error_route_not_found" = "找不到這段通勤路線。";
 "ad_privacy_options" = "廣告隱私設定";
 "ad_privacy_options_manage" = "管理";
-"ad_privacy_options_failed_title" = "無法開啟廣告隱私設定";
-"ad_privacy_options_failed_body" = "設定選項仍在載入中，請稍候再試一次。";
+"ad_consent_title" = "雨天鬧鐘的廣告";
+"ad_consent_body" = "在你所在的地區，顯示廣告前需要先取得你的選擇。你可以允許個人化廣告，或維持非個人化廣告——兩種選擇下 App 功能完全相同，之後也隨時可以在鬧鐘設定裡更改。";
+"ad_consent_accept" = "允許個人化廣告";
+"ad_consent_decline" = "維持非個人化廣告";
+"ad_consent_privacy_link" = "隱私權政策";
 "ok_button" = "好";
