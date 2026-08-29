@@ -1,3 +1,6 @@
+#if DEBUG
+import AdSupport
+#endif
 import AppTrackingTransparency
 import IronSource
 import UIKit
@@ -68,6 +71,10 @@ final class ConsentManager: ObservableObject {
             return
         }
         hasStartedConsentFlow = true
+
+        #if DEBUG
+        Self.logAdvertisingIdentifier()
+        #endif
 
         isGDPRUser = Self.isGDPRRegion()
         showsPrivacyOptions = isGDPRUser
@@ -270,6 +277,22 @@ final class ConsentManager: ObservableObject {
 
         return Self.gdprRegions.contains(Locale.current.region?.identifier ?? "")
     }
+
+    #if DEBUG
+    /// Prints the advertising identifier so it can be pasted into LevelPlay's
+    /// Setup → Test devices, which is how a real device gets test ads instead
+    /// of billable ones. The value is all zeros until ATT is granted, so the
+    /// first launch of a fresh install prints zeros and the next one prints
+    /// the real id.
+    private static func logAdvertisingIdentifier() {
+        let identifier = ASIdentifierManager.shared().advertisingIdentifier.uuidString
+        if identifier == "00000000-0000-0000-0000-000000000000" {
+            print("[RainyClock] Advertising ID unavailable (all zeros). Allow tracking when the prompt appears, then relaunch to read it.")
+        } else {
+            print("[RainyClock] Advertising ID for LevelPlay → Setup → Test devices: \(identifier)")
+        }
+    }
+    #endif
 
     /// EEA members plus the UK.
     private static let gdprRegions: Set<String> = [

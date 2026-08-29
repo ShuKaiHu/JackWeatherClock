@@ -98,6 +98,11 @@ Still owed before submitting:
       change**: third-party SDK from Google Mobile Ads / UMP to Unity LevelPlay, and the party
       receiving tracking data from Google to Unity. Everything else about the declaration is
       unchanged.
+- [ ] **Register the iPhone as a LevelPlay test device.** Debug builds print the advertising
+      id at launch (`[RainyClock] Advertising ID for LevelPlay → Setup → Test devices: …`);
+      run from Xcode with the phone attached and read it from the console. It reads as all
+      zeros until ATT is granted, so allow tracking at the prompt and relaunch. Paste it into
+      **Setup → Test devices** with Platform = iOS.
 - [ ] **Verify on a real device before or right after upload.** Every check so far has been on
       the simulator. Register the iPhone under **Setup → Test devices** in the LevelPlay
       dashboard first, then confirm through TestFlight that the banner still fills — the
