@@ -123,7 +123,12 @@ default.
       Signing opted in at first upload. Its SHA-1 (and Play's) then go into the Maps key.
 - [ ] **(you) AdMob: register a new Android app** and one anchored adaptive banner unit; pass
       both as Gradle properties at build time. `app-ads.txt` needs no change — it is
-      per-account and already verified.
+      per-account and already verified. **Dead as of 2026-08-24: the publisher account was
+      disabled for invalid traffic and the appeal was rejected — final**
+      (`docs/admob-invalid-traffic-appeal.md`). Nothing can ever be registered under it, and
+      a replacement account must not be opened. The Android release ships **ad-free**, or on
+      a non-Google network — options and swap cost in `docs/monetization-after-admob.md`.
+      The Maps Platform key and its Cloud billing are unaffected; this is only about ads.
 
 **4. Content and code left to write**
 

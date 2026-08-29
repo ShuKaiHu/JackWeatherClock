@@ -16,7 +16,7 @@ two sessions no longer share a working tree either. `Jack_Waether_Clock_MM/` is 
 `claude/android-play-store-release-jykw59`. `git worktree list` confirms it. Both checkouts
 hold the whole repo — the separation is by branch, not by directory.
 
-## Where things stand — 2026-08-13
+## Where things stand — 2026-08-24
 
 | Platform | State |
 | --- | --- |
@@ -33,12 +33,20 @@ hold the whole repo — the separation is by branch, not by directory.
 
 ## True on both sides
 
+- **The AdMob publisher account is disabled** — Google disabled `pub-2920259088304022` for
+  invalid traffic on 2026-08-22, **and the appeal was rejected 2026-08-24 — final**. One
+  account served both platforms, so neither iOS nor a future Android release can monetize
+  through Google. Incident record: `docs/admob-invalid-traffic-appeal.md`; the options that
+  remain: `docs/monetization-after-admob.md`. **Never open a replacement account** — it is
+  an explicit term of the ban and would take the new account's owner down too. Unaffected:
+  Apple, WeatherKit, the Maps Platform key and its Cloud billing, and a future Play account.
 - **The published website is this repo.** `docs/` is served at `shukaihu.github.io/RainyClock/`
   and carries the support and privacy-policy pages linked from the live App Store listing —
   and the privacy-policy page is what a Play listing will have to point at too. **This repo
   must stay public**, and a fix to either page only counts once it is pushed. The domain root
   and `app-ads.txt` come from a *different* repo, `ShuKaiHu/ShuKaiHu.github.io`.
-- **`app-ads.txt` is per AdMob account, not per app.** It is already verified, so an Android
-  app registered under the same account needs no change to it.
+- **`app-ads.txt` is per publisher account, not per app.** Its Google lines died with the
+  account on 2026-08-22 and now authorize nothing. Leave the file in place — it is harmless
+  — and if a non-Google network is ever adopted, replace the lines with that network's own.
 - **The alarm tones are shared.** Android copies the iOS target's `.wav` files at build time
   rather than duplicating them; deleting one on the iOS side breaks the Android build.

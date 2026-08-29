@@ -11,7 +11,7 @@ sessions writing over each other. Anything true of both platforms goes in `docs/
 - Store copy, release notes, review notes → `docs/appstore-metadata.md`
 - Product reasoning and rejected alternatives (both platforms) → `docs/PRODUCT_DECISIONS.md`
 
-Last updated: 2026-08-13.
+Last updated: 2026-08-29.
 
 ## Where things stand
 
@@ -20,7 +20,7 @@ Last updated: 2026-08-13.
 | **Live on the App Store** | `1.6.5` | **Released 2026-08-04.** Confirmed against the public listing, not against this file — see the warning below |
 | Superseded | `1.6.3 (18)` | Released 2026-07-28 |
 | Rejected, then resolved | `1.6.4 (19)` | Rejected 2026-08-01 on 5.1.2(i) and 2.1(a); both answered, and the fixes reached users in 1.6.5 |
-| **Uploaded, not submitted** | `1.6.6 (24)` | In App Store Connect since 2026-08-13. Still needs a `1.6.6` version record, the notes, the build attached, and a submission |
+| **In progress** | `1.6.6` | Google ads removed. Done in the iOS worktree (`RainyClock-iOS`, `ios/main`), not in this branch — see Monetization below. The build `24` uploaded on 2026-08-13 predates the ad removal, so whatever ships as `1.6.6` needs a build number above `24` |
 
 > **This file said "1.6.5 waiting to upload" for nine days after 1.6.5 had already shipped.**
 > Nobody updated it after the upload, and an agent reading it repeated the claim back as
@@ -61,10 +61,57 @@ app ships no Home Screen widget at all: the widget extension holds only the Alar
 Activity, which is why it exists. And on an iPad the app runs in iPhone compatibility mode,
 where iOS offers no third-party widgets whatever the app contains.
 
-## Monetization: unblocked, waiting on traffic
+## Monetization: AdMob gone for good (2026-08-24)
 
-AdMob's app-ads.txt verification passed on 2026-07-27 and the app's approval status is 就緒
-(Ready). Nothing is left to configure. What the AdMob report showed the next day:
+Google disabled the publisher account (`pub-2920259088304022`) for invalid traffic on
+2026-08-22, and **the appeal was rejected 2026-08-24 — final**: no second appeal, no
+payment, and **no replacement account may ever be opened**. The app can no longer serve ads
+through any Google product.
+
+- Incident record, root cause (developer traffic on the production unit before the 07-28 and
+  08-03 test-unit guards) and why the appeal failed → `docs/admob-invalid-traffic-appeal.md`
+- What to do instead — ad-free, a StoreKit tip jar, or a non-Google network, with what an
+  SDK swap actually costs → `docs/monetization-after-admob.md`
+
+**The ad code is being removed, as `1.6.6`.** That work is happening in the iOS worktree
+(`RainyClock-iOS`, on `ios/main`), not here. An earlier attempt on the
+`claude/google-adsense-account-disabled-l5odtz` branch was reverted on 2026-08-29 to avoid
+two sessions changing the same files — that branch is **documentation only** now, and this
+log, `docs/monetization-after-admob.md`, `docs/PRODUCT_DECISIONS.md` and the privacy-policy
+edit are what it carries.
+
+What removal has to cover, so nothing is missed wherever it is done:
+
+- `AdMobBannerView.swift` and `Services/ConsentManager.swift`, and with them the banner, the
+  UMP consent flow, the ATT prompt and the ad-privacy settings row in `ContentView`
+- `AppEnvironment.adMobBannerAdUnitID`, `GADApplicationIdentifier`,
+  `NSUserTrackingUsageDescription`, and all 50 `SKAdNetworkItems`
+- the `swift-package-manager-google-mobile-ads` SPM package, its product dependency, and
+  `Package.resolved` (which also pinned UserMessagingPlatform transitively)
+- the four `ad_privacy_options*` strings and the ATT purpose string, both languages
+- `docs/privacy-policy.html` — **already done on this branch**, both languages: the
+  Advertising and Tracking sections are gone and the "what this app does not do" list now
+  denies ads and the advertising identifier outright. Check it has not been done twice.
+
+`PrivacyInfo.xcprivacy` needs no change — `NSPrivacyTracking` was already `false` after the
+ITMS-91064 revert, and that declaration simply becomes accurate.
+
+Two things code cannot do, both required before submission:
+
+1. **Change App Privacy in App Store Connect back to "no tracking".** Device ID, Advertising
+   Data, Product Interaction and Coarse Location were set to "yes" for tracking on
+   2026-08-02.
+2. **Time the privacy-policy publication with the release.** `docs/` goes live when it
+   reaches `main`, and the edited policy describes an app with no ads, while the store still
+   serves `1.6.5`, which does prompt for ATT.
+
+No emergency release is needed either way: a banner that gets no fill renders at height 0,
+so `1.6.5` users already see nothing.
+
+Everything below stands as the pre-disablement record, kept because the appeal cites it.
+
+app-ads.txt verification passed on 2026-07-27 and the app's approval status was 就緒
+(Ready). What the AdMob report showed the next day:
 
 | Metric | Value | Reading |
 | --- | --- | --- |
@@ -417,8 +464,10 @@ Ordered by value, not urgency. None of these block a release.
    credentials sit there for no reason.
 3. **Refresh `SKAdNetworkItems` occasionally.** 50 identifiers were declared in `1.6.2 (17)`;
    Google adds buyers to its list over time.
-4. **Confirm the AdMob payments and tax profile is complete.** Earnings are withheld past the
-   payout threshold otherwise. Worth settling before there is anything to withhold.
+4. **Confirm the AdMob payments and tax profile is complete.** Now about the *final*
+   payment: the account was disabled 2026-08-22 and whatever survives the 30-day hold
+   (likely nothing — revenue was US$0.00 at the last read report) only pays out to a
+   completed profile. See `docs/admob-invalid-traffic-appeal.md`.
 5. **Google Places fallback is dormant.** `GooglePlacesAPIKey` is empty in
    `RainyClock/Info.plist`, so address lookup relies entirely on Apple geocoding.
 6. **Google SDK frames symbolicate poorly.** Xcode upload warns about missing dSYMs for
