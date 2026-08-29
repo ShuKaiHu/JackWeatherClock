@@ -82,8 +82,26 @@ Still owed before submitting:
       account's `seller_id` in `ironsrc.com/sellers.json`, which is how a future check can
       confirm it without logging in — the account was not listed there yet on 2026-08-29,
       since sellers.json only carries accounts that have started transacting.
-- [ ] Archive `1.6.7 (26)`, upload, attach, submit. Notes and the App Review text are in
-      `docs/appstore-metadata.md`.
+- [x] **Archived 2026-08-30 as `build/RainyClock-1.6.7-26.xcarchive`** and verified: app and
+      `RainyClockAlarmWidget.appex` both report `1.6.7 (26)` (the lockstep that rejects
+      uploads when it slips), `LevelPlayAppKey` and the ATT usage string are present, no
+      `GAD*` keys survive, the only embedded framework is `IronSource.framework`, the privacy
+      manifest still carries the ITMS-91064-safe `NSPrivacyTracking = false` with an empty
+      domain list, and 152 SKAdNetwork ids are in place. The SDK really is in the shipped
+      binary — `LPMBannerAdView` and `LevelPlay` appear throughout it — and so is
+      `ISAES256EncryptWithKey:`, which is the proof that `-ObjC` did its job. The 51 KB
+      `IronSource.framework` in `Frameworks/` is a stub that carries the SDK's privacy
+      manifest; the code itself is statically linked, and `otool -L` shows no dynamic
+      dependency on it.
+- [ ] Upload, attach to a `1.6.7` version record, and submit. Notes and the App Review text
+      are in `docs/appstore-metadata.md`. **In App Store Connect the privacy declarations must
+      change**: third-party SDK from Google Mobile Ads / UMP to Unity LevelPlay, and the party
+      receiving tracking data from Google to Unity. Everything else about the declaration is
+      unchanged.
+- [ ] **Verify on a real device before or right after upload.** Every check so far has been on
+      the simulator. Register the iPhone under **Setup → Test devices** in the LevelPlay
+      dashboard first, then confirm through TestFlight that the banner still fills — the
+      device build links the SDK statically, a path the simulator never exercised.
 
 > **This file said "1.6.5 waiting to upload" for nine days after 1.6.5 had already shipped.**
 > Nobody updated it after the upload, and an agent reading it repeated the claim back as
