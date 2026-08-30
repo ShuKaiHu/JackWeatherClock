@@ -100,11 +100,15 @@ Still owed before submitting:
       frames inside ironSource's own code arrive unsymbolicated, because the vendor ships no
       dSYM with the static framework. Turning `uploadSymbols` off to silence it would cost
       the symbols for our own code too, so leave it.
-- [ ] Attach to a `1.6.7` version record and submit. Notes and the App Review text
-      are in `docs/appstore-metadata.md`. **In App Store Connect the privacy declarations must
-      change**: third-party SDK from Google Mobile Ads / UMP to Unity LevelPlay, and the party
-      receiving tracking data from Google to Unity. Everything else about the declaration is
-      unchanged.
+- [ ] Attach to a `1.6.7` version record and submit. Notes and the App Review text are in
+      `docs/appstore-metadata.md`. **The App Privacy declaration needs no change for the ad
+      swap** — an earlier draft of this list claimed it did, and sent someone hunting for a
+      field that does not exist. Apple's questionnaire asks only which data types are
+      collected, for what purpose, and whether they are used for tracking; it phrases the
+      question as "you or your third-party partners" and never asks which partner. Data
+      types, purposes and the tracking answers are all unchanged by moving from Google to
+      Unity. The vendor name matters in the two places that already carry it: the privacy
+      policy page and the App Review note.
 - [x] **Test device registered 2026-08-30** — the iPhone 16 Pro, under **Setup → Test
       devices**. Debug builds print the advertising id at launch
       (`[RainyClock] Advertising ID for LevelPlay → Setup → Test devices: …`), which is the

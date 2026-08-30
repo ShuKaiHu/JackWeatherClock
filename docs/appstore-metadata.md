@@ -418,7 +418,15 @@ Final answers should be verified in App Store Connect before submission.
 | Backend server | None |
 | Third-party SDKs | Unity LevelPlay (ironSource) SDK. **Changed in `1.6.7`** — the Google Mobile Ads SDK and Google User Messaging Platform were removed |
 | Advertising | Unity LevelPlay banner ads (one banner, no Google demand behind it — the AdMob account is terminated) |
-| Tracking | Yes, from `1.6.5 (20)`: ATT is implemented, so Device ID and advertising/usage data must be checked as "Used to Track You". From `1.6.7` the third party receiving that data is Unity, not Google — update the partner named in the declaration |
+| Tracking | Yes, from `1.6.5 (20)`: ATT is implemented, so Device ID and advertising/usage data must be checked as "Used to Track You" |
+
+**This table is a planning aid, not a mirror of the App Store Connect form.** The rows above
+name SDKs and vendors because that is useful to us; App Store Connect never asks for them. Its
+App Privacy questionnaire asks only which data types are collected, for what purpose, and
+whether each is used for tracking — the question reads "you or your third-party partners", so
+partners are in scope but are never named. Swapping Google for Unity therefore changes nothing
+in that form. Where the vendor's name does have to be right is the privacy policy page and the
+App Review note.
 
 ## Screenshots Still Needed
 
