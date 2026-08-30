@@ -21,7 +21,7 @@ Last updated: 2026-08-13.
 | Superseded | `1.6.5` | Released 2026-08-04 |
 | Superseded | `1.6.3 (18)` | Released 2026-07-28 |
 | Rejected, then resolved | `1.6.4 (19)` | Rejected 2026-08-01 on 5.1.2(i) and 2.1(a); both answered, and the fixes reached users in 1.6.5 |
-| **Uploaded, not submitted** | `1.6.7 (26)` | The ad-provider migration, below. Uploaded 2026-08-30 with `xcodebuild -exportArchive`, which worked again without hand-entered credentials. Still needs a `1.6.7` version record, the notes, the privacy declaration switched from Google to Unity, the build attached, and a submission |
+| **Waiting for Review** | `1.6.7 (26)` | The ad-provider migration, below. Uploaded and **submitted 2026-08-30**; `xcodebuild -exportArchive` again needed no credentials by hand. Check the listing rather than this line once review turns around — see the lookup command below |
 
 **Ships with 1.6.6 (edited in ASC 2026-08-13):** both app names change — 繁體中文
 `RainyClock` → `Rainy Clock`, English `Rainy Clock: Rain Alarm` → `Rainy-Clock`. Plain
@@ -100,8 +100,8 @@ Still owed before submitting:
       frames inside ironSource's own code arrive unsymbolicated, because the vendor ships no
       dSYM with the static framework. Turning `uploadSymbols` off to silence it would cost
       the symbols for our own code too, so leave it.
-- [ ] Attach to a `1.6.7` version record and submit. Notes and the App Review text are in
-      `docs/appstore-metadata.md`. **The App Privacy declaration needs no change for the ad
+- [x] **Submitted 2026-08-30** with the notes and App Review text from
+      `docs/appstore-metadata.md`. **The App Privacy declaration needed no change for the ad
       swap** — an earlier draft of this list claimed it did, and sent someone hunting for a
       field that does not exist. Apple's questionnaire asks only which data types are
       collected, for what purpose, and whether they are used for tracking; it phrases the

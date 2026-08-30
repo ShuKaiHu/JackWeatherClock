@@ -2,14 +2,19 @@
 
 Ongoing state and the backlog live in `docs/STATUS-IOS.md`; this file is the submission reference.
 
+> The table below went three versions stale before anyone noticed, the same way `STATUS-IOS.md`
+> did. Two files carrying the same state will drift; the App Store listing is the only thing
+> that cannot. Before trusting either, run the `itunes.apple.com/lookup` command in
+> `docs/STATUS-IOS.md`.
+
 ## Current Build
 
 | Item | Status |
 | --- | --- |
-| App version | `1.6.5` (in development) |
-| Build number | `23` (`20` invalidated by ITMS-91064; `21` and `22` superseded before upload) |
-| Review status | `1.6.5 (23)` ready to upload and resubmit |
-| Last released | `1.6.3 (18)` — released to the App Store 2026-07-28 |
+| App version | `1.6.7` — the Google-to-Unity-LevelPlay ad migration |
+| Build number | `26` (`25` shipped as 1.6.6; `24` was superseded before submission) |
+| Review status | `1.6.7 (26)` submitted 2026-08-30, awaiting review |
+| Last released | `1.6.6` — released to the App Store 2026-08-18 |
 | Bundle identifier | `com.shukaihu.RainyClock` |
 | Extension bundle identifier | `com.shukaihu.RainyClock.AlarmWidget` (added in `1.6.3`) |
 | Device family | iPhone only |
