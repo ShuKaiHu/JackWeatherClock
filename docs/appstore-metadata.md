@@ -85,9 +85,8 @@ rain alarm,weather alarm,commute alarm,smart alarm,rain,weather,alarm clock,comm
 ## Version 1.6.7 “What’s New”
 
 The ad provider changed and nothing else did, so these notes say that plainly rather than
-inventing user-facing changes — the same rule `1.6.2` followed. **Confirm the version and
-build numbers before pasting:** they assume `1.6.6 (25)` cleared review, which was still
-`正在等待審查` when it was last checked on 2026-08-13.
+inventing user-facing changes — the same rule `1.6.2` followed. `1.6.6` did clear review and
+went live 2026-08-18, so `1.6.7 (26)` is the right pair; build 26 was uploaded 2026-08-30.
 
 ### English
 
