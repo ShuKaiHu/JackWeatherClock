@@ -21,7 +21,7 @@ Last updated: 2026-08-13.
 | Superseded | `1.6.5` | Released 2026-08-04 |
 | Superseded | `1.6.3 (18)` | Released 2026-07-28 |
 | Rejected, then resolved | `1.6.4 (19)` | Rejected 2026-08-01 on 5.1.2(i) and 2.1(a); both answered, and the fixes reached users in 1.6.5 |
-| **In development** | `1.6.7 (26)` | The ad-provider migration, below. Version bumped in `Info.plist` and the project file; nothing archived or uploaded yet |
+| **Uploaded, not submitted** | `1.6.7 (26)` | The ad-provider migration, below. Uploaded 2026-08-30 with `xcodebuild -exportArchive`, which worked again without hand-entered credentials. Still needs a `1.6.7` version record, the notes, the privacy declaration switched from Google to Unity, the build attached, and a submission |
 
 **Ships with 1.6.6 (edited in ASC 2026-08-13):** both app names change — 繁體中文
 `RainyClock` → `Rainy Clock`, English `Rainy Clock: Rain Alarm` → `Rainy-Clock`. Plain
@@ -93,7 +93,14 @@ Still owed before submitting:
       `IronSource.framework` in `Frameworks/` is a stub that carries the SDK's privacy
       manifest; the code itself is statically linked, and `otool -L` shows no dynamic
       dependency on it.
-- [ ] Upload, attach to a `1.6.7` version record, and submit. Notes and the App Review text
+- [x] **Uploaded 2026-08-30.** `xcodebuild -exportArchive` with
+      `ExportOptions-AppStoreUpload.plist` again needed no credentials by hand. One warning
+      worth knowing rather than fixing: `Upload Symbols Failed … did not include a dSYM for
+      the IronSource.framework`. It does not block the upload or review; it only means crash
+      frames inside ironSource's own code arrive unsymbolicated, because the vendor ships no
+      dSYM with the static framework. Turning `uploadSymbols` off to silence it would cost
+      the symbols for our own code too, so leave it.
+- [ ] Attach to a `1.6.7` version record and submit. Notes and the App Review text
       are in `docs/appstore-metadata.md`. **In App Store Connect the privacy declarations must
       change**: third-party SDK from Google Mobile Ads / UMP to Unity LevelPlay, and the party
       receiving tracking data from Google to Unity. Everything else about the declaration is
