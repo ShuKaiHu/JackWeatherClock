@@ -104,6 +104,13 @@ private struct LevelPlayBannerContainer: UIViewRepresentable {
                 loadedHeight = CGFloat(height)
             }
             isLoaded = true
+            // The counterpart of the failure log below. Without it a silent
+            // console means either "filled" or "never asked", which is the
+            // same blind spot the failure log exists to close.
+            #if DEBUG
+            let size = adInfo.adSize.map { "\($0.width)x\($0.height)" } ?? "unknown size"
+            print("[LevelPlay] banner loaded from \(adInfo.adNetwork), \(size)")
+            #endif
         }
 
         func didFailToLoadAd(withAdUnitId adUnitId: String, error: Error) {
