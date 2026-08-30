@@ -98,15 +98,21 @@ Still owed before submitting:
       change**: third-party SDK from Google Mobile Ads / UMP to Unity LevelPlay, and the party
       receiving tracking data from Google to Unity. Everything else about the declaration is
       unchanged.
-- [ ] **Register the iPhone as a LevelPlay test device.** Debug builds print the advertising
-      id at launch (`[RainyClock] Advertising ID for LevelPlay → Setup → Test devices: …`);
-      run from Xcode with the phone attached and read it from the console. It reads as all
-      zeros until ATT is granted, so allow tracking at the prompt and relaunch. Paste it into
-      **Setup → Test devices** with Platform = iOS.
-- [ ] **Verify on a real device before or right after upload.** Every check so far has been on
-      the simulator. Register the iPhone under **Setup → Test devices** in the LevelPlay
-      dashboard first, then confirm through TestFlight that the banner still fills — the
-      device build links the SDK statically, a path the simulator never exercised.
+- [x] **Test device registered 2026-08-30** — the iPhone 16 Pro, under **Setup → Test
+      devices**. Debug builds print the advertising id at launch
+      (`[RainyClock] Advertising ID for LevelPlay → Setup → Test devices: …`), which is the
+      only way to read it: iOS shows it nowhere, and SDK 9.6.0 dropped the old
+      `ISIntegrationHelper`. It reads as all zeros until ATT is granted — no prompt appeared
+      here because the App Store build had already been allowed on that phone, and the
+      decision survives installing a debug build over it, since the bundle id is the same.
+- [x] **Verified on the device 2026-08-30, and it is the check that mattered.** The device
+      build links IronSource statically, which the simulator never exercised — the `-ObjC`
+      launch crash came out of exactly that difference. `[LevelPlay] banner loaded from
+      ironsourceads, 402x50` on the iPhone 16 Pro, 402pt being that device's logical width,
+      so the anchored adaptive sizing is right too; a screenshot confirmed the banner on
+      screen. Getting there without billable impressions is worth remembering: launching with
+      `-forceGDPRConsentGeography` and dismissing the sheet without answering leaves
+      `startAdSdk()` uncalled, so the advertising id can be read with no ad request at all.
 
 > **This file said "1.6.5 waiting to upload" for nine days after 1.6.5 had already shipped.**
 > Nobody updated it after the upload, and an agent reading it repeated the claim back as
