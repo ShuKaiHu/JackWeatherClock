@@ -61,9 +61,14 @@ function extractAudio(payload) {
  * request from an upstream fault.
  *
  * Retries are short and few, because a caller is waiting and the app's fallback
- * to a bundled tone beats a long stall. Two things are retried:
+ * to a bundled tone beats a long stall. Three things are retried:
  *
  * - 5xx, which this model produces intermittently.
+ * - 429. Gemini rate-limits per project, not per caller, so two users generating
+ *   at the same moment can trip it even though neither did anything wrong. It
+ *   gets a real backoff rather than the immediate retry the others get, and if it
+ *   survives that it is reported as 429 — "busy, try again" is actionable, where
+ *   the 502 it used to collapse into was not.
  * - `content_blocked`, which measurement shows is *noise rather than judgement*.
  *   "早安，該起床囉" — good morning, time to get up — was refused on roughly one
  *   call in six while identical requests either side of it succeeded. Reporting
@@ -104,6 +109,15 @@ async function synthesize({ apiKey, persona, segments, language, maximumSeconds 
       continue
     }
 
+    if (response.status === 429) {
+      lastError = new Error('gemini rate limited')
+      lastError.rateLimited = true
+      // Unlike the others, this one needs time to clear rather than another
+      // immediate attempt.
+      await new Promise((resolve) => setTimeout(resolve, 1_000 * (attempt + 1)))
+      continue
+    }
+
     if (response.status >= 500) {
       lastError = new Error(`gemini responded ${response.status}`)
       continue
@@ -135,9 +149,13 @@ async function synthesize({ apiKey, persona, segments, language, maximumSeconds 
   }
 
   const error = lastError ?? new Error('gemini failed')
-  // Refused every single time is the one case where the words are plausibly the
-  // problem, and the only case worth telling the user about.
-  error.status = blockedEveryTime && lastError?.blocked ? 422 : 502
+  if (lastError?.rateLimited) {
+    error.status = 429
+  } else {
+    // Refused every single time is the one case where the words are plausibly
+    // the problem, and the only case worth telling the user about.
+    error.status = blockedEveryTime && lastError?.blocked ? 422 : 502
+  }
   throw error
 }
 

@@ -266,8 +266,13 @@ async function handleTTS(request, response) {
     sendAudio(response, pcm, segments)
   } catch (error) {
     console.error(`TTS request failed: ${error.message}`)
-    const status = error.status === 422 ? 422 : 502
-    sendJson(response, status, { error: status === 422 ? 'rejected' : 'upstream_unavailable' })
+    // Three outcomes the app treats differently: the words were refused every
+    // time and are worth reporting, the project is momentarily out of quota and
+    // trying later will work, or something is broken and it should fall back to
+    // a bundled tone.
+    const status = [422, 429].includes(error.status) ? error.status : 502
+    const body = { 422: 'rejected', 429: 'busy' }[status] ?? 'upstream_unavailable'
+    sendJson(response, status, { error: body })
   }
 }
 
