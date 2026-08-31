@@ -674,5 +674,7 @@
 	</array>
 	<key>VoiceProxyURL</key>
 	<string></string>
+	<key>LevelPlayRewardedAdUnitId</key>
+	<string></string>
 </dict>
 </plist>

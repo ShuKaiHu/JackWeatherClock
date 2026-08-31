@@ -587,6 +587,21 @@ private struct AlarmTabView: View {
                                 Text(viewModel.settings.alarmSound.displayName)
                                     .foregroundStyle(.secondary)
                             }
+                            // Selecting the spoken alarm opens the sheet, but only
+                            // on a change — so once it is chosen there is nothing
+                            // left to tap to edit it. This is that.
+                            if viewModel.settings.alarmSound == .aiVoice {
+                                Button {
+                                    stopSoundPreview()
+                                    showsAIVoiceSheet = true
+                                } label: {
+                                    Image(systemName: "square.and.pencil")
+                                        .font(.title3)
+                                }
+                                .buttonStyle(.plain)
+                                .foregroundStyle(Color.accentColor)
+                                .accessibilityLabel(Text("alarm_sound_ai_voice"))
+                            }
                             // The system alarm tone lives in iOS, not in the app
                             // bundle, so there is nothing to play here.
                             if !viewModel.settings.alarmSound.usesSystemAlarmTone {

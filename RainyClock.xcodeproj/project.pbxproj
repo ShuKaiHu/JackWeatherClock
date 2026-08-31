@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		01D38ACAF517A7C2D707E95E /* RewardedAdController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AD002638D80D3B245F91C05 /* RewardedAdController.swift */; };
 		055C98A97C952DCC1CC69CC0 /* preview-gentle-en.m4a in Resources */ = {isa = PBXBuildFile; fileRef = EF02EAB9B27600D9E3C12FA1 /* preview-gentle-en.m4a */; };
 		05874822BCC1F7733B2BEE1F /* preview-sergeant-en.m4a in Resources */ = {isa = PBXBuildFile; fileRef = BD49BAED1D38DE6ABCBCAB8E /* preview-sergeant-en.m4a */; };
 		0A1000012C00000000000001 /* RainyClockApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1000112C00000000000001 /* RainyClockApp.swift */; };
@@ -59,6 +60,7 @@
 		752692FA157404C5E3CAEFFF /* preview-bright-en.m4a in Resources */ = {isa = PBXBuildFile; fileRef = 342D9A76F5EC5AD990F7CD84 /* preview-bright-en.m4a */; };
 		754AECAC7E45A94AF3DEA98E /* CommuteAlarmMetadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4BB22C84DAA14A208462B12 /* CommuteAlarmMetadata.swift */; };
 		78C9359541A1A63A25859ED4 /* preview-steady-en.m4a in Resources */ = {isa = PBXBuildFile; fileRef = 8609FAE441DF3D157DF646BD /* preview-steady-en.m4a */; };
+		91824AA8244757AED10F11B2 /* AIVoiceQuota.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BA273EA8BCD1B0999200C60 /* AIVoiceQuota.swift */; };
 		9ED317318119EF731F40E4FC /* RainyClockAlarmWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 4F27BC082A98163C47E456A4 /* RainyClockAlarmWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A0338E5E582A4E84E222D889 /* preview-bright-zh.m4a in Resources */ = {isa = PBXBuildFile; fileRef = 6DF2544063B4E1202AA50CBA /* preview-bright-zh.m4a */; };
 		AA98B6CDAFC126C83261B927 /* VoicePersona.swift in Sources */ = {isa = PBXBuildFile; fileRef = 262973271663C0D9E9899FDF /* VoicePersona.swift */; };
@@ -154,9 +156,11 @@
 		38716E405CDB08148FEFEA93 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		39C8C3492E7E1E5211E865AC /* AlarmViewModelSchedulingTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AlarmViewModelSchedulingTests.swift; sourceTree = "<group>"; };
 		39DEDC191EA3E78F71B4D8A1 /* preview-gentle-zh.m4a */ = {isa = PBXFileReference; includeInIndex = 1; path = "preview-gentle-zh.m4a"; sourceTree = "<group>"; };
+		3AD002638D80D3B245F91C05 /* RewardedAdController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RewardedAdController.swift; sourceTree = "<group>"; };
 		4133FF63012A434AB5C610F5 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		4F27BC082A98163C47E456A4 /* RainyClockAlarmWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RainyClockAlarmWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		57381698D3814E4FBA98C10A /* AIVoiceSheet.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AIVoiceSheet.swift; sourceTree = "<group>"; };
+		6BA273EA8BCD1B0999200C60 /* AIVoiceQuota.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AIVoiceQuota.swift; sourceTree = "<group>"; };
 		6C3FE90D63767F3FE105940E /* preview-mom-en.m4a */ = {isa = PBXFileReference; includeInIndex = 1; path = "preview-mom-en.m4a"; sourceTree = "<group>"; };
 		6DF2544063B4E1202AA50CBA /* preview-bright-zh.m4a */ = {isa = PBXFileReference; includeInIndex = 1; path = "preview-bright-zh.m4a"; sourceTree = "<group>"; };
 		7D92658ADF45F0EC2AD58E50 /* AlarmKitScheduler.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AlarmKitScheduler.swift; sourceTree = "<group>"; };
@@ -297,6 +301,8 @@
 				07A5A9EAEA066F80FAC943D3 /* GeneratedVoiceStore.swift */,
 				D0E42F1A82A2DC0F58286FF0 /* GeneratedVoiceAssembler.swift */,
 				E5ECAFB90DC821FA5EE54ADD /* AIVoiceClient.swift */,
+				6BA273EA8BCD1B0999200C60 /* AIVoiceQuota.swift */,
+				3AD002638D80D3B245F91C05 /* RewardedAdController.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -547,6 +553,8 @@
 				CF5CAA8FE6A0EB863437C561 /* AIVoiceSheet.swift in Sources */,
 				2D0102BC61B33B4F45B782AB /* AIVoiceClient.swift in Sources */,
 				AA98B6CDAFC126C83261B927 /* VoicePersona.swift in Sources */,
+				91824AA8244757AED10F11B2 /* AIVoiceQuota.swift in Sources */,
+				01D38ACAF517A7C2D707E95E /* RewardedAdController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -25,8 +25,18 @@ struct AIVoiceSheet: View {
     @State private var previewPlayer: AVAudioPlayer?
     @State private var playingPersona: VoicePersona?
     @State private var previewTask: Task<Void, Never>?
+    @State private var remaining = AIVoiceQuota.remaining
+    @StateObject private var rewardedAd = RewardedAdController()
 
     private let client: AIVoiceGenerating = AIVoiceClient()
+
+    /// Why the count is zero, which decides what the user can do about it.
+    private var quotaExhaustedHint: LocalizedStringKey {
+        if !RewardedAdController.isConfigured {
+            return "ai_voice_quota_gone"
+        }
+        return rewardedAd.isReady ? "ai_voice_quota_watch" : "ai_voice_quota_no_ad"
+    }
 
     /// One counter for both languages: a Chinese character costs a whole unit, a
     /// Latin one the fraction that makes 150 of them weigh the same as 40.
@@ -39,7 +49,19 @@ struct AIVoiceSheet: View {
 
     private var isOverBudget: Bool { used > Self.chineseBudget }
     private var canGenerate: Bool {
-        !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !isOverBudget && !isGenerating
+        !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && !isOverBudget && !isGenerating && remaining > 0
+    }
+
+    private func watchAdForCredit() {
+        rewardedAd.show {
+            // The credit is written the instant the network says the reward was
+            // earned, before any attempt to generate. If synthesis then fails —
+            // a 500, a content block, no network — the retry is free and the
+            // promise made in exchange for the video is still kept.
+            AIVoiceQuota.grantCredit()
+            remaining = AIVoiceQuota.remaining
+        }
     }
 
     var body: some View {
@@ -109,6 +131,31 @@ struct AIVoiceSheet: View {
                     Text("ai_voice_who_says_it_hint")
                 }
 
+                Section {
+                    HStack {
+                        Text("ai_voice_remaining")
+                        Spacer()
+                        Text("\(remaining)")
+                            .foregroundStyle(remaining > 0 ? .secondary : Color.red)
+                            .monospacedDigit()
+                    }
+                    // Only offered once the free allowance is gone, and only when
+                    // an ad is actually there — a button that trades a video for a
+                    // generation has to be able to honour the trade.
+                    if remaining == 0, RewardedAdController.isConfigured {
+                        Button {
+                            watchAdForCredit()
+                        } label: {
+                            Label("ai_voice_watch_ad", systemImage: "play.rectangle")
+                        }
+                        .disabled(!rewardedAd.isReady || rewardedAd.isPresenting)
+                    }
+                } header: {
+                    Text("ai_voice_quota")
+                } footer: {
+                    Text(remaining > 0 ? "ai_voice_quota_hint" : quotaExhaustedHint)
+                }
+
                 if let message {
                     Section {
                         Text(message).font(.footnote)
@@ -136,6 +183,12 @@ struct AIVoiceSheet: View {
                 // have to come from settings or they are gone.
                 text = viewModel.settings.aiVoiceText
                 persona = viewModel.settings.aiVoicePersona
+                remaining = AIVoiceQuota.remaining
+                // Loaded ahead of being needed, so the exchange button can say
+                // whether it will work rather than finding out on the tap.
+                if remaining == 0 {
+                    rewardedAd.load()
+                }
             }
             .onDisappear { stopPreview() }
         }
@@ -201,6 +254,11 @@ struct AIVoiceSheet: View {
 
             switch outcome {
             case .speech(let pcm):
+                // Spent only on a clip that actually arrived. A failed request
+                // costs the user nothing, which is also what makes the retry
+                // after a random content block harmless.
+                AIVoiceQuota.consume()
+                remaining = AIVoiceQuota.remaining
                 guard let assembled = try? GeneratedVoiceAssembler.assemble(speech: pcm),
                       let fileName = GeneratedVoiceStore.write(
                         assembled,
