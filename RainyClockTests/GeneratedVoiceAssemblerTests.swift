@@ -8,11 +8,15 @@ import XCTest
 /// alarm either way.
 final class GeneratedVoiceAssemblerTests: XCTestCase {
     private let rate = GeneratedVoiceAssembler.outputSampleRate
-    private let bed = CommuteAlarmSettings.AlarmSound.rainyClock.fileName
 
-    /// Silence, in the format the proxy returns: 24 kHz mono 16-bit.
+    /// A tone in the format the proxy returns — 24 kHz mono 16-bit — so the
+    /// repeats are findable in the output. Silence would prove nothing.
     private func speech(seconds: Double) -> Data {
-        Data(count: Int(seconds * GeneratedVoiceAssembler.speechSampleRate) * 2)
+        let rate = GeneratedVoiceAssembler.speechSampleRate
+        let frames = (0..<Int(seconds * rate)).map { i -> Int16 in
+            Int16(12_000 * sin(2 * .pi * 440 * Double(i) / rate))
+        }
+        return frames.withUnsafeBufferPointer { Data(buffer: $0) }
     }
 
     private func frames(of wav: Data) -> [Int16] {
@@ -21,10 +25,10 @@ final class GeneratedVoiceAssemblerTests: XCTestCase {
     }
 
     func testAssembledClipIsAlwaysTheSameLength() throws {
-        // Whatever comes back, the alarm rings for the same span. A ten-second
-        // line that plays once would otherwise leave eighteen seconds of silence.
+        // Whatever comes back, the alarm rings for the same span. A nine-second
+        // line that plays once would otherwise leave nineteen seconds of silence.
         for seconds in [0.5, 3.0, 9.9, 25.0] {
-            let data = try GeneratedVoiceAssembler.assemble(speech: speech(seconds: seconds), bedFileName: bed)
+            let data = try GeneratedVoiceAssembler.assemble(speech: speech(seconds: seconds))
             XCTAssertEqual(
                 frames(of: data).count,
                 Int(GeneratedVoiceStore.assembledDuration * rate),
@@ -33,35 +37,51 @@ final class GeneratedVoiceAssemblerTests: XCTestCase {
         }
     }
 
-    func testTheRemainderIsAudibleToneRatherThanSilence() throws {
-        let data = try GeneratedVoiceAssembler.assemble(speech: speech(seconds: 2), bedFileName: bed)
-        let all = frames(of: data)
-        let budget = Int(GeneratedVoiceStore.maximumSpeechDuration * rate)
-
-        // Silent speech was supplied, so anything non-zero after the budget is the
-        // tone bed — the half that makes this still work as an alarm.
-        XCTAssertTrue(all[budget...].contains { $0 != 0 })
+    func testNoSilenceLastsLongerThanThePause() throws {
+        // The property that matters is not "audio at the very end" — the clip can
+        // legitimately finish mid-pause — but that it never goes quiet for long
+        // enough to read as the alarm having stopped.
+        for seconds in [1.0, 2.0, 5.5, 9.9] {
+            let all = frames(of: try GeneratedVoiceAssembler.assemble(speech: speech(seconds: seconds)))
+            var longest = 0
+            var run = 0
+            for sample in all {
+                run = sample == 0 ? run + 1 : 0
+                longest = max(longest, run)
+            }
+            let allowed = Int((GeneratedVoiceAssembler.gapBetweenRepeats + 0.2) * rate)
+            XCTAssertLessThanOrEqual(
+                longest, allowed,
+                "a \(seconds)s line left \(Double(longest) / rate)s of silence"
+            )
+        }
     }
 
-    func testTheBedStartsAtTheBudgetNotWhereTheSpeechStopped() throws {
-        // A short line gets a beat of silence before the tone rather than the two
-        // running together.
-        let data = try GeneratedVoiceAssembler.assemble(speech: speech(seconds: 1), bedFileName: bed)
+    func testThereIsAPauseBetweenPasses() throws {
+        // Say it, wait, say it again — not a stutter.
+        let data = try GeneratedVoiceAssembler.assemble(speech: speech(seconds: 2))
         let all = frames(of: data)
-        let budget = Int(GeneratedVoiceStore.maximumSpeechDuration * rate)
-        XCTAssertTrue(all[(budget - 1_000)..<budget].allSatisfy { $0 == 0 })
+        let lineEnd = Int(2 * rate)
+        let gap = Int(GeneratedVoiceAssembler.gapBetweenRepeats * rate)
+        XCTAssertTrue(all[lineEnd..<(lineEnd + gap)].allSatisfy { $0 == 0 })
+        XCTAssertNotEqual(all[lineEnd + gap + 100], 0, "the second pass should start after the gap")
     }
 
-    func testAMissingToneIsAnErrorRatherThanASilentFile() {
-        XCTAssertThrowsError(
-            try GeneratedVoiceAssembler.assemble(speech: speech(seconds: 2), bedFileName: "NotShipped.wav")
-        )
+    func testSpeechLongerThanItsBudgetIsTruncatedRatherThanRefused() throws {
+        // The model has no duration parameter, so an over-long clip is a normal
+        // outcome, not a fault.
+        let data = try GeneratedVoiceAssembler.assemble(speech: speech(seconds: 25))
+        XCTAssertEqual(frames(of: data).count, Int(GeneratedVoiceStore.assembledDuration * rate))
+    }
+
+    func testEmptySpeechIsAnErrorRatherThanASilentAlarm() {
+        XCTAssertThrowsError(try GeneratedVoiceAssembler.assemble(speech: Data()))
     }
 
     func testTheHeaderIsSomethingAVFoundationWillOpen() throws {
         // Both alarm paths hand the file to the system, not to our own player, so
         // "it parses" is the only check that means anything.
-        let data = try GeneratedVoiceAssembler.assemble(speech: speech(seconds: 2), bedFileName: bed)
+        let data = try GeneratedVoiceAssembler.assemble(speech: speech(seconds: 2))
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("assembler-\(UUID().uuidString).wav")
         try data.write(to: url)

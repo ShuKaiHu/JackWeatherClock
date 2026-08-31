@@ -3,17 +3,17 @@ import Foundation
 
 /// Turns the speech the proxy returns into a file an alarm can actually ring.
 ///
-/// The speech alone is not an alarm. It is ten seconds at most, and AlarmKit
-/// exposes no way to ask for it to repeat — the observed behaviour changed
-/// between iOS 26.0, which played a custom sound once, and 26.1, which repeats
-/// it. A ten-second clip that plays once leaves eighteen seconds of silence
-/// where an alarm should be.
+/// A spoken line is the whole alarm — no tone under it, no tone after it. What
+/// it is not is long enough on its own: AlarmKit exposes no way to ask for a
+/// sound to repeat, and the observed behaviour changed between iOS 26.0, which
+/// played a custom sound once, and 26.1, which repeats it. Nine seconds that
+/// play once leave nineteen seconds of silence where an alarm should be, and on
+/// iOS 17-25 the notification path plays the file exactly once per ring.
 ///
-/// So every clip is assembled to a fixed length: the speech first, then the tone
-/// the user already chose, looped to fill the rest. Whichever way the system
-/// behaves, the result works — played once it is a complete alarm, repeated it
-/// alternates speech and tone, which is easier to wake up to than speech on a
-/// loop.
+/// So the line is repeated to a fixed length with a pause between passes, which
+/// is how a person actually wakes someone: say it, wait, say it again. Whichever
+/// way the system behaves the result works, and it costs nothing extra — the
+/// repeats are copies of audio already paid for.
 enum GeneratedVoiceAssembler {
     /// What the proxy sends back: headerless mono 16-bit PCM.
     static let speechSampleRate: Double = 24_000
@@ -24,66 +24,42 @@ enum GeneratedVoiceAssembler {
     /// byte-identical to what already ships.
     static let outputSampleRate: Double = 44_100
 
+    /// Silence between one pass of the line and the next. Long enough to read as
+    /// a pause rather than a stutter, short enough that the alarm never sounds
+    /// like it has stopped.
+    static let gapBetweenRepeats: TimeInterval = 1.5
+
     enum AssemblyError: Error {
-        case bedMissing(String)
+        case emptySpeech
         case conversionFailed
     }
 
-    /// - Parameters:
-    ///   - speech: raw little-endian 16-bit mono PCM at `speechSampleRate`.
-    ///   - bedFileName: a tone from the app bundle to fill the remainder.
+    /// - Parameter speech: raw little-endian 16-bit mono PCM at `speechSampleRate`.
     /// - Returns: a complete WAV, `GeneratedVoiceStore.assembledDuration` long.
-    static func assemble(speech: Data, bedFileName: String) throws -> Data {
-        let speechFrames = try resampleToOutputRate(speech)
-        let bed = try loadBed(named: bedFileName)
+    static func assemble(speech: Data) throws -> Data {
+        let resampled = try resampleToOutputRate(speech)
+        guard !resampled.isEmpty else {
+            throw AssemblyError.emptySpeech
+        }
 
         let total = Int(GeneratedVoiceStore.assembledDuration * outputSampleRate)
-        let speechLimit = Int(GeneratedVoiceStore.maximumSpeechDuration * outputSampleRate)
-        var frames = [Int16](repeating: 0, count: total)
+        let limit = Int(GeneratedVoiceStore.maximumSpeechDuration * outputSampleRate)
+        let gap = Int(gapBetweenRepeats * outputSampleRate)
 
         // Trust nothing about the length: the model has no duration parameter, so
         // a clip longer than the budget is a normal outcome rather than a fault.
-        let spoken = min(speechFrames.count, speechLimit, total)
-        for i in 0..<spoken {
-            frames[i] = speechFrames[i]
-        }
+        let line = Array(resampled.prefix(min(limit, total)))
+        var frames = [Int16](repeating: 0, count: total)
 
-        // The bed starts where the speech budget ends, not where the speech
-        // happens to stop, so a short line leaves a beat of silence before the
-        // tone instead of running straight into it.
-        if !bed.isEmpty {
-            for i in speechLimit..<total {
-                frames[i] = bed[(i - speechLimit) % bed.count]
+        var cursor = 0
+        while cursor < total {
+            for i in 0..<line.count where cursor + i < total {
+                frames[cursor + i] = line[i]
             }
+            cursor += line.count + gap
         }
 
         return wav(frames: frames, sampleRate: outputSampleRate)
-    }
-
-    /// Reads a bundled tone down to bare samples. Any format AVFoundation can
-    /// open works, so this keeps holding once the shipped tones change.
-    private static func loadBed(named fileName: String) throws -> [Int16] {
-        let name = (fileName as NSString).deletingPathExtension
-        let ext = (fileName as NSString).pathExtension
-        guard let url = Bundle.main.url(forResource: name, withExtension: ext.isEmpty ? "wav" : ext) else {
-            throw AssemblyError.bedMissing(fileName)
-        }
-
-        let file = try AVAudioFile(forReading: url)
-        guard let format = AVAudioFormat(
-            commonFormat: .pcmFormatInt16,
-            sampleRate: outputSampleRate,
-            channels: 1,
-            interleaved: true
-        ), let buffer = AVAudioPCMBuffer(
-            pcmFormat: format,
-            frameCapacity: AVAudioFrameCount(file.length)
-        ) else {
-            throw AssemblyError.conversionFailed
-        }
-
-        try file.read(into: buffer)
-        return samples(from: buffer)
     }
 
     /// Converts the proxy's 24 kHz speech up to the tones' 44.1 kHz.
