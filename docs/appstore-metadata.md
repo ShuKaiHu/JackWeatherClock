@@ -82,6 +82,33 @@ rain alarm,weather alarm,commute alarm,smart alarm,rain,weather,alarm clock,comm
 
 雨天鬧鐘,天氣鬧鐘,通勤鬧鐘,智慧鬧鐘,降雨,天氣,鬧鐘,通勤
 
+## Version 1.6.8 (27) “What’s New”
+
+The AI voice alarm. Written to say what the user gets and what it costs them, because the
+free-then-watch-an-ad shape is the part they need to understand before tapping into it.
+
+### English
+
+```
+Wake up to a voice instead of a tone.
+
+• Write what your alarm should say, pick one of six voices, and Rainy Clock speaks it. The delivery varies across your sentences on its own — warmer at the start, more urgent about the weather, encouraging at the end.
+• Listen to every voice before choosing. Previews are built in, cost nothing, and work offline.
+• The first three you make are free. After that, watching a short video earns one more.
+• Your finished alarm is saved on your phone and rings even without a connection.
+```
+
+### 繁體中文
+
+```
+用人聲叫你起床，不再只是鈴聲。
+
+• 寫下你想聽到的話，選一個聲音，雨天鬧鐘會唸出來。語氣會依句子自己變化——開頭溫和一點、講到天氣時比較急、結尾帶點鼓勵。
+• 六個聲音都可以先試聽。試聽內建在 App 裡，不花次數也不需要網路。
+• 前三次免費。之後每看一段短片可以再做一次。
+• 做好的鬧鈴存在手機上，沒有網路也照樣會響。
+```
+
 ## Version 1.6.7 “What’s New”
 
 The ad provider changed and nothing else did, so these notes say that plainly rather than
