@@ -18,15 +18,11 @@ import IronSource
 final class RewardedAdController: NSObject, ObservableObject {
     private static let logger = Logger(subsystem: "com.shukaihu.RainyClock", category: "RewardedAd")
 
-    /// Empty until a rewarded unit exists in the LevelPlay dashboard, in the same
-    /// way `LevelPlayAppKey` and `VoiceProxyURL` are. The feature reports itself
-    /// unavailable instead of offering an exchange it cannot honour.
+    /// Alongside the banner's unit in `AppEnvironment`, since both are dashboard
+    /// identifiers rather than per-build configuration. Blank turns the exchange
+    /// off and the sheet stops offering it.
     static var adUnitID: String? {
-        guard let raw = Bundle.main.object(forInfoDictionaryKey: "LevelPlayRewardedAdUnitId") as? String,
-              !raw.isEmpty else {
-            return nil
-        }
-        return raw
+        AppEnvironment.levelPlayRewardedAdUnitID.isEmpty ? nil : AppEnvironment.levelPlayRewardedAdUnitID
     }
 
     static var isConfigured: Bool { adUnitID != nil }
