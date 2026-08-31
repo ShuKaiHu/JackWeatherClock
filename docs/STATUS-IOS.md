@@ -560,6 +560,24 @@ transcribed every time, while no tag cost more than 0.79 s or appeared once in 3
 The durations also show the tags *working* — `[bored]` drags the line out, `[extremely fast]`
 shortens it.
 
+**Rate limits decide the model, not price — measured 2026-08-30 on a paid Tier 1 project.**
+`gemini-2.5-flash-preview-tts` on the Gemini API is capped at **100 requests per day**; the
+error names the metric outright (`generate_requests_per_model_per_day, limit: 100`) and says
+to retry in ten hours. That is the whole app's budget for a day, not one user's — it is not a
+rate limit, it is an off switch. `gemini-3.1-flash-tts-preview` uses dynamic throughput limits
+and kept serving after 2.5 had stopped, so it is now the default despite costing twice as much
+per second (NT$0.20 against NT$0.10 for a ten-second clip, which is not the number that
+decides this). Tier 2 needs US$100 of cumulative spend plus three days, and whether it lifts
+the 2.5 cap is unknown.
+
+**The bigger consequence: the Gemini API is probably the wrong surface for production.** The
+same models are reachable through Cloud Text-to-Speech at **150 QPM with no documented daily
+cap**, raisable on request, and with an explicit `cmn-TW` locale field the Gemini API path does
+not have. The original reason for choosing the Gemini API — Cloud TTS refuses API keys and
+wants a service account — was reasoning about a bake-off script, not production: this proxy
+runs on Cloud Run, where a service account is the *native* credential and strictly less work
+than shipping and rotating a key. Switching surfaces is the next infrastructure decision.
+
 Scope: one model, one voice, one style prompt, zh-Hant only, four samples. Enough to stop
 designing around the warning, not enough to assume it is wrong everywhere — English in
 particular is untested, and these are preview models. The emotion table records how each tag

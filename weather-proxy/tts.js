@@ -10,9 +10,21 @@ const { buildPrompt } = require('./personas')
 
 const ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/interactions'
 
-// 2.5-flash, not 3.1-flash: half the price for output audio, and without 3.1's
-// documented habit of returning text tokens instead of audio.
-const MODEL = process.env.GEMINI_TTS_MODEL ?? 'gemini-2.5-flash-preview-tts'
+// 3.1-flash despite costing twice as much per second of audio, because on the
+// Gemini API `gemini-2.5-flash-preview-tts` is capped at **100 requests per day**
+// on a paid Tier 1 project — measured by hitting it, and the error names the
+// metric: `generate_requests_per_model_per_day, limit: 100`. That is the whole
+// app's budget for a day, not one user's, so it is not a rate limit, it is an
+// off switch. 3.1 uses dynamic throughput limits and kept serving after 2.5 had
+// stopped.
+//
+// The price difference is NT$0.10 vs NT$0.20 for a ten-second clip, which is not
+// the number that decides this.
+//
+// Longer term the same models are reachable through Cloud Text-to-Speech at
+// 150 QPM with no documented daily cap, and this proxy already runs on Cloud Run
+// where a service account is the native credential. See STATUS-IOS.
+const MODEL = process.env.GEMINI_TTS_MODEL ?? 'gemini-3.1-flash-tts-preview'
 
 const UPSTREAM_TIMEOUT_MS = 30_000
 
