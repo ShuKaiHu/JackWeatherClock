@@ -52,8 +52,10 @@
 		6721402961A0B2FF93129B01 /* BackgroundWeatherRefresh.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D92658ADFA0F0EC2AD58B01 /* BackgroundWeatherRefresh.swift */; };
 		754AECAC7E45A94AF3DEA98E /* CommuteAlarmMetadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4BB22C84DAA14A208462B12 /* CommuteAlarmMetadata.swift */; };
 		9ED317318119EF731F40E4FC /* RainyClockAlarmWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 4F27BC082A98163C47E456A4 /* RainyClockAlarmWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		CC01D225E6E91D1422F2F457 /* GeneratedVoiceAssembler.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0E42F1A82A2DC0F58286FF0 /* GeneratedVoiceAssembler.swift */; };
 		CD94782468365102E82370FC /* CommuteAlarmLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C36A72344C85323EDB4B2B8 /* CommuteAlarmLiveActivity.swift */; };
 		D9AFFD3EDD2005FE2CE06FEC /* AlarmSchedulingSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDA82D02716704A4024FBA29 /* AlarmSchedulingSettingsTests.swift */; };
+		E02AA2444353D39C4B42A1E9 /* GeneratedVoiceAssemblerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9606BA5A5CBAB2AB6039C090 /* GeneratedVoiceAssemblerTests.swift */; };
 		F7F9A507A2726D0344BDA3B7 /* AlarmViewModelSchedulingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39C8C3492E7E1E5211E865AC /* AlarmViewModelSchedulingTests.swift */; };
 /* End PBXBuildFile section */
 
@@ -138,6 +140,8 @@
 		4F27BC082A98163C47E456A4 /* RainyClockAlarmWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RainyClockAlarmWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		7D92658ADF45F0EC2AD58E50 /* AlarmKitScheduler.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AlarmKitScheduler.swift; sourceTree = "<group>"; };
 		7D92658ADFA0F0EC2AD58B01 /* BackgroundWeatherRefresh.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BackgroundWeatherRefresh.swift; sourceTree = "<group>"; };
+		9606BA5A5CBAB2AB6039C090 /* GeneratedVoiceAssemblerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GeneratedVoiceAssemblerTests.swift; sourceTree = "<group>"; };
+		D0E42F1A82A2DC0F58286FF0 /* GeneratedVoiceAssembler.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GeneratedVoiceAssembler.swift; sourceTree = "<group>"; };
 		F4BB22C84DAA14A208462B12 /* CommuteAlarmMetadata.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CommuteAlarmMetadata.swift; sourceTree = "<group>"; };
 		FDA82D02716704A4024FBA29 /* AlarmSchedulingSettingsTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AlarmSchedulingSettingsTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -247,6 +251,7 @@
 				7D92658ADF45F0EC2AD58E50 /* AlarmKitScheduler.swift */,
 				7D92658ADFA0F0EC2AD58B01 /* BackgroundWeatherRefresh.swift */,
 				07A5A9EAEA066F80FAC943D3 /* GeneratedVoiceStore.swift */,
+				D0E42F1A82A2DC0F58286FF0 /* GeneratedVoiceAssembler.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -266,6 +271,7 @@
 				0A1000872C00000000000002 /* WeatherSampleMapperTests.swift */,
 				FDA82D02716704A4024FBA29 /* AlarmSchedulingSettingsTests.swift */,
 				39C8C3492E7E1E5211E865AC /* AlarmViewModelSchedulingTests.swift */,
+				9606BA5A5CBAB2AB6039C090 /* GeneratedVoiceAssemblerTests.swift */,
 			);
 			path = RainyClockTests;
 			sourceTree = "<group>";
@@ -449,6 +455,7 @@
 				0A1000102C00000000000001 /* WeatherSampleMapperTests.swift in Sources */,
 				D9AFFD3EDD2005FE2CE06FEC /* AlarmSchedulingSettingsTests.swift in Sources */,
 				F7F9A507A2726D0344BDA3B7 /* AlarmViewModelSchedulingTests.swift in Sources */,
+				E02AA2444353D39C4B42A1E9 /* GeneratedVoiceAssemblerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -479,6 +486,7 @@
 				672140296105B2FF93129911 /* AlarmKitScheduler.swift in Sources */,
 				6721402961A0B2FF93129B01 /* BackgroundWeatherRefresh.swift in Sources */,
 				12E2CB57CF460CA5D7EC382B /* GeneratedVoiceStore.swift in Sources */,
+				CC01D225E6E91D1422F2F457 /* GeneratedVoiceAssembler.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
