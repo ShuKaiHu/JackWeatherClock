@@ -129,13 +129,18 @@ function styleLanguage(language) {
 }
 
 /**
- * Builds the single string sent to the model: style direction, then the words.
+ * Splits the request into the two things Cloud Text-to-Speech asks for
+ * separately: the direction (`input.prompt`) and the words (`input.text`).
  *
- * Two deliberate details. The `synthesize this speech` preamble is required —
- * without an explicit instruction the model sometimes reads a bare prompt aloud
- * as if it were dialogue, or rejects it outright. And square brackets are
- * stripped from the caller's text, because a user who types one would otherwise
- * be writing an unintended delivery instruction into their own alarm.
+ * That separation is why the "Synthesize this speech:" preamble this used to
+ * carry is gone. It existed because the Gemini Developer API took one string and
+ * could not always tell direction from dialogue — it would read the stage notes
+ * aloud. Here the API makes the distinction itself, so the words are only ever
+ * the user's own.
+ *
+ * Square brackets are still stripped from the caller's text: a user who types
+ * one would otherwise be writing an unintended delivery instruction into their
+ * own alarm.
  */
 function buildPrompt({ persona, segments, language }) {
   const definition = PERSONAS[persona]
@@ -158,10 +163,11 @@ function buildPrompt({ persona, segments, language }) {
 
   if (!spoken) return null
 
-  const tagged = definition.tag ? `${definition.tag} ${spoken}` : spoken
   return {
     voice: definition.voice,
-    prompt: `${definition.style[lang]}\n\nSynthesize this speech:\n${tagged}`
+    language: lang,
+    style: definition.style[lang],
+    spoken: definition.tag ? `${definition.tag} ${spoken}` : spoken
   }
 }
 

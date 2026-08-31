@@ -32,9 +32,10 @@ const {
   WEATHERKIT_KEY_ID: keyId,
   WEATHERKIT_PRIVATE_KEY: privateKey,
   PROXY_SHARED_SECRET: sharedSecret,
-  // Absent by design in a weather-only deployment: /v1/tts then answers 503 and
-  // the app falls back to a bundled tone, rather than the service failing to boot.
-  GEMINI_API_KEY: geminiApiKey,
+  // Speech no longer needs a credential of its own: Cloud Text-to-Speech and
+  // Vertex AI both authenticate with the service account this already runs as.
+  // `TTS_DISABLED=1` is the off switch a missing key used to be.
+  TTS_DISABLED: ttsDisabled,
   PORT = '8080'
 } = process.env
 
@@ -168,7 +169,7 @@ async function handleTTS(request, response) {
     return sendJson(response, 401, { error: 'unauthorized' })
   }
 
-  if (!geminiApiKey) {
+  if (ttsDisabled === '1') {
     return sendJson(response, 503, { error: 'tts_not_configured' })
   }
 
@@ -225,7 +226,6 @@ async function handleTTS(request, response) {
   // neutral rather than blocking the clip.
   if (annotateFrom) {
     const emotions = await annotate({
-      apiKey: geminiApiKey,
       sentences: annotateFrom,
       persona,
       language
@@ -256,7 +256,6 @@ async function handleTTS(request, response) {
 
   try {
     const pcm = await synthesize({
-      apiKey: geminiApiKey,
       persona,
       segments,
       language,

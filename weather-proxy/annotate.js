@@ -1,6 +1,7 @@
 'use strict'
 
 const { EMOTION_IDS } = require('./personas')
+const { accessToken } = require('./google-auth')
 
 // Decides how each sentence of the user's line should be delivered.
 //
@@ -12,13 +13,25 @@ const { EMOTION_IDS } = require('./personas')
 // what stops it inventing `[cheerful]`, a tag Google documents as being spoken
 // aloud as a word.
 //
+// Runs on **Vertex AI** rather than the Gemini Developer API, for the same
+// reason the speech does: the Developer API's terms forbid use in a service
+// "likely to be accessed by individuals under the age of 18", and explicitly do
+// not govern Google Cloud services. Moving only the speech would have left the
+// app half-covered by a contract it cannot honour. It also removes the last
+// place an API key was needed.
+//
 // Everything here is best-effort. Any failure — quota, timeout, a short answer,
 // a hallucinated id — falls back to neutral for that sentence and the clip is
 // still generated.
 
-const ENDPOINT_BASE = 'https://generativelanguage.googleapis.com/v1beta/models'
-const MODEL = process.env.GEMINI_ANNOTATE_MODEL ?? 'gemini-flash-lite-latest'
+const PROJECT = process.env.GOOGLE_CLOUD_PROJECT ?? 'rainyclock'
+const LOCATION = process.env.VERTEX_LOCATION ?? 'us-central1'
+const MODEL = process.env.VERTEX_ANNOTATE_MODEL ?? 'gemini-2.5-flash'
 const TIMEOUT_MS = 8_000
+
+const endpoint = () =>
+  `https://${LOCATION}-aiplatform.googleapis.com/v1/projects/${PROJECT}` +
+  `/locations/${LOCATION}/publishers/google/models/${MODEL}:generateContent`
 
 /**
  * Splits on sentence-ending punctuation in either script, keeping the mark with
@@ -52,8 +65,8 @@ function splitSentences(text, limit) {
 
 const neutral = (n) => Array.from({ length: n }, () => 'neutral')
 
-async function annotate({ apiKey, sentences, persona, language }) {
-  if (!apiKey || sentences.length === 0) return neutral(sentences.length)
+async function annotate({ sentences, persona, language }) {
+  if (sentences.length === 0) return []
 
   const isChinese = typeof language === 'string' && language.toLowerCase().startsWith('zh')
   const instruction = [
@@ -71,7 +84,7 @@ async function annotate({ apiKey, sentences, persona, language }) {
   ].filter(Boolean).join('\n')
 
   const body = {
-    contents: [{ parts: [{ text: instruction }] }],
+    contents: [{ role: 'user', parts: [{ text: instruction }] }],
     generationConfig: {
       responseMimeType: 'application/json',
       responseSchema: {
@@ -84,17 +97,21 @@ async function annotate({ apiKey, sentences, persona, language }) {
   }
 
   try {
-    const response = await fetch(`${ENDPOINT_BASE}/${MODEL}:generateContent`, {
+    const token = await accessToken()
+    const response = await fetch(endpoint(), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+        'x-goog-user-project': PROJECT
+      },
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(TIMEOUT_MS)
     })
     if (!response.ok) return neutral(sentences.length)
 
     const payload = await response.json()
-    const raw = payload?.candidates?.[0]?.content?.parts?.[0]?.text
-    const parsed = JSON.parse(raw)
+    const parsed = JSON.parse(payload?.candidates?.[0]?.content?.parts?.[0]?.text)
     if (!Array.isArray(parsed)) return neutral(sentences.length)
 
     // Pad and validate rather than trusting the length or the values: the schema
@@ -105,4 +122,4 @@ async function annotate({ apiKey, sentences, persona, language }) {
   }
 }
 
-module.exports = { annotate, splitSentences, MODEL }
+module.exports = { annotate, splitSentences, MODEL, LOCATION }

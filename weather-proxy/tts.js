@@ -1,34 +1,46 @@
 'use strict'
 
 const { buildPrompt } = require('./personas')
+const { accessToken } = require('./google-auth')
 
-// Speech synthesis through the Gemini API, kept behind the proxy for the same
-// reason the WeatherKit signing is: the key cannot ship inside the app. Here the
-// stakes are higher than an allowance — a scraped Gemini key is billed by the
-// token, so the spend cap in front of this has to be a real ceiling, not an
-// alert.
-
-const ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/interactions'
-
-// 3.1-flash despite costing twice as much per second of audio, because on the
-// Gemini API `gemini-2.5-flash-preview-tts` is capped at **100 requests per day**
-// on a paid Tier 1 project — measured by hitting it, and the error names the
-// metric: `generate_requests_per_model_per_day, limit: 100`. That is the whole
-// app's budget for a day, not one user's, so it is not a rate limit, it is an
-// off switch. 3.1 uses dynamic throughput limits and kept serving after 2.5 had
-// stopped.
+// Speech synthesis through **Cloud Text-to-Speech**, not the Gemini Developer
+// API, for three reasons that all point the same way.
 //
-// The price difference is NT$0.10 vs NT$0.20 for a ten-second clip, which is not
-// the number that decides this.
+// The contract: the Gemini API's terms say a developer "will not use the
+// Services as part of a website, application, or other service ... that is
+// directed towards or is likely to be accessed by individuals under the age of
+// 18". An alarm clock cannot honestly promise that. Those same terms state, for
+// clarity, that they "do not govern your direct use of any Google Cloud Platform
+// service", and Cloud Text-to-Speech is one — governed instead by the Cloud
+// Platform terms, which carry no such clause.
 //
-// Longer term the same models are reachable through Cloud Text-to-Speech at
-// 150 QPM with no documented daily cap, and this proxy already runs on Cloud Run
-// where a service account is the native credential. See STATUS-IOS.
-const MODEL = process.env.GEMINI_TTS_MODEL ?? 'gemini-3.1-flash-tts-preview'
+// The limits: `gemini-2.5-flash-tts` on the Developer API is capped at 100
+// requests per *day* on a paid Tier 1 project — the whole app's budget, not one
+// user's. The same model through Cloud TTS runs at 150 queries per *minute*,
+// raisable on request.
+//
+// The credential: there isn't one. Cloud Run's service account authenticates
+// this, so no key is created, stored, rotated, or leaked.
+
+const ENDPOINT = 'https://texttospeech.googleapis.com/v1/text:synthesize'
+
+/**
+ * Which project the call is billed and quota-counted against. Implicit for a
+ * service account on Cloud Run, but required when a developer runs this against
+ * their own Application Default Credentials — without it the API answers 403
+ * asking for a quota project, which reads as a permission problem and is not one.
+ */
+const PROJECT = process.env.GOOGLE_CLOUD_PROJECT ?? 'rainyclock'
+
+// The cheap model, which the Developer API's daily cap had forced us off.
+const MODEL = process.env.GEMINI_TTS_MODEL ?? 'gemini-2.5-flash-tts'
+
+// Cloud TTS takes an explicit locale, which the Developer API had no field for.
+const LANGUAGE_CODES = { 'zh-Hant': 'cmn-TW', en: 'en-US' }
 
 const UPSTREAM_TIMEOUT_MS = 30_000
 
-/** Gemini returns headerless mono 16-bit PCM at this rate. */
+/** 16-bit mono PCM at this rate, matching what the app assembles against. */
 const SAMPLE_RATE = 24_000
 const BYTES_PER_SECOND = SAMPLE_RATE * 2
 
@@ -44,28 +56,27 @@ function truncateToSeconds(pcm, seconds) {
 }
 
 /**
- * Pulls the audio out of a response whose shape is not pinned down.
+ * Strips the RIFF container Cloud TTS wraps LINEAR16 in, since the app is handed
+ * bare samples and builds its own header.
  *
- * The interactions API and the older generateContent API bury the payload at
- * different paths, and neither is documented for this model well enough to rely
- * on. Both hide exactly one long base64 blob, so taking the longest string is
- * more durable than guessing a path — and it degrades to a clear error rather
- * than a crash when the model returns prose instead of audio.
+ * The `data` chunk is located rather than assumed to start at byte 44: a WAV may
+ * legally carry `LIST` or other chunks before it, and a fixed offset would ship
+ * a few milliseconds of metadata as audio.
  */
-function extractAudio(payload) {
-  let best = null
-  const stack = [payload]
-  while (stack.length > 0) {
-    const current = stack.pop()
-    if (Array.isArray(current)) {
-      stack.push(...current)
-    } else if (current && typeof current === 'object') {
-      stack.push(...Object.values(current))
-    } else if (typeof current === 'string' && current.length > 1_000) {
-      if (best === null || current.length > best.length) best = current
-    }
+function pcmFromWav(buffer) {
+  if (buffer.length < 12 || buffer.toString('ascii', 0, 4) !== 'RIFF') {
+    return buffer
   }
-  return best === null ? null : Buffer.from(best, 'base64')
+  let offset = 12
+  while (offset + 8 <= buffer.length) {
+    const id = buffer.toString('ascii', offset, offset + 4)
+    const size = buffer.readUInt32LE(offset + 4)
+    if (id === 'data') {
+      return buffer.subarray(offset + 8, Math.min(offset + 8 + size, buffer.length))
+    }
+    offset += 8 + size + (size % 2)
+  }
+  return buffer
 }
 
 /**
@@ -76,21 +87,19 @@ function extractAudio(payload) {
  * to a bundled tone beats a long stall. Three things are retried:
  *
  * - 5xx, which this model produces intermittently.
- * - 429. Gemini rate-limits per project, not per caller, so two users generating
- *   at the same moment can trip it even though neither did anything wrong. It
- *   gets a real backoff rather than the immediate retry the others get, and if it
+ * - 429. The quota is per project, not per caller, so two users generating at
+ *   the same moment can trip it even though neither did anything wrong. It gets
+ *   a real backoff rather than the immediate retry the others get, and if it
  *   survives that it is reported as 429 — "busy, try again" is actionable, where
  *   the 502 it used to collapse into was not.
- * - `content_blocked`, which measurement shows is *noise rather than judgement*.
- *   "早安，該起床囉" — good morning, time to get up — was refused on roughly one
- *   call in six while identical requests either side of it succeeded. Reporting
- *   that to the user as "your words were rejected" would be both wrong and
- *   unactionable, so it gets the same treatment as a 500.
+ * - A refusal by the safety filter, which measurement showed is *noise rather
+ *   than judgement*: "早安，該起床囉" — good morning, time to get up — was refused
+ *   on roughly one call in six while identical requests either side succeeded.
  *
  * A refusal that survives every attempt is passed on as 422, because at that
  * point it probably is about the words.
  */
-async function synthesize({ apiKey, persona, segments, language, maximumSeconds }) {
+async function synthesize({ persona, segments, language, maximumSeconds }) {
   const built = buildPrompt({ persona, segments, language })
   if (!built) {
     const error = new Error('unknown persona or empty text')
@@ -99,10 +108,13 @@ async function synthesize({ apiKey, persona, segments, language, maximumSeconds 
   }
 
   const body = JSON.stringify({
-    model: MODEL,
-    input: built.prompt,
-    response_format: { type: 'audio' },
-    generation_config: { speech_config: [{ voice: built.voice }] }
+    input: { text: built.spoken, prompt: built.style },
+    voice: {
+      languageCode: LANGUAGE_CODES[built.language] ?? 'en-US',
+      name: built.voice,
+      model_name: MODEL
+    },
+    audioConfig: { audioEncoding: 'LINEAR16', sampleRateHertz: SAMPLE_RATE }
   })
 
   let lastError = null
@@ -110,65 +122,70 @@ async function synthesize({ apiKey, persona, segments, language, maximumSeconds 
   for (let attempt = 0; attempt < 3; attempt += 1) {
     let response
     try {
+      const token = await accessToken()
       response = await fetch(ENDPOINT, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          'x-goog-user-project': PROJECT
+        },
         body,
         signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS)
       })
     } catch (cause) {
-      lastError = new Error(`gemini unreachable: ${cause.message}`)
+      lastError = new Error(`text-to-speech unreachable: ${cause.message}`)
       continue
     }
 
     if (response.status === 429) {
-      lastError = new Error('gemini rate limited')
+      lastError = new Error('text-to-speech rate limited')
       lastError.rateLimited = true
-      // Unlike the others, this one needs time to clear rather than another
-      // immediate attempt.
       await new Promise((resolve) => setTimeout(resolve, 1_000 * (attempt + 1)))
       continue
     }
 
     if (response.status >= 500) {
-      lastError = new Error(`gemini responded ${response.status}`)
+      lastError = new Error(`text-to-speech responded ${response.status}`)
       continue
     }
 
     if (!response.ok) {
       const detail = await response.text().catch(() => '')
-      if (detail.includes('content_blocked')) {
-        lastError = new Error('gemini blocked the content')
+      if (/blocked|safety|prohibited/i.test(detail)) {
+        lastError = new Error('text-to-speech blocked the content')
         lastError.blocked = true
         continue
       }
       blockedEveryTime = false
-      const error = new Error(`gemini rejected the request: ${detail.slice(0, 300)}`)
+      const error = new Error(`text-to-speech rejected the request: ${detail.slice(0, 300)}`)
       error.status = response.status === 400 || response.status === 403 ? 422 : 502
       throw error
     }
 
     blockedEveryTime = false
-    const pcm = extractAudio(await response.json())
-    if (pcm === null || pcm.length === 0) {
-      // The model answered in words instead of audio. Retrying does sometimes
-      // help; failing loudly is still better than returning silence.
-      lastError = new Error('gemini returned no audio')
+    const payload = await response.json().catch(() => null)
+    if (!payload?.audioContent) {
+      lastError = new Error('text-to-speech returned no audio')
+      continue
+    }
+
+    const pcm = pcmFromWav(Buffer.from(payload.audioContent, 'base64'))
+    if (pcm.length === 0) {
+      lastError = new Error('text-to-speech returned an empty clip')
       continue
     }
 
     return truncateToSeconds(pcm, maximumSeconds)
   }
 
-  const error = lastError ?? new Error('gemini failed')
+  const error = lastError ?? new Error('text-to-speech failed')
   if (lastError?.rateLimited) {
     error.status = 429
   } else {
-    // Refused every single time is the one case where the words are plausibly
-    // the problem, and the only case worth telling the user about.
     error.status = blockedEveryTime && lastError?.blocked ? 422 : 502
   }
   throw error
 }
 
-module.exports = { synthesize, extractAudio, truncateToSeconds, SAMPLE_RATE, BYTES_PER_SECOND, MODEL }
+module.exports = { synthesize, pcmFromWav, truncateToSeconds, SAMPLE_RATE, BYTES_PER_SECOND, MODEL }
