@@ -128,32 +128,31 @@ struct AIVoiceSheet: View {
                 } header: {
                     Text("ai_voice_who_says_it")
                 } footer: {
-                    Text("ai_voice_who_says_it_hint")
+                    // The rule the count in the toolbar is counting down, said once
+                    // where there is room to say it.
+                    Text(remaining > 0 ? "ai_voice_quota_hint" : "ai_voice_who_says_it_hint")
                 }
 
-                Section {
-                    HStack {
-                        Text("ai_voice_remaining")
-                        Spacer()
-                        Text("\(remaining)")
-                            .foregroundStyle(remaining > 0 ? .secondary : Color.red)
-                            .monospacedDigit()
-                    }
-                    // Only offered once the free allowance is gone, and only when
-                    // an ad is actually there — a button that trades a video for a
-                    // generation has to be able to honour the trade.
-                    if remaining == 0, RewardedAdController.isConfigured {
-                        Button {
-                            watchAdForCredit()
-                        } label: {
-                            Label("ai_voice_watch_ad", systemImage: "play.rectangle")
+                // Only the way *back* from empty lives down here. The count itself
+                // sits beside the button that spends it, where it is read.
+                if remaining == 0 {
+                    Section {
+                        // Offered only when an ad is really there: a button that
+                        // trades a video for a generation has to be able to honour
+                        // the trade.
+                        if RewardedAdController.isConfigured {
+                            Button {
+                                watchAdForCredit()
+                            } label: {
+                                Label("ai_voice_watch_ad", systemImage: "play.rectangle")
+                            }
+                            .disabled(!rewardedAd.isReady || rewardedAd.isPresenting)
                         }
-                        .disabled(!rewardedAd.isReady || rewardedAd.isPresenting)
+                    } header: {
+                        Text("ai_voice_quota")
+                    } footer: {
+                        Text(quotaExhaustedHint)
                     }
-                } header: {
-                    Text("ai_voice_quota")
-                } footer: {
-                    Text(remaining > 0 ? "ai_voice_quota_hint" : quotaExhaustedHint)
                 }
 
                 if let message {
@@ -172,8 +171,17 @@ struct AIVoiceSheet: View {
                     if isGenerating {
                         ProgressView()
                     } else {
-                        Button("ai_voice_generate") { generate() }
-                            .disabled(!canGenerate)
+                        // The count belongs next to the button that spends it. Put
+                        // it at the bottom of the form and it is read after the
+                        // decision rather than before it.
+                        HStack(spacing: 6) {
+                            Text("\(remaining)")
+                                .monospacedDigit()
+                                .foregroundStyle(remaining > 0 ? .secondary : Color.red)
+                                .accessibilityLabel(Text("ai_voice_remaining"))
+                            Button("ai_voice_generate") { generate() }
+                                .disabled(!canGenerate)
+                        }
                     }
                 }
             }
