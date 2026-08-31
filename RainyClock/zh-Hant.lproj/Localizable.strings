@@ -50,6 +50,7 @@
 "alarm_sound_energetic_pulse" = "活力節奏";
 "alarm_sound_deep_resonance" = "低頻共鳴";
 "alarm_sound_minimal_tap" = "極簡敲擊";
+"alarm_sound_ai_voice" = "AI 人聲";
 "alarm_sound_system_default" = "系統預設鬧鈴";
 "preview_alarm_sound" = "試聽鬧鈴";
 "snooze" = "賴床";

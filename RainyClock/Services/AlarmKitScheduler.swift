@@ -30,6 +30,7 @@ struct AlarmKitScheduler: NotificationScheduling {
         normalAlarmDate: Date,
         weekdays: Set<Int>,
         sound: CommuteAlarmSettings.AlarmSound,
+        soundFileNameOverride: String?,
         snoozeMinutes: Int?,
         title: String,
         body: String
@@ -77,7 +78,7 @@ struct AlarmKitScheduler: NotificationScheduling {
             countdownDuration: snoozeMinutes.map { Alarm.CountdownDuration(preAlert: nil, postAlert: TimeInterval($0 * 60)) },
             schedule: schedule,
             attributes: attributes,
-            sound: Self.alertSound(for: sound)
+            sound: Self.alertSound(fileNamed: soundFileNameOverride)
         )
 
         // Register the replacement before retiring what is already armed: if
@@ -117,9 +118,14 @@ struct AlarmKitScheduler: NotificationScheduling {
     }
 
     /// The system alarm tone is only reachable through `.default`; every other
-    /// choice names a file this app ships.
-    private static func alertSound(for sound: CommuteAlarmSettings.AlarmSound) -> AlertConfiguration.AlertSound {
-        sound.usesSystemAlarmTone ? .default : .named(sound.fileName)
+    /// choice names a file, either one this app ships or one it generated into the
+    /// container's `Library/Sounds` — AlarmKit resolves both by bare name, and an
+    /// empty name would ring nothing.
+    private static func alertSound(fileNamed fileName: String?) -> AlertConfiguration.AlertSound {
+        guard let fileName, !fileName.isEmpty else {
+            return .default
+        }
+        return .named(fileName)
     }
 
     private static func presentation(adjustedForRain: Bool, snoozeMinutes: Int?) -> AlarmPresentation {

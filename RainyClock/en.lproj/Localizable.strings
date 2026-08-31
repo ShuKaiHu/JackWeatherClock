@@ -50,6 +50,7 @@
 "alarm_sound_energetic_pulse" = "Energetic Pulse";
 "alarm_sound_deep_resonance" = "Deep Resonance";
 "alarm_sound_minimal_tap" = "Minimal Tap";
+"alarm_sound_ai_voice" = "AI Voice";
 "alarm_sound_system_default" = "System Default Alarm";
 "preview_alarm_sound" = "Preview alarm sound";
 "snooze" = "Snooze";

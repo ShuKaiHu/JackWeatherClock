@@ -201,6 +201,7 @@ private final class SchedulerSpy: NotificationScheduling, @unchecked Sendable {
         var normalAlarmDate: Date
         var weekdays: Set<Int>
         var sound: CommuteAlarmSettings.AlarmSound
+        var soundFileNameOverride: String?
         var snoozeMinutes: Int?
     }
 
@@ -233,6 +234,7 @@ private final class SchedulerSpy: NotificationScheduling, @unchecked Sendable {
         normalAlarmDate: Date,
         weekdays: Set<Int>,
         sound: CommuteAlarmSettings.AlarmSound,
+        soundFileNameOverride: String?,
         snoozeMinutes: Int?,
         title: String,
         body: String
@@ -248,6 +250,7 @@ private final class SchedulerSpy: NotificationScheduling, @unchecked Sendable {
                     normalAlarmDate: normalAlarmDate,
                     weekdays: weekdays,
                     sound: sound,
+                    soundFileNameOverride: soundFileNameOverride,
                     snoozeMinutes: snoozeMinutes
                 )
             )

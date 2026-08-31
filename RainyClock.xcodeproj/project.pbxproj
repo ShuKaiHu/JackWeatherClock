@@ -30,9 +30,6 @@
 		0A1000B12C00000000000003 /* RainyClock.wav in Resources */ = {isa = PBXBuildFile; fileRef = 0A1000B02C00000000000003 /* RainyClock.wav */; };
 		0A1000B32C00000000000003 /* MorningBell.wav in Resources */ = {isa = PBXBuildFile; fileRef = 0A1000B22C00000000000003 /* MorningBell.wav */; };
 		0A1000B52C00000000000003 /* SoftPiano.wav in Resources */ = {isa = PBXBuildFile; fileRef = 0A1000B42C00000000000003 /* SoftPiano.wav */; };
-		0A1000F42C00000000000005 /* UnityMediationSDK in Frameworks */ = {isa = PBXBuildFile; productRef = 0A1000F32C00000000000005 /* UnityMediationSDK */; };
-		0A1000F92C00000000000005 /* AdConsentSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1000F82C00000000000005 /* AdConsentSheet.swift */; };
-		0A1000F12C00000000000005 /* LevelPlayBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1000F02C00000000000005 /* LevelPlayBannerView.swift */; };
 		0A1000D12C00000000000005 /* BrightChime.wav in Resources */ = {isa = PBXBuildFile; fileRef = 0A1000D02C00000000000005 /* BrightChime.wav */; };
 		0A1000D32C00000000000005 /* GentleWaves.wav in Resources */ = {isa = PBXBuildFile; fileRef = 0A1000D22C00000000000005 /* GentleWaves.wav */; };
 		0A1000D52C00000000000005 /* DigitalBeep.wav in Resources */ = {isa = PBXBuildFile; fileRef = 0A1000D42C00000000000005 /* DigitalBeep.wav */; };
@@ -42,8 +39,12 @@
 		0A1000DD2C00000000000005 /* MinimalTap.wav in Resources */ = {isa = PBXBuildFile; fileRef = 0A1000DC2C00000000000005 /* MinimalTap.wav */; };
 		0A1000E02C00000000000006 /* WeatherKitSamplingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1000E12C00000000000006 /* WeatherKitSamplingService.swift */; };
 		0A1000F02C00000000000007 /* MapItemResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1000F12C00000000000007 /* MapItemResolver.swift */; };
+		0A1000F12C00000000000005 /* LevelPlayBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1000F02C00000000000005 /* LevelPlayBannerView.swift */; };
 		0A1000F22C00000000000008 /* GooglePlaceResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1000F32C00000000000008 /* GooglePlaceResolver.swift */; };
+		0A1000F42C00000000000005 /* UnityMediationSDK in Frameworks */ = {isa = PBXBuildFile; productRef = 0A1000F32C00000000000005 /* UnityMediationSDK */; };
+		0A1000F92C00000000000005 /* AdConsentSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1000F82C00000000000005 /* AdConsentSheet.swift */; };
 		0A1001002C00000000000009 /* ConsentManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1001012C00000000000009 /* ConsentManager.swift */; };
+		12E2CB57CF460CA5D7EC382B /* GeneratedVoiceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07A5A9EAEA066F80FAC943D3 /* GeneratedVoiceStore.swift */; };
 		16908840039C92EF6FDD7931 /* CommuteAlarmMetadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4BB22C84DAA14A208462B12 /* CommuteAlarmMetadata.swift */; };
 		305482FE2E7CFA780A020BD2 /* RainyClockAlarmWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36DE7F14501F8A8F682E4478 /* RainyClockAlarmWidgetBundle.swift */; };
 		62E6937A638A6D55A89E4F77 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 38716E405CDB08148FEFEA93 /* Foundation.framework */; };
@@ -88,10 +89,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		07A5A9EAEA066F80FAC943D3 /* GeneratedVoiceStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GeneratedVoiceStore.swift; sourceTree = "<group>"; };
 		0A1000112C00000000000001 /* RainyClockApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RainyClockApp.swift; sourceTree = "<group>"; };
 		0A1000122C00000000000001 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		0A1000F02C00000000000005 /* LevelPlayBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LevelPlayBannerView.swift; sourceTree = "<group>"; };
-		0A1000F82C00000000000005 /* AdConsentSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdConsentSheet.swift; sourceTree = "<group>"; };
 		0A1000132C00000000000001 /* CommuteAlarmSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommuteAlarmSettings.swift; sourceTree = "<group>"; };
 		0A1000142C00000000000001 /* AlarmTimeCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmTimeCalculator.swift; sourceTree = "<group>"; };
 		0A1000152C00000000000001 /* NotificationScheduling.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationScheduling.swift; sourceTree = "<group>"; };
@@ -125,8 +125,10 @@
 		0A1000DA2C00000000000005 /* DeepResonance.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = DeepResonance.wav; sourceTree = "<group>"; };
 		0A1000DC2C00000000000005 /* MinimalTap.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = MinimalTap.wav; sourceTree = "<group>"; };
 		0A1000E12C00000000000006 /* WeatherKitSamplingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherKitSamplingService.swift; sourceTree = "<group>"; };
+		0A1000F02C00000000000005 /* LevelPlayBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LevelPlayBannerView.swift; sourceTree = "<group>"; };
 		0A1000F12C00000000000007 /* MapItemResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapItemResolver.swift; sourceTree = "<group>"; };
 		0A1000F32C00000000000008 /* GooglePlaceResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GooglePlaceResolver.swift; sourceTree = "<group>"; };
+		0A1000F82C00000000000005 /* AdConsentSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdConsentSheet.swift; sourceTree = "<group>"; };
 		0A1001012C00000000000009 /* ConsentManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsentManager.swift; sourceTree = "<group>"; };
 		1C36A72344C85323EDB4B2B8 /* CommuteAlarmLiveActivity.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CommuteAlarmLiveActivity.swift; sourceTree = "<group>"; };
 		36DE7F14501F8A8F682E4478 /* RainyClockAlarmWidgetBundle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RainyClockAlarmWidgetBundle.swift; sourceTree = "<group>"; };
@@ -244,6 +246,7 @@
 				0A1000E12C00000000000006 /* WeatherKitSamplingService.swift */,
 				7D92658ADF45F0EC2AD58E50 /* AlarmKitScheduler.swift */,
 				7D92658ADFA0F0EC2AD58B01 /* BackgroundWeatherRefresh.swift */,
+				07A5A9EAEA066F80FAC943D3 /* GeneratedVoiceStore.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -475,6 +478,7 @@
 				16908840039C92EF6FDD7931 /* CommuteAlarmMetadata.swift in Sources */,
 				672140296105B2FF93129911 /* AlarmKitScheduler.swift in Sources */,
 				6721402961A0B2FF93129B01 /* BackgroundWeatherRefresh.swift in Sources */,
+				12E2CB57CF460CA5D7EC382B /* GeneratedVoiceStore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
