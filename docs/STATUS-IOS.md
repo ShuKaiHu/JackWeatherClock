@@ -22,7 +22,7 @@ Last updated: 2026-08-13.
 | Superseded | `1.6.3 (18)` | Released 2026-07-28 |
 | Rejected, then resolved | `1.6.4 (19)` | Rejected 2026-08-01 on 5.1.2(i) and 2.1(a); both answered, and the fixes reached users in 1.6.5 |
 | **Live on the App Store** | `1.6.7` | **Released 2026-08-30.** The ad-provider migration. Confirmed against the public listing on 2026-08-31 — this row had still been claiming 正在等待審查, the third time this file has gone stale the same way |
-| **Uploaded, not submitted** | `1.6.8 (27)` | The AI voice alarm. Archived and uploaded 2026-09-01; `xcodebuild -exportArchive` again needed no credentials by hand. **Still owed before submitting:** declare *Other User Content* in App Privacy (App Store Connect → App 隱私權 → 資料類型 → 編輯), paste the release notes and the review note from `docs/appstore-metadata.md`, and submit |
+| **Waiting for Review** | `1.6.8 (27)` | The AI voice alarm. Uploaded and **submitted 2026-09-01**; the CLI export path again needed no credentials by hand. Do not trust this row once review turns around — run the `itunes.apple.com/lookup` command above, which is what caught this file claiming 1.6.6 and 1.6.7 were still in review after both had shipped |
 
 **Ships with 1.6.6 (edited in ASC 2026-08-13):** both app names change — 繁體中文
 `RainyClock` → `Rainy Clock`, English `Rainy Clock: Rain Alarm` → `Rainy-Clock`. Plain
