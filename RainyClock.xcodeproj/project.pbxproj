@@ -69,6 +69,7 @@
 		CD94782468365102E82370FC /* CommuteAlarmLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C36A72344C85323EDB4B2B8 /* CommuteAlarmLiveActivity.swift */; };
 		CF5CAA8FE6A0EB863437C561 /* AIVoiceSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57381698D3814E4FBA98C10A /* AIVoiceSheet.swift */; };
 		CFC9F616B873328E7A2F0342 /* preview-steady-zh.m4a in Resources */ = {isa = PBXBuildFile; fileRef = DDC50EA36C988E419DE6D554 /* preview-steady-zh.m4a */; };
+		D901596ADED0CA3EC1B23B61 /* AdReport.swift in Sources */ = {isa = PBXBuildFile; fileRef = C21DFB581C278C05ABFA0647 /* AdReport.swift */; };
 		D9AFFD3EDD2005FE2CE06FEC /* AlarmSchedulingSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDA82D02716704A4024FBA29 /* AlarmSchedulingSettingsTests.swift */; };
 		DF082B611B71792BF1D6336D /* preview-buddy-zh.m4a in Resources */ = {isa = PBXBuildFile; fileRef = 91F9D85B61E9E6AF09BBB425 /* preview-buddy-zh.m4a */; };
 		E02AA2444353D39C4B42A1E9 /* GeneratedVoiceAssemblerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9606BA5A5CBAB2AB6039C090 /* GeneratedVoiceAssemblerTests.swift */; };
@@ -172,6 +173,7 @@
 		A0D3D02201171DF13F744C9A /* preview-sergeant-zh.m4a */ = {isa = PBXFileReference; includeInIndex = 1; path = "preview-sergeant-zh.m4a"; sourceTree = "<group>"; };
 		BD49BAED1D38DE6ABCBCAB8E /* preview-sergeant-en.m4a */ = {isa = PBXFileReference; includeInIndex = 1; path = "preview-sergeant-en.m4a"; sourceTree = "<group>"; };
 		BEF28F46540B76D9879B6DA7 /* preview-mom-zh.m4a */ = {isa = PBXFileReference; includeInIndex = 1; path = "preview-mom-zh.m4a"; sourceTree = "<group>"; };
+		C21DFB581C278C05ABFA0647 /* AdReport.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AdReport.swift; sourceTree = "<group>"; };
 		D0E42F1A82A2DC0F58286FF0 /* GeneratedVoiceAssembler.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GeneratedVoiceAssembler.swift; sourceTree = "<group>"; };
 		DDC50EA36C988E419DE6D554 /* preview-steady-zh.m4a */ = {isa = PBXFileReference; includeInIndex = 1; path = "preview-steady-zh.m4a"; sourceTree = "<group>"; };
 		E5ECAFB90DC821FA5EE54ADD /* AIVoiceClient.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AIVoiceClient.swift; sourceTree = "<group>"; };
@@ -303,6 +305,7 @@
 				E5ECAFB90DC821FA5EE54ADD /* AIVoiceClient.swift */,
 				6BA273EA8BCD1B0999200C60 /* AIVoiceQuota.swift */,
 				3AD002638D80D3B245F91C05 /* RewardedAdController.swift */,
+				C21DFB581C278C05ABFA0647 /* AdReport.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -555,6 +558,7 @@
 				AA98B6CDAFC126C83261B927 /* VoicePersona.swift in Sources */,
 				91824AA8244757AED10F11B2 /* AIVoiceQuota.swift in Sources */,
 				01D38ACAF517A7C2D707E95E /* RewardedAdController.swift in Sources */,
+				D901596ADED0CA3EC1B23B61 /* AdReport.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

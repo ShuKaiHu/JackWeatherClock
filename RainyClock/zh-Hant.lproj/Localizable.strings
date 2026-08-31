@@ -163,3 +163,7 @@
 "ai_voice_watch_ad" = "看影片換一次生成";
 "ai_voice_quota_free_remaining" = "剩餘 %d 次免費。用完之後，每看一段影片可以再生成一次。";
 "ai_voice_quota_remaining" = "剩餘 %d 次。用完之後，每看一段影片可以再生成一次。";
+"report_ad" = "檢舉廣告";
+"report_ad_action" = "回報";
+"report_ad_subject" = "雨天鬧鐘：檢舉不當廣告";
+"report_ad_body" = "請描述你看到的廣告，如果方便的話附上截圖。\n\nApp 版本：%@\n廣告來源：Unity LevelPlay\n\n---\n";

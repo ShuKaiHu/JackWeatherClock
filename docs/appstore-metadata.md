@@ -282,16 +282,63 @@ Everywhere else the experience is unchanged — alarms, commute routes, and weat
 ## App Review Notes
 
 **Never paste from the historical blocks below.** The only current note is the
-version-specific one for `1.6.7`. The older blocks are kept as a record of what was told to
+version-specific one for `1.6.8`. The older blocks are kept as a record of what was told to
 App Review at the time, and several are now false: the pre-`1.6.2` ones say alarm scheduling
 uses local notifications only (untrue since `1.6.3` adopted AlarmKit — and it undercuts the
 2.1(a) reply, which rests on AlarmKit requiring the widget extension) and that the app does
 not track (untrue since `1.6.5` added ATT), while everything up to `1.6.6` describes Google
 AdMob and `npa=1`, which `1.6.7` replaced with Unity LevelPlay.
 
-### Version-specific note prepared for 1.6.7 — CURRENT
+### Version-specific note prepared for 1.6.8 (27) — CURRENT
 
 The only note to paste. Update the build number if it moves.
+
+Written around the one thing most likely to go wrong in review: a reviewer spends the three
+free generations, then taps the exchange in a datacentre with tracking denied, where no
+rewarded ad fills. `1.6.4` was rejected under 2.1 for a reviewer reaching a dead end, so the
+note says in advance what that screen means and that nothing is broken.
+
+```
+AI VOICE ALARM (new in this version)
+
+Alarm sound → "AI 人聲" / "AI Voice" opens a screen where the user types what the alarm
+should say and picks one of six voices. Tapping Generate sends only those words, the chosen
+voice, and the app's language to a relay service we operate, which passes them to Google
+Cloud Text-to-Speech and returns audio. The finished sound is stored on the device and rings
+offline. No account, no personal data, nothing linked to the user. This is declared in App
+Privacy as Other User Content, used for App Functionality, not linked to identity and not
+used for tracking, and it is described in the privacy policy under "AI Voice Alarm".
+
+The six voice previews are audio files bundled in the app. They play offline and cost
+nothing, so every voice can be heard before anything is generated.
+
+FREE ALLOWANCE AND REWARDED VIDEO
+
+The first three generations are free. After that the screen offers a rewarded video in
+exchange for one more, which guideline 3.2.2(x) permits ("completing a level, watching an
+ad"). No purchase is involved and no IAP is required to use any part of the app.
+
+If no rewarded video is available — which is likely in a test environment, and is also what
+happens when ad tracking is declined or ad consent is dismissed — the screen says so and
+offers nothing further. This is the intended behaviour, not a failure:
+
+  • Alarms already set continue to ring normally, including ones already using an AI voice.
+  • Every other alarm sound, and the rest of the app, is unaffected.
+  • The feature never requires enabling tracking or accepting ads to be used at all; the
+    three free generations work regardless of both answers.
+
+REPORTING ADS
+
+Alarm tab → "Report an ad" opens a prefilled mail draft, per guideline 2.5.18.
+
+TESTING THE ALARM
+
+As in previous versions, alarms use AlarmKit on iOS 26 and later, which is why the app ships
+the RainyClockAlarmWidget extension. Please test on an iPhone; on iPad the app runs in iPhone
+compatibility mode.
+```
+
+### Version-specific note prepared for 1.6.7 — superseded by 1.6.8
 
 ```
 This build changes how ads are served. They were previously served by Google AdMob; they are

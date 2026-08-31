@@ -652,6 +652,20 @@ private struct AlarmTabView: View {
                                 .foregroundStyle(Color.accentColor)
                             }
                         }
+
+                        // Guideline 2.5.18: an app that carries ads must give
+                        // users a way to report an inappropriate or
+                        // age-inappropriate one. Unlike the consent row above,
+                        // this is required everywhere, not only under GDPR — so
+                        // it is not behind `showsPrivacyOptions`.
+                        HStack {
+                            Text("report_ad")
+                            Spacer()
+                            Link(destination: AdReport.mailURL) {
+                                Text("report_ad_action")
+                            }
+                            .foregroundStyle(Color.accentColor)
+                        }
                     }
                     .padding(18)
                     .background(Color.appCardBackground, in: RoundedRectangle(cornerRadius: 24, style: .continuous))

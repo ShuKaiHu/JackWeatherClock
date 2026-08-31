@@ -163,3 +163,7 @@
 "ai_voice_watch_ad" = "Watch a video for one generation";
 "ai_voice_quota_free_remaining" = "%d free generations left. After that, each video watched earns one more.";
 "ai_voice_quota_remaining" = "%d generations left. After that, each video watched earns one more.";
+"report_ad" = "Report an ad";
+"report_ad_action" = "Report";
+"report_ad_subject" = "Rainy Clock: inappropriate ad report";
+"report_ad_body" = "Please describe the ad you saw, and attach a screenshot if you can.\n\nApp version: %@\nAd provider: Unity LevelPlay\n\n---\n";
