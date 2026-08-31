@@ -672,5 +672,7 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>VoiceProxyURL</key>
+	<string></string>
 </dict>
 </plist>

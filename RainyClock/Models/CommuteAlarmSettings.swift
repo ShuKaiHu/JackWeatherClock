@@ -169,6 +169,11 @@ struct CommuteAlarmSettings: Codable, Equatable {
     /// when `alarmSound == .aiVoice`. Kept beside the enum rather than inside it
     /// so `AlarmSound` stays a plain raw-value enum.
     var aiVoiceFileName: String?
+    /// What was said and who said it. Kept so the sheet reopens on what the user
+    /// last chose rather than a blank page — the clip itself is audio and cannot
+    /// be read back into a text field.
+    var aiVoicePersona: VoicePersona = .default
+    var aiVoiceText: String = ""
     var isSnoozeEnabled: Bool = true
     var snoozeDurationMinutes: Int = 5
 
@@ -196,6 +201,8 @@ struct CommuteAlarmSettings: Codable, Equatable {
         let decodedAlarmSound = try values.decodeIfPresent(AlarmSound.self, forKey: .alarmSound) ?? .rainyClock
         alarmSound = AlarmSound.restorableCases.contains(decodedAlarmSound) ? decodedAlarmSound : .rainyClock
         aiVoiceFileName = try values.decodeIfPresent(String.self, forKey: .aiVoiceFileName)
+        aiVoicePersona = try values.decodeIfPresent(VoicePersona.self, forKey: .aiVoicePersona) ?? .default
+        aiVoiceText = try values.decodeIfPresent(String.self, forKey: .aiVoiceText) ?? ""
         isSnoozeEnabled = try values.decodeIfPresent(Bool.self, forKey: .isSnoozeEnabled) ?? true
         let decodedSnoozeDuration = try values.decodeIfPresent(Int.self, forKey: .snoozeDurationMinutes) ?? 5
         snoozeDurationMinutes = min(max(decodedSnoozeDuration, Self.snoozeDurationRange.lowerBound), Self.snoozeDurationRange.upperBound)

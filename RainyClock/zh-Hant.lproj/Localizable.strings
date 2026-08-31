@@ -131,3 +131,27 @@
 "ad_consent_decline" = "維持非個人化廣告";
 "ad_consent_privacy_link" = "隱私權政策";
 "ok_button" = "好";
+
+/* AI voice alarm */
+"voice_persona_steady" = "沉穩播報";
+"voice_persona_steady_hint" = "像晨間新聞，清楚穩定";
+"voice_persona_bright" = "元氣早安";
+"voice_persona_bright_hint" = "有精神，把你叫起來";
+"voice_persona_gentle" = "溫柔陪伴";
+"voice_persona_gentle_hint" = "輕輕地喚醒你";
+"voice_persona_buddy" = "損友吐槽";
+"voice_persona_buddy_hint" = "邊虧你邊叫你起床";
+"voice_persona_mom" = "碎念媽媽";
+"voice_persona_mom_hint" = "已經叫你第三次了";
+"voice_persona_sergeant" = "魔鬼教官";
+"voice_persona_sergeant_hint" = "大聲，不容商量";
+"ai_voice_what_to_say" = "要說什麼";
+"ai_voice_what_to_say_hint" = "寫下你想聽到的話。App 會依句子自動決定語氣起伏。";
+"ai_voice_who_says_it" = "誰來說";
+"ai_voice_who_says_it_hint" = "按播放可以先試聽，不會用掉生成次數。";
+"ai_voice_placeholder" = "早安～該起床囉！今天外面下雨，要早點出門。";
+"ai_voice_generate" = "產生";
+"ai_voice_error_rejected" = "這段文字沒辦法生成，換個說法再試一次。";
+"ai_voice_error_busy" = "現在比較忙，過一下再試。";
+"ai_voice_error_unavailable" = "目前無法連線，鬧鐘會先用原本的鈴聲。";
+"ai_voice_not_set" = "尚未設定";

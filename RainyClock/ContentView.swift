@@ -492,6 +492,7 @@ private struct AlarmTabView: View {
 
     @ObservedObject var viewModel: AlarmViewModel
     @ObservedObject private var consentManager = ConsentManager.shared
+    @State private var showsAIVoiceSheet = false
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     // Only consulted at accessibility text sizes, where the row wraps and the
     // chip finally has room to grow. Capped so AX5 doesn't produce a chip
@@ -600,6 +601,30 @@ private struct AlarmTabView: View {
                             }
                         }
 
+                        // Its own row rather than an entry in the picker above: a
+                        // spoken alarm is written before it exists, so choosing it
+                        // means opening something, not selecting a row that would
+                        // otherwise name a file the app does not have yet.
+                        if AIVoiceClient.isConfigured {
+                            Button {
+                                showsAIVoiceSheet = true
+                            } label: {
+                                HStack {
+                                    Text("alarm_sound_ai_voice")
+                                        .foregroundStyle(.primary)
+                                    Spacer()
+                                    Text(viewModel.settings.alarmSound == .aiVoice
+                                         ? viewModel.settings.aiVoicePersona.displayName
+                                         : String(localized: "ai_voice_not_set"))
+                                        .foregroundStyle(.secondary)
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption)
+                                        .foregroundStyle(.tertiary)
+                                }
+                            }
+                            .buttonStyle(.plain)
+                        }
+
                         Toggle(isOn: $viewModel.settings.isSnoozeEnabled) {
                             Text("snooze")
                         }
@@ -695,6 +720,9 @@ private struct AlarmTabView: View {
             .navigationTitle(String(localized: "tab_alarm"))
             .toolbar(.hidden, for: .navigationBar)
             .background(Color.appBackground)
+        }
+        .sheet(isPresented: $showsAIVoiceSheet) {
+            AIVoiceSheet(viewModel: viewModel)
         }
         .sheet(isPresented: $showsTimePicker) {
             NavigationStack {

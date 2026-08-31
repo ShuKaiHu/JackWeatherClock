@@ -131,3 +131,27 @@
 "ad_consent_decline" = "Keep non-personalized ads";
 "ad_consent_privacy_link" = "Privacy Policy";
 "ok_button" = "OK";
+
+/* AI voice alarm */
+"voice_persona_steady" = "Steady";
+"voice_persona_steady_hint" = "Clear and even, like the morning news";
+"voice_persona_bright" = "Bright";
+"voice_persona_bright_hint" = "Energetic, gets you up";
+"voice_persona_gentle" = "Gentle";
+"voice_persona_gentle_hint" = "Wakes you softly";
+"voice_persona_buddy" = "Buddy";
+"voice_persona_buddy_hint" = "Teases you awake";
+"voice_persona_mom" = "Mom";
+"voice_persona_mom_hint" = "This is the third time she has called you";
+"voice_persona_sergeant" = "Sergeant";
+"voice_persona_sergeant_hint" = "Loud, and not negotiating";
+"ai_voice_what_to_say" = "What it says";
+"ai_voice_what_to_say_hint" = "Write what you want to hear. The app varies the delivery across your sentences.";
+"ai_voice_who_says_it" = "Who says it";
+"ai_voice_who_says_it_hint" = "Tap play to listen first. Previews do not use a generation.";
+"ai_voice_placeholder" = "Good morning! It is raining today, so leave a little earlier.";
+"ai_voice_generate" = "Generate";
+"ai_voice_error_rejected" = "That wording could not be generated. Try phrasing it differently.";
+"ai_voice_error_busy" = "Busy right now. Try again in a moment.";
+"ai_voice_error_unavailable" = "Cannot reach the service. Your alarm will use its usual tone.";
+"ai_voice_not_set" = "Not set";
