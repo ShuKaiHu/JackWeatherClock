@@ -157,9 +157,9 @@
 "ai_voice_not_set" = "尚未設定";
 "cancel" = "取消";
 "ai_voice_quota" = "生成次數";
-"ai_voice_remaining" = "剩餘次數";
-"ai_voice_quota_hint" = "前三次免費。用完之後，每看一段影片可以再生成一次。";
 "ai_voice_quota_watch" = "免費次數已用完。看一段影片可以再生成一次。";
 "ai_voice_quota_no_ad" = "免費次數已用完，目前沒有可看的影片，請稍後再試。已設定好的鬧鈴不受影響。";
 "ai_voice_quota_gone" = "免費次數已用完。已設定好的鬧鈴不受影響。";
 "ai_voice_watch_ad" = "看影片換一次生成";
+"ai_voice_quota_free_remaining" = "剩餘 %d 次免費。用完之後，每看一段影片可以再生成一次。";
+"ai_voice_quota_remaining" = "剩餘 %d 次。用完之後，每看一段影片可以再生成一次。";

@@ -38,6 +38,18 @@ struct AIVoiceSheet: View {
         return rewardedAd.isReady ? "ai_voice_quota_watch" : "ai_voice_quota_no_ad"
     }
 
+    /// How many are left, and what happens when they are not.
+    ///
+    /// The word "free" is dropped once any of the remaining count was bought with
+    /// a video, because by then it is not free and saying so would be a small lie
+    /// told every time the sheet opens.
+    private var quotaSentence: String {
+        let format = remaining == AIVoiceQuota.freeRemaining
+            ? String(localized: "ai_voice_quota_free_remaining")
+            : String(localized: "ai_voice_quota_remaining")
+        return String.localizedStringWithFormat(format, remaining)
+    }
+
     /// One counter for both languages: a Chinese character costs a whole unit, a
     /// Latin one the fraction that makes 150 of them weigh the same as 40.
     private var used: Double {
@@ -128,9 +140,10 @@ struct AIVoiceSheet: View {
                 } header: {
                     Text("ai_voice_who_says_it")
                 } footer: {
-                    // The rule the count in the toolbar is counting down, said once
-                    // where there is room to say it.
-                    Text(remaining > 0 ? "ai_voice_quota_hint" : "ai_voice_who_says_it_hint")
+                    // The count and the rule in one sentence, rather than a bare
+                    // number beside the button: how many are left only means
+                    // anything next to what happens when they run out.
+                    Text(quotaSentence)
                 }
 
                 // Only the way *back* from empty lives down here. The count itself
@@ -171,17 +184,8 @@ struct AIVoiceSheet: View {
                     if isGenerating {
                         ProgressView()
                     } else {
-                        // The count belongs next to the button that spends it. Put
-                        // it at the bottom of the form and it is read after the
-                        // decision rather than before it.
-                        HStack(spacing: 6) {
-                            Text("\(remaining)")
-                                .monospacedDigit()
-                                .foregroundStyle(remaining > 0 ? .secondary : Color.red)
-                                .accessibilityLabel(Text("ai_voice_remaining"))
-                            Button("ai_voice_generate") { generate() }
-                                .disabled(!canGenerate)
-                        }
+                        Button("ai_voice_generate") { generate() }
+                            .disabled(!canGenerate)
                     }
                 }
             }

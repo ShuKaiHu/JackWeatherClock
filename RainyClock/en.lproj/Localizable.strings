@@ -157,9 +157,9 @@
 "ai_voice_not_set" = "Not set";
 "cancel" = "Cancel";
 "ai_voice_quota" = "Generations";
-"ai_voice_remaining" = "Remaining";
-"ai_voice_quota_hint" = "The first three are free. After that, each video watched earns one more.";
 "ai_voice_quota_watch" = "You have used the free ones. Watch a video to earn another.";
 "ai_voice_quota_no_ad" = "You have used the free ones, and no video is available right now. Alarms you have already set are unaffected.";
 "ai_voice_quota_gone" = "You have used the free ones. Alarms you have already set are unaffected.";
 "ai_voice_watch_ad" = "Watch a video for one generation";
+"ai_voice_quota_free_remaining" = "%d free generations left. After that, each video watched earns one more.";
+"ai_voice_quota_remaining" = "%d generations left. After that, each video watched earns one more.";
