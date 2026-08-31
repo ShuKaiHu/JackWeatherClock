@@ -616,8 +616,18 @@ Done:
 
 Still open, roughly in order:
 
-- The app-side client, audio assembly (speech + tone bed → 28 s), and the text-entry UI —
-  including how a typed line is split into sentences and which emotion each one gets.
+- [x] **Deployed 2026-08-31.** `/v1/tts` is live on the same Cloud Run service as the weather
+      proxy, revision `00007-jjc`, memory raised 256Mi → 512Mi because the TTS cache holds
+      audio rather than a few hundred bytes of forecast and an OOM here would take the
+      weather down with it. The Gemini key is in Secret Manager as `gemini-api-key`,
+      matching how the WeatherKit private key is already held — it is not in the service's
+      env config, not in the repo, and not in the app. The Cloud Run service account needed
+      `roles/secretmanager.secretAccessor` granted **on the new secret**; the first deploy
+      failed on exactly that and left the previous revision serving, so the weather never
+      went down. Verified after: weather returns the same 25 hours it did before, and a
+      real clip generates end to end. `VoiceProxyURL` in `Info.plist` now points at it.
+- Free quota and the rewarded exchange ship, but nothing meters cost server-side beyond
+  `DAILY_TTS_LIMIT` (2,000 clips ≈ US$6.40/day).
 - **Whether the alarm can name a road.** `RouteWeatherSegment.name` is not a street name — it
   is `住家` / `路程 ½` / `公司`, from a closed set of localised constants, and interior samples
   are empty below 4 km and for transit entirely. So "忠孝東路那段會濕" is not currently

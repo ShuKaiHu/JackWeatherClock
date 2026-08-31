@@ -673,6 +673,6 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>VoiceProxyURL</key>
-	<string></string>
+	<string>https://rainyclock-weather-proxy-510427696731.asia-east1.run.app</string>
 </dict>
 </plist>
