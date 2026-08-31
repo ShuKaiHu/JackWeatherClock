@@ -155,3 +155,4 @@
 "ai_voice_error_busy" = "現在比較忙，過一下再試。";
 "ai_voice_error_unavailable" = "目前無法連線，鬧鐘會先用原本的鈴聲。";
 "ai_voice_not_set" = "尚未設定";
+"cancel" = "取消";

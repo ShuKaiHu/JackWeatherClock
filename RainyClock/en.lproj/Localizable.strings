@@ -155,3 +155,4 @@
 "ai_voice_error_busy" = "Busy right now. Try again in a moment.";
 "ai_voice_error_unavailable" = "Cannot reach the service. Your alarm will use its usual tone.";
 "ai_voice_not_set" = "Not set";
+"cancel" = "Cancel";
