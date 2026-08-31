@@ -1,0 +1,104 @@
+'use strict'
+
+// The closed set of voices this proxy will speak in.
+//
+// The client sends a persona id and the words. It does NOT send a voice name or
+// a style prompt, and that is the whole point: an endpoint that accepts an
+// arbitrary style prompt is a free general-purpose Gemini endpoint the moment
+// somebody reads the URL out of the app. Keeping the prompt here also means the
+// wording can be retuned by redeploying the proxy instead of shipping an app
+// update through review.
+//
+// Voice names are Google's prebuilt Gemini-TTS voices; the descriptor in each
+// comment is Google's own one-word characterisation. Three female, three male,
+// so gender is a property of the choice rather than a separate question the UI
+// has to ask.
+
+const STYLE_ZH = 'zh-Hant'
+const STYLE_EN = 'en'
+
+const PERSONAS = {
+  // Default. Carries the rain briefing better than a hype voice does, and is the
+  // least likely to be uninstalled as an annoying novelty.
+  steady: {
+    voice: 'Charon', // Informative
+    style: {
+      [STYLE_ZH]: '用沉穩、清楚、像晨間播報員的語氣說這段話。語速平穩，咬字清晰，台灣口音的中文。',
+      [STYLE_EN]: 'Read this in a calm, clear morning-broadcast voice. Steady pace, crisp diction.'
+    }
+  },
+  bright: {
+    voice: 'Leda', // Youthful
+    style: {
+      [STYLE_ZH]: '用充滿活力、開朗有精神的語氣說這段話，像在叫醒賴床的朋友。語速稍快，台灣口音的中文。',
+      [STYLE_EN]: 'Say this brightly and energetically, like waking up a friend who overslept. Slightly quick pace.'
+    }
+  },
+  gentle: {
+    voice: 'Vindemiatrix', // Gentle
+    style: {
+      [STYLE_ZH]: '用溫柔、放鬆、帶著關心的語氣說這段話，像在輕輕喚醒枕邊的人。語速偏慢，台灣口音的中文。',
+      [STYLE_EN]: 'Say this gently and warmly, like softly waking someone beside you. Unhurried pace.'
+    }
+  },
+  buddy: {
+    voice: 'Puck', // Upbeat
+    style: {
+      [STYLE_ZH]: '用輕鬆、帶點調侃的語氣說這段話，像損友在虧你又賴床。台灣口音的中文。',
+      [STYLE_EN]: 'Say this in a loose, teasing tone, like a friend ribbing you for oversleeping.'
+    }
+  },
+  mom: {
+    voice: 'Gacrux', // Mature
+    style: {
+      [STYLE_ZH]: '用媽媽碎念的語氣說這段話，帶點無奈又關心，像已經叫過第三次了。台灣口音的中文。',
+      [STYLE_EN]: 'Say this the way a mother nags, half exasperated and half caring, as if this is the third time.'
+    }
+  },
+  // The only persona that ships an audio tag. `[shouting]` is documented, raises
+  // volume, and is spoken as delivery rather than read aloud as a word — unlike
+  // the emotion-adjective tags, which Google says to express in the style prompt
+  // instead. Never use `[whispers]`: it lowers volume, and a quiet alarm is a
+  // broken one.
+  sergeant: {
+    voice: 'Orus', // Firm
+    tag: '[shouting]',
+    style: {
+      [STYLE_ZH]: '用嚴厲、命令式、像教官點名的語氣說這段話，音量大，不容商量。台灣口音的中文。',
+      [STYLE_EN]: 'Bark this like a drill sergeant calling roll. Loud, clipped, no room for argument.'
+    }
+  }
+}
+
+const PERSONA_IDS = Object.freeze(Object.keys(PERSONAS))
+
+/** Normalises a caller's locale onto the two style languages that exist. */
+function styleLanguage(language) {
+  return typeof language === 'string' && language.toLowerCase().startsWith('zh') ? STYLE_ZH : STYLE_EN
+}
+
+/**
+ * Builds the single string sent to the model: style direction, then the words.
+ *
+ * Two deliberate details. The `synthesize this speech` preamble is required —
+ * without an explicit instruction the model sometimes reads a bare prompt aloud
+ * as if it were dialogue, or rejects it outright. And square brackets are
+ * stripped from the caller's text, because a user who types one would otherwise
+ * be writing an unintended delivery instruction into their own alarm.
+ */
+function buildPrompt({ persona, text, language }) {
+  const definition = PERSONAS[persona]
+  if (!definition) return null
+
+  const lang = styleLanguage(language)
+  const spoken = text.replace(/[[\]]/g, '').trim()
+  if (!spoken) return null
+
+  const tagged = definition.tag ? `${definition.tag} ${spoken}` : spoken
+  return {
+    voice: definition.voice,
+    prompt: `${definition.style[lang]}\n\nSynthesize this speech:\n${tagged}`
+  }
+}
+
+module.exports = { PERSONAS, PERSONA_IDS, buildPrompt, styleLanguage }

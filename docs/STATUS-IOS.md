@@ -495,6 +495,62 @@ below xxxLarge changes shape. Verified on an iPhone 16e simulator via
 zh-Hant. **The Android `WeekdaySelector` has the same defect** — a fixed `Modifier.size(40.dp)`
 circle — and is untouched here.
 
+## AI voice alarm — in progress
+
+An alarm that wakes you with generated speech instead of a tone, with the rain briefing the
+app already computes as the thing it says. Not shipping in any version yet.
+
+**Vendor: Google Gemini-TTS**, decided 2026-08-30. It is the only one with both Taiwanese
+Mandarin and real prompt-driven tone control. Azure has the best zh-TW accent but its three
+zh-TW voices support **zero** emotion styles; OpenAI has the best tone control but its voices
+are English-native and audibly foreign in Mandarin. Model is `gemini-2.5-flash-preview-tts`,
+not `3.1` — half the price for output audio and without 3.1's documented habit of returning
+text tokens instead of audio.
+
+Costing, verified against Google's own pricing page: output audio is billed per token at
+US$10/1M, 25–32 tokens a second (the pricing page and the tokenisation doc disagree; assume
+32). A 10-second clip is therefore about **NT$0.10**. The Gemini API's free tier is unusable
+here — Google's terms require paid services for API clients available to users in the EEA,
+Switzerland or the UK, which an App Store listing reaches.
+
+Done:
+
+- [x] **Runtime-generated sounds work at all** — the device test above. This was the feature's
+      single make-or-break unknown, and the only prior public report of it was a failure.
+- [x] **Foundation in the app** (`0a87602`): `AlarmSound.aiVoice`, the clip name beside the
+      enum rather than in it, `restorableCases` so the settings decoder stops erasing it, a
+      fallback to a shipped tone when the file is missing, and `GeneratedVoiceStore` owning
+      `Library/Sounds` and the 28 s / 10 s constants.
+- [x] **`/v1/tts` on the existing `weather-proxy/`.** The Gemini key never ships. Reuses the
+      same three guards the weather route has, sized for a different asset: WeatherKit's
+      allowance is a call count that resets, but Gemini bills per token, so a scraped key is
+      an unbounded bill and `DAILY_TTS_LIMIT` (2,000 clips ≈ US$6.40) is a real ceiling rather
+      than an alert. **A Cloud Billing budget would not do this — those only notify.**
+      The client sends a persona id and the words; it cannot send a voice name or a style
+      prompt, or the endpoint becomes free general-purpose Gemini for anyone who reads the URL
+      out of the app. Deploy needs `GEMINI_API_KEY` set; without it the route answers 503 and
+      the app falls back to a tone, so a weather-only deployment still boots.
+
+Still open, roughly in order:
+
+- The app-side client, audio assembly (speech + tone bed → 28 s), and the generation UI.
+- **Whether the alarm can name a road.** `RouteWeatherSegment.name` is not a street name — it
+  is `住家` / `路程 ½` / `公司`, from a closed set of localised constants, and interior samples
+  are empty below 4 km and for transit entirely. So "忠孝東路那段會濕" is not currently
+  sayable; it renders as "路程一半那段會濕". Either reverse-geocode a thoroughfare at the
+  wettest sample (real work, needs its own fallback for Taiwan geocoding) or reword around
+  elapsed time. **This is a product decision and it is load-bearing** — the route-level line is
+  the only part of this feature no competitor can copy.
+- Free quota, and whether to meter at all. Rewarded video does **not** pay for this: at a
+  US$5 eCPM planning figure a completed view returns ~NT$0.155 against NT$0.10 of TTS, and
+  breaking even on 30 s clips would need US$19 eCPM, above any verifiable rewarded rate
+  anywhere. Guideline 3.2.2(x) permits ad-gating, so the obstacle is arithmetic, not policy.
+- `docs/privacy-policy.html` states the app transmits nothing to a server and names alarm time
+  and rain lead time as never leaving the device. Both become false the moment this ships;
+  those sentences need rewriting, not an appended paragraph.
+- Google's API terms prohibit use in a service "likely to be accessed by individuals under the
+  age of 18". Unresolved, and it is a binary ship gate.
+
 ## Backlog
 
 Ordered by value, not urgency. None of these block a release.
