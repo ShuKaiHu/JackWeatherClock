@@ -497,8 +497,31 @@ circle — and is untouched here.
 
 ## AI voice alarm — in progress
 
-An alarm that wakes you with generated speech instead of a tone, with the rain briefing the
-app already computes as the thing it says. Not shipping in any version yet.
+An alarm that wakes you with generated speech instead of a tone. Not shipping in any version yet.
+
+**The user writes the words; the app writes the delivery.** Decided 2026-08-30. The text is
+the user's own — the app does not compose it — but the app splits it into sentences and tags
+each with an emotion before synthesis, so the line is performed rather than read flat.
+
+That split is why the proxy takes an emotion *id* per segment and never a tag. Google sorts
+bracketed markup into four modes, and the one everybody reaches for first is the broken one:
+
+> **Mode 3: Vocalized markup (adjectives)** — "The markup tag itself is spoken as a word,
+> while also influencing the tone of the entire sentence." … "Warning: Because the tag itself
+> is spoken, this mode is likely an undesired side effect for most use cases. Prefer using the
+> Style Prompt to set these emotional tones instead."
+
+`[cheerful]`, `[urgent]`, `[encouraging]` are all Mode 3, so an alarm built the obvious way
+says the word "cheerful" out loud at 7 a.m. The emotion table therefore maps each intent onto
+Mode 2 (delivery: `[shouting]`, `[extremely fast]`) or Mode 4 (pacing), which carry the same
+feeling without being read out, and a test asserts no adjective-form tag can ever reach the
+model. Adverb-form tags (`[cheerfully]`, `[warmly]`, `[gently]`) are reported reliable by a
+third-party evaluation but are undocumented by Google; they are recorded against each emotion
+and stay off behind `TTS_ALLOW_UNVERIFIED_TAGS` until somebody has actually listened.
+
+**Untested, and worth ten minutes in AI Studio:** whether the adjective/adverb distinction is
+real — Google's Mode 3 examples are all adjectives, and the reliable third-party list is all
+adverbs. If adverbs are safe, the emotional range available roughly doubles.
 
 **Vendor: Google Gemini-TTS**, decided 2026-08-30. It is the only one with both Taiwanese
 Mandarin and real prompt-driven tone control. Azure has the best zh-TW accent but its three
@@ -533,7 +556,8 @@ Done:
 
 Still open, roughly in order:
 
-- The app-side client, audio assembly (speech + tone bed → 28 s), and the generation UI.
+- The app-side client, audio assembly (speech + tone bed → 28 s), and the text-entry UI —
+  including how a typed line is split into sentences and which emotion each one gets.
 - **Whether the alarm can name a road.** `RouteWeatherSegment.name` is not a street name — it
   is `住家` / `路程 ½` / `公司`, from a closed set of localised constants, and interior samples
   are empty below 4 km and for transit entirely. So "忠孝東路那段會濕" is not currently

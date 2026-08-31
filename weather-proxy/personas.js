@@ -72,6 +72,57 @@ const PERSONAS = {
 
 const PERSONA_IDS = Object.freeze(Object.keys(PERSONAS))
 
+// The emotion vocabulary the app may ask for, one entry per sentence of the
+// user's own text. The app decides which sentence gets which; this decides what
+// that actually turns into, and the client never sends a raw tag.
+//
+// That split exists because Google sorts bracketed markup into four modes and
+// only three of them are safe. From the Gemini-TTS docs:
+//
+//   Mode 1  non-speech sounds     [sigh] [laughing]        inserts the sound
+//   Mode 2  style modifiers       [shouting] [whispering]  changes delivery only
+//   Mode 3  vocalized adjectives  [scared] [curious]       "The markup tag itself
+//                                                           is spoken as a word"
+//   Mode 4  pacing                [medium pause]           inserts silence
+//
+// Google's warning on Mode 3 is explicit: "Because the tag itself is spoken,
+// this mode is likely an undesired side effect for most use cases. Prefer using
+// the Style Prompt to set these emotional tones instead." Every adjective-form
+// emotion tag — [cheerful], [urgent], [encouraging] — is Mode 3, so none of them
+// can be emitted directly. What follows maps each intent onto Mode 2 or Mode 4,
+// which carry the same feeling through pace and volume without being read out.
+//
+// `unverified` marks adverb-form tags that a third-party evaluation reports as
+// reliable but that Google does not document. They are off by default; flip one
+// on only after hearing it, and the fix is a redeploy rather than an app update.
+const EMOTIONS = {
+  neutral: { tag: null },
+  // Cheer through pace, not through the word "cheerful".
+  cheerful: { tag: null, unverified: '[cheerfully]' },
+  playful: { tag: null, unverified: '[mischievously]' },
+  // Urgency is genuinely a pace change, so Mode 2 expresses it better than an
+  // adjective would have.
+  urgent: { tag: '[extremely fast]' },
+  // The one tag that raises volume. Never [whispers], which lowers it: a quiet
+  // alarm is a broken alarm.
+  stern: { tag: '[shouting]' },
+  encouraging: { tag: null, unverified: '[warmly]' },
+  gentle: { tag: null, unverified: '[gently]' },
+  beat: { tag: '[medium pause]' }
+}
+
+const EMOTION_IDS = Object.freeze(Object.keys(EMOTIONS))
+
+/** Whether an unverified adverb-form tag may be emitted. Off unless heard. */
+const allowUnverifiedTags = process.env.TTS_ALLOW_UNVERIFIED_TAGS === '1'
+
+function tagFor(emotion) {
+  const entry = EMOTIONS[emotion]
+  if (!entry) return null
+  if (entry.tag) return entry.tag
+  return allowUnverifiedTags && entry.unverified ? entry.unverified : null
+}
+
 /** Normalises a caller's locale onto the two style languages that exist. */
 function styleLanguage(language) {
   return typeof language === 'string' && language.toLowerCase().startsWith('zh') ? STYLE_ZH : STYLE_EN
@@ -86,12 +137,25 @@ function styleLanguage(language) {
  * stripped from the caller's text, because a user who types one would otherwise
  * be writing an unintended delivery instruction into their own alarm.
  */
-function buildPrompt({ persona, text, language }) {
+function buildPrompt({ persona, segments, language }) {
   const definition = PERSONAS[persona]
   if (!definition) return null
 
   const lang = styleLanguage(language)
-  const spoken = text.replace(/[[\]]/g, '').trim()
+
+  const spoken = segments
+    .map(({ text, emotion }) => {
+      // Strip the user's own brackets before adding ours. Someone typing one is
+      // otherwise writing a delivery instruction into their own alarm, and after
+      // this line every bracket in the transcript is one we put there.
+      const words = String(text ?? '').replace(/[[\]]/g, '').trim()
+      if (!words) return null
+      const tag = tagFor(emotion)
+      return tag ? `${tag} ${words}` : words
+    })
+    .filter(Boolean)
+    .join(' ')
+
   if (!spoken) return null
 
   const tagged = definition.tag ? `${definition.tag} ${spoken}` : spoken
@@ -101,4 +165,4 @@ function buildPrompt({ persona, text, language }) {
   }
 }
 
-module.exports = { PERSONAS, PERSONA_IDS, buildPrompt, styleLanguage }
+module.exports = { PERSONAS, PERSONA_IDS, EMOTIONS, EMOTION_IDS, buildPrompt, styleLanguage, tagFor }

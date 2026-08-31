@@ -9,7 +9,7 @@ const {
   createDailyBudget,
   createRateLimiter
 } = require('./guards')
-const { PERSONA_IDS, styleLanguage } = require('./personas')
+const { PERSONA_IDS, EMOTION_IDS, styleLanguage } = require('./personas')
 const { synthesize, SAMPLE_RATE } = require('./tts')
 
 /**
@@ -78,6 +78,8 @@ const UPSTREAM_TIMEOUT_MS = 10_000
 /** Cost guard, not a UX rule — the app enforces the real per-language limits. */
 const MAX_TTS_CHARACTERS = 200
 const MAX_TTS_BODY_BYTES = 4_096
+/** One per sentence of a wake-up line; more than this is not a wake-up line. */
+const MAX_TTS_SEGMENTS = 8
 
 /** Reads a JSON body, refusing anything larger than a sentence could justify. */
 async function readJsonBody(request) {
@@ -174,21 +176,50 @@ async function handleTTS(request, response) {
     return sendJson(response, 400, { error: 'invalid_body' })
   }
 
-  const { persona, text, language } = body
+  const { persona, language } = body
   if (!PERSONA_IDS.includes(persona)) {
     return sendJson(response, 400, { error: 'unknown_persona', allowed: PERSONA_IDS })
   }
-  if (typeof text !== 'string' || text.trim().length === 0) {
+
+  // The words are the user's own; the delivery is the app's. Segments carry an
+  // emotion *id* rather than a tag, because the tag a given feeling should
+  // become is a moving target — Google reads adjective-form tags aloud as words
+  // — and this way correcting one is a redeploy instead of an app release.
+  const segments = Array.isArray(body.segments)
+    ? body.segments
+    : typeof body.text === 'string'
+      ? [{ text: body.text, emotion: 'neutral' }]
+      : null
+
+  if (!segments || segments.length === 0 || segments.length > MAX_TTS_SEGMENTS) {
+    return sendJson(response, 400, { error: 'segments_required', limit: MAX_TTS_SEGMENTS })
+  }
+
+  let characters = 0
+  for (const segment of segments) {
+    if (!segment || typeof segment.text !== 'string') {
+      return sendJson(response, 400, { error: 'segment_text_required' })
+    }
+    if (segment.emotion !== undefined && !EMOTION_IDS.includes(segment.emotion)) {
+      return sendJson(response, 400, { error: 'unknown_emotion', allowed: EMOTION_IDS })
+    }
+    characters += segment.text.length
+  }
+
+  if (characters === 0) {
     return sendJson(response, 400, { error: 'text_required' })
   }
-  if (text.length > MAX_TTS_CHARACTERS) {
+  if (characters > MAX_TTS_CHARACTERS) {
     return sendJson(response, 400, { error: 'text_too_long', limit: MAX_TTS_CHARACTERS })
   }
 
-  // The same words in the same voice are the same audio, and the app-composed
-  // rain and dry lines are a small closed set shared across every user — so this
-  // collapses the fleet's most common requests into one upstream call each.
-  const key = `${persona}|${styleLanguage(language)}|${text.trim()}`
+  // Same words, same delivery, same voice is the same audio — so a retry after a
+  // dropped connection, or two people asking for the same line, costs one call.
+  const key = [
+    persona,
+    styleLanguage(language),
+    ...segments.map((s) => `${s.emotion ?? 'neutral'}:${s.text.trim()}`)
+  ].join('|')
   const cached = ttsCache.get(key)
   if (cached) {
     return sendAudio(response, cached)
@@ -207,7 +238,7 @@ async function handleTTS(request, response) {
     const pcm = await synthesize({
       apiKey: geminiApiKey,
       persona,
-      text,
+      segments,
       language,
       maximumSeconds: MAX_SPEECH_SECONDS
     })

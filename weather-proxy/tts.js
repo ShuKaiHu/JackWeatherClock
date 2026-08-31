@@ -64,8 +64,8 @@ function extractAudio(payload) {
  * retry clears most of it. No backoff loop: a caller is waiting, and the app's
  * own fallback to a bundled tone is a better answer than a long stall.
  */
-async function synthesize({ apiKey, persona, text, language, maximumSeconds }) {
-  const built = buildPrompt({ persona, text, language })
+async function synthesize({ apiKey, persona, segments, language, maximumSeconds }) {
+  const built = buildPrompt({ persona, segments, language })
   if (!built) {
     const error = new Error('unknown persona or empty text')
     error.status = 400
