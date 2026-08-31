@@ -70,7 +70,7 @@ Rainy Clock does not require an account and does not run its own backend server.
 
 iOS 17–25 以本機通知排程鬧鐘，響鈴仍會受靜音開關影響。
 
-雨天鬧鐘不需要註冊帳號，也不會建立自己的後端伺服器。
+雨天鬧鐘不需要註冊帳號。你輸入的 AI 語音台詞會送到我們的轉發服務並交給 Google 合成，其餘資料都留在裝置上。
 
 ## Keywords
 
@@ -412,10 +412,10 @@ Final answers should be verified in App Store Connect before submission.
 | Area | Draft Answer |
 | --- | --- |
 | Account creation | No |
-| User-generated content | No |
+| User-generated content | **Yes, once the AI voice alarm ships.** The user types the line their alarm speaks, and it is sent to a relay and on to Google to be synthesized. In the App Privacy questionnaire this is *Other User Content*, collected for App Functionality, **not** linked to identity and **not** used for tracking |
 | Location data | Used for app functionality when resolving route/weather locations |
 | Contact info | Not collected by the app |
-| Backend server | None |
+| Backend server | One, `weather-proxy` on Cloud Run — signs WeatherKit requests for Android, and synthesizes AI voice for both. App Store Connect never asks this; the row is here because the store description and the privacy policy both used to claim there was none |
 | Third-party SDKs | Unity LevelPlay (ironSource) SDK. **Changed in `1.6.7`** — the Google Mobile Ads SDK and Google User Messaging Platform were removed |
 | Advertising | Unity LevelPlay banner ads (one banner, no Google demand behind it — the AdMob account is terminated) |
 | Tracking | Yes, from `1.6.5 (20)`: ATT is implemented, so Device ID and advertising/usage data must be checked as "Used to Track You" |
