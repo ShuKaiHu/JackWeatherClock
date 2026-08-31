@@ -249,6 +249,18 @@ or Google Analytics SDK. It is not a signal about real usage; App Store Connect'
 
 ## Archiving and Uploading
 
+**`1.6.8 (27)` uploaded 2026-09-01.** The CLI path worked for the third release running —
+plain `xcodebuild -exportArchive` with `ExportOptions-AppStoreUpload.plist`, no Organizer and
+no credentials entered by hand. Archive verified before upload: app and appex both at
+`1.6.8 (27)`, the production `VoiceProxyURL`, all twelve preview clips, `NSPrivacyTracking`
+still `false`, no `GAD*` keys, `IronSource.framework` the only embedded framework, and the
+Gemini key absent from the whole bundle — which it should be, since nothing in the app has
+one any more.
+
+The `Upload Symbols Failed … dSYM for the IronSource.framework` warning appeared again. It
+does not block anything; the vendor ships no dSYM with its static framework, so crash frames
+inside ironSource's own code arrive unsymbolicated.
+
 ```bash
 xcodebuild -project RainyClock.xcodeproj -scheme RainyClock -configuration Release \
   -destination 'generic/platform=iOS' \
