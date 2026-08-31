@@ -536,13 +536,34 @@ end-to-end; three things came out of it that would otherwise cost someone an aft
 - **The free tier is unusable for development, not only for shipping.** Roughly ten TTS calls
   exhausted the quota, and it does not recover on a useful timescale. Billing has to be
   enabled before any real work; the EEA/UK clause already required it before any release.
-- **The Mode 3 warning did not reproduce.** `[cheerful]` on `2.5-flash-preview-tts` with a
-  Chinese transcript was **not** spoken: transcribing the audio back showed 早安，該起床囉 with
-  no stray word, and the clip ran 2.01 s against 1.97 s for the untagged control. The method is
-  sound — a real English word planted in the same sentence ("hello") was transcribed 3/3 and
-  added 1.1 s. **One sample per tag, though, and against explicit documentation**, so the safe
-  mapping stays the default. Worth a proper run once billing is on: if adjective tags really
-  are safe on this model, the emotional range roughly doubles and the mapping simplifies.
+- **Content blocking is noise, not judgement.** `早安，該起床囉` — good morning, time to get
+  up — was refused with `content_blocked` on roughly one call in six, with identical requests
+  either side of it succeeding. It is not about the words, so the proxy retries it like a 5xx
+  and only reports 422 when every attempt is refused. An app that surfaced the first refusal
+  as "your text was rejected" would be telling users something both wrong and unactionable.
+
+**The Mode 3 warning does not reproduce, measured 2026-08-30.** Google documents that
+adjective-form markup is "spoken as a word". On `gemini-2.5-flash-preview-tts` with a
+Traditional Chinese transcript, it is not — across four samples each of eight tags, including
+Google's own examples:
+
+| tag | spoken? | vs untagged |
+| --- | --- | --- |
+| control: planted word "hello" | **4/4 spoken** | +1.11 s |
+| `[curious]`, `[bored]` (Google's own Mode 3 examples) | 0/4 | +0.33 s, +0.79 s |
+| `[cheerful]`, `[urgent]`, `[encouraging]` | 0/4 | +0.20 s, +0.29 s, +0.12 s |
+| `[cheerfully]` (adverb form) | 0/4 | +0.30 s |
+| `[shouting]`, `[extremely fast]` (documented Mode 2) | 0/4 | +0.60 s, −0.06 s |
+
+The positive control is what makes the negatives mean anything: a real word costs 1.1 s and is
+transcribed every time, while no tag cost more than 0.79 s or appeared once in 32 transcripts.
+The durations also show the tags *working* — `[bored]` drags the line out, `[extremely fast]`
+shortens it.
+
+Scope: one model, one voice, one style prompt, zh-Hant only, four samples. Enough to stop
+designing around the warning, not enough to assume it is wrong everywhere — English in
+particular is untested, and these are preview models. The emotion table records how each tag
+was cleared so a future reader can tell measurement from assumption.
 
 **Vendor: Google Gemini-TTS**, decided 2026-08-30. It is the only one with both Taiwanese
 Mandarin and real prompt-driven tone control. Azure has the best zh-TW accent but its three

@@ -242,7 +242,7 @@ async function handleTTS(request, response) {
   ].join('|')
   const cached = ttsCache.get(key)
   if (cached) {
-    return sendAudio(response, cached)
+    return sendAudio(response, cached, segments)
   }
 
   if (!ttsRateLimiter.tryConsume(clientAddress(request))) {
@@ -263,7 +263,7 @@ async function handleTTS(request, response) {
       maximumSeconds: MAX_SPEECH_SECONDS
     })
     ttsCache.set(key, pcm)
-    sendAudio(response, pcm)
+    sendAudio(response, pcm, segments)
   } catch (error) {
     console.error(`TTS request failed: ${error.message}`)
     const status = error.status === 422 ? 422 : 502
@@ -271,13 +271,18 @@ async function handleTTS(request, response) {
   }
 }
 
-const sendAudio = (response, pcm) => {
-  response.writeHead(200, {
+const sendAudio = (response, pcm, segments) => {
+  const headers = {
     'Content-Type': 'audio/L16',
     'Content-Length': pcm.length,
     'X-Sample-Rate': String(SAMPLE_RATE),
     'Cache-Control': 'no-store'
-  })
+  }
+  // What the line was actually performed as, in order. The app has no other way
+  // to see what a model chose, and neither does anyone debugging a clip that
+  // came out wrong.
+  if (segments) headers['X-Emotions'] = segments.map((s) => s.emotion ?? 'neutral').join(',')
+  response.writeHead(200, headers)
   response.end(pcm)
 }
 

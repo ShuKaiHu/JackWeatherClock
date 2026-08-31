@@ -60,9 +60,18 @@ function extractAudio(payload) {
  * Synthesizes one clip. Throws with `.status` set so the caller can tell a bad
  * request from an upstream fault.
  *
- * One retry, because this model intermittently 500s and a single immediate
- * retry clears most of it. No backoff loop: a caller is waiting, and the app's
- * own fallback to a bundled tone is a better answer than a long stall.
+ * Retries are short and few, because a caller is waiting and the app's fallback
+ * to a bundled tone beats a long stall. Two things are retried:
+ *
+ * - 5xx, which this model produces intermittently.
+ * - `content_blocked`, which measurement shows is *noise rather than judgement*.
+ *   "早安，該起床囉" — good morning, time to get up — was refused on roughly one
+ *   call in six while identical requests either side of it succeeded. Reporting
+ *   that to the user as "your words were rejected" would be both wrong and
+ *   unactionable, so it gets the same treatment as a 500.
+ *
+ * A refusal that survives every attempt is passed on as 422, because at that
+ * point it probably is about the words.
  */
 async function synthesize({ apiKey, persona, segments, language, maximumSeconds }) {
   const built = buildPrompt({ persona, segments, language })
@@ -80,7 +89,8 @@ async function synthesize({ apiKey, persona, segments, language, maximumSeconds 
   })
 
   let lastError = null
-  for (let attempt = 0; attempt < 2; attempt += 1) {
+  let blockedEveryTime = true
+  for (let attempt = 0; attempt < 3; attempt += 1) {
     let response
     try {
       response = await fetch(ENDPOINT, {
@@ -101,14 +111,18 @@ async function synthesize({ apiKey, persona, segments, language, maximumSeconds 
 
     if (!response.ok) {
       const detail = await response.text().catch(() => '')
-      // A refusal is the caller's problem and will not improve on retry: the
-      // safety filter rejected the words, and the app should say so rather than
-      // silently ring a default tone the user did not choose.
+      if (detail.includes('content_blocked')) {
+        lastError = new Error('gemini blocked the content')
+        lastError.blocked = true
+        continue
+      }
+      blockedEveryTime = false
       const error = new Error(`gemini rejected the request: ${detail.slice(0, 300)}`)
       error.status = response.status === 400 || response.status === 403 ? 422 : 502
       throw error
     }
 
+    blockedEveryTime = false
     const pcm = extractAudio(await response.json())
     if (pcm === null || pcm.length === 0) {
       // The model answered in words instead of audio. Retrying does sometimes
@@ -121,7 +135,9 @@ async function synthesize({ apiKey, persona, segments, language, maximumSeconds 
   }
 
   const error = lastError ?? new Error('gemini failed')
-  error.status = 502
+  // Refused every single time is the one case where the words are plausibly the
+  // problem, and the only case worth telling the user about.
+  error.status = blockedEveryTime && lastError?.blocked ? 422 : 502
   throw error
 }
 
