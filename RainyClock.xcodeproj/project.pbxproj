@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		01D38ACAF517A7C2D707E95E /* RewardedAdController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AD002638D80D3B245F91C05 /* RewardedAdController.swift */; };
+		055C98A97C952DCC1CC69CC0 /* preview-gentle-en.m4a in Resources */ = {isa = PBXBuildFile; fileRef = EF02EAB9B27600D9E3C12FA1 /* preview-gentle-en.m4a */; };
+		05874822BCC1F7733B2BEE1F /* preview-sergeant-en.m4a in Resources */ = {isa = PBXBuildFile; fileRef = BD49BAED1D38DE6ABCBCAB8E /* preview-sergeant-en.m4a */; };
 		0A1000012C00000000000001 /* RainyClockApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1000112C00000000000001 /* RainyClockApp.swift */; };
 		0A1000022C00000000000001 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1000122C00000000000001 /* ContentView.swift */; };
 		0A1000032C00000000000001 /* CommuteAlarmSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1000132C00000000000001 /* CommuteAlarmSettings.swift */; };
@@ -30,8 +33,6 @@
 		0A1000B12C00000000000003 /* RainyClock.wav in Resources */ = {isa = PBXBuildFile; fileRef = 0A1000B02C00000000000003 /* RainyClock.wav */; };
 		0A1000B32C00000000000003 /* MorningBell.wav in Resources */ = {isa = PBXBuildFile; fileRef = 0A1000B22C00000000000003 /* MorningBell.wav */; };
 		0A1000B52C00000000000003 /* SoftPiano.wav in Resources */ = {isa = PBXBuildFile; fileRef = 0A1000B42C00000000000003 /* SoftPiano.wav */; };
-		0A1000C12C00000000000004 /* AdMobBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1000C02C00000000000004 /* AdMobBannerView.swift */; };
-		0A1000C42C00000000000004 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 0A1000C32C00000000000004 /* GoogleMobileAds */; };
 		0A1000D12C00000000000005 /* BrightChime.wav in Resources */ = {isa = PBXBuildFile; fileRef = 0A1000D02C00000000000005 /* BrightChime.wav */; };
 		0A1000D32C00000000000005 /* GentleWaves.wav in Resources */ = {isa = PBXBuildFile; fileRef = 0A1000D22C00000000000005 /* GentleWaves.wav */; };
 		0A1000D52C00000000000005 /* DigitalBeep.wav in Resources */ = {isa = PBXBuildFile; fileRef = 0A1000D42C00000000000005 /* DigitalBeep.wav */; };
@@ -41,17 +42,38 @@
 		0A1000DD2C00000000000005 /* MinimalTap.wav in Resources */ = {isa = PBXBuildFile; fileRef = 0A1000DC2C00000000000005 /* MinimalTap.wav */; };
 		0A1000E02C00000000000006 /* WeatherKitSamplingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1000E12C00000000000006 /* WeatherKitSamplingService.swift */; };
 		0A1000F02C00000000000007 /* MapItemResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1000F12C00000000000007 /* MapItemResolver.swift */; };
+		0A1000F12C00000000000005 /* LevelPlayBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1000F02C00000000000005 /* LevelPlayBannerView.swift */; };
 		0A1000F22C00000000000008 /* GooglePlaceResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1000F32C00000000000008 /* GooglePlaceResolver.swift */; };
+		0A1000F42C00000000000005 /* UnityMediationSDK in Frameworks */ = {isa = PBXBuildFile; productRef = 0A1000F32C00000000000005 /* UnityMediationSDK */; };
+		0A1000F92C00000000000005 /* AdConsentSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1000F82C00000000000005 /* AdConsentSheet.swift */; };
 		0A1001002C00000000000009 /* ConsentManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1001012C00000000000009 /* ConsentManager.swift */; };
+		12E2CB57CF460CA5D7EC382B /* GeneratedVoiceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07A5A9EAEA066F80FAC943D3 /* GeneratedVoiceStore.swift */; };
 		16908840039C92EF6FDD7931 /* CommuteAlarmMetadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4BB22C84DAA14A208462B12 /* CommuteAlarmMetadata.swift */; };
+		2D0102BC61B33B4F45B782AB /* AIVoiceClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5ECAFB90DC821FA5EE54ADD /* AIVoiceClient.swift */; };
 		305482FE2E7CFA780A020BD2 /* RainyClockAlarmWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36DE7F14501F8A8F682E4478 /* RainyClockAlarmWidgetBundle.swift */; };
+		3A72E4BA911DE567BDEA8BE0 /* preview-buddy-en.m4a in Resources */ = {isa = PBXBuildFile; fileRef = 861C9010FF0EA0132823485F /* preview-buddy-en.m4a */; };
+		5ED0BEB9D3318E359E99F0A2 /* preview-mom-en.m4a in Resources */ = {isa = PBXBuildFile; fileRef = 6C3FE90D63767F3FE105940E /* preview-mom-en.m4a */; };
+		602074CD6CEA9C97CD29B77E /* preview-sergeant-zh.m4a in Resources */ = {isa = PBXBuildFile; fileRef = A0D3D02201171DF13F744C9A /* preview-sergeant-zh.m4a */; };
 		62E6937A638A6D55A89E4F77 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 38716E405CDB08148FEFEA93 /* Foundation.framework */; };
 		672140296105B2FF93129911 /* AlarmKitScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D92658ADF45F0EC2AD58E50 /* AlarmKitScheduler.swift */; };
 		6721402961A0B2FF93129B01 /* BackgroundWeatherRefresh.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D92658ADFA0F0EC2AD58B01 /* BackgroundWeatherRefresh.swift */; };
+		752692FA157404C5E3CAEFFF /* preview-bright-en.m4a in Resources */ = {isa = PBXBuildFile; fileRef = 342D9A76F5EC5AD990F7CD84 /* preview-bright-en.m4a */; };
 		754AECAC7E45A94AF3DEA98E /* CommuteAlarmMetadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4BB22C84DAA14A208462B12 /* CommuteAlarmMetadata.swift */; };
+		78C9359541A1A63A25859ED4 /* preview-steady-en.m4a in Resources */ = {isa = PBXBuildFile; fileRef = 8609FAE441DF3D157DF646BD /* preview-steady-en.m4a */; };
+		91824AA8244757AED10F11B2 /* AIVoiceQuota.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BA273EA8BCD1B0999200C60 /* AIVoiceQuota.swift */; };
 		9ED317318119EF731F40E4FC /* RainyClockAlarmWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 4F27BC082A98163C47E456A4 /* RainyClockAlarmWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A0338E5E582A4E84E222D889 /* preview-bright-zh.m4a in Resources */ = {isa = PBXBuildFile; fileRef = 6DF2544063B4E1202AA50CBA /* preview-bright-zh.m4a */; };
+		AA98B6CDAFC126C83261B927 /* VoicePersona.swift in Sources */ = {isa = PBXBuildFile; fileRef = 262973271663C0D9E9899FDF /* VoicePersona.swift */; };
+		B2EF991B654BB0E7A03A90AC /* preview-gentle-zh.m4a in Resources */ = {isa = PBXBuildFile; fileRef = 39DEDC191EA3E78F71B4D8A1 /* preview-gentle-zh.m4a */; };
+		CC01D225E6E91D1422F2F457 /* GeneratedVoiceAssembler.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0E42F1A82A2DC0F58286FF0 /* GeneratedVoiceAssembler.swift */; };
 		CD94782468365102E82370FC /* CommuteAlarmLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C36A72344C85323EDB4B2B8 /* CommuteAlarmLiveActivity.swift */; };
+		CF5CAA8FE6A0EB863437C561 /* AIVoiceSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57381698D3814E4FBA98C10A /* AIVoiceSheet.swift */; };
+		CFC9F616B873328E7A2F0342 /* preview-steady-zh.m4a in Resources */ = {isa = PBXBuildFile; fileRef = DDC50EA36C988E419DE6D554 /* preview-steady-zh.m4a */; };
+		D901596ADED0CA3EC1B23B61 /* AdReport.swift in Sources */ = {isa = PBXBuildFile; fileRef = C21DFB581C278C05ABFA0647 /* AdReport.swift */; };
 		D9AFFD3EDD2005FE2CE06FEC /* AlarmSchedulingSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDA82D02716704A4024FBA29 /* AlarmSchedulingSettingsTests.swift */; };
+		DF082B611B71792BF1D6336D /* preview-buddy-zh.m4a in Resources */ = {isa = PBXBuildFile; fileRef = 91F9D85B61E9E6AF09BBB425 /* preview-buddy-zh.m4a */; };
+		E02AA2444353D39C4B42A1E9 /* GeneratedVoiceAssemblerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9606BA5A5CBAB2AB6039C090 /* GeneratedVoiceAssemblerTests.swift */; };
+		F78A594DA66B7682BD358744 /* preview-mom-zh.m4a in Resources */ = {isa = PBXBuildFile; fileRef = BEF28F46540B76D9879B6DA7 /* preview-mom-zh.m4a */; };
 		F7F9A507A2726D0344BDA3B7 /* AlarmViewModelSchedulingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39C8C3492E7E1E5211E865AC /* AlarmViewModelSchedulingTests.swift */; };
 /* End PBXBuildFile section */
 
@@ -87,6 +109,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		07A5A9EAEA066F80FAC943D3 /* GeneratedVoiceStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GeneratedVoiceStore.swift; sourceTree = "<group>"; };
 		0A1000112C00000000000001 /* RainyClockApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RainyClockApp.swift; sourceTree = "<group>"; };
 		0A1000122C00000000000001 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		0A1000132C00000000000001 /* CommuteAlarmSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommuteAlarmSettings.swift; sourceTree = "<group>"; };
@@ -114,7 +137,6 @@
 		0A1000B02C00000000000003 /* RainyClock.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = RainyClock.wav; sourceTree = "<group>"; };
 		0A1000B22C00000000000003 /* MorningBell.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = MorningBell.wav; sourceTree = "<group>"; };
 		0A1000B42C00000000000003 /* SoftPiano.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = SoftPiano.wav; sourceTree = "<group>"; };
-		0A1000C02C00000000000004 /* AdMobBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdMobBannerView.swift; sourceTree = "<group>"; };
 		0A1000D02C00000000000005 /* BrightChime.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = BrightChime.wav; sourceTree = "<group>"; };
 		0A1000D22C00000000000005 /* GentleWaves.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = GentleWaves.wav; sourceTree = "<group>"; };
 		0A1000D42C00000000000005 /* DigitalBeep.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = DigitalBeep.wav; sourceTree = "<group>"; };
@@ -123,17 +145,39 @@
 		0A1000DA2C00000000000005 /* DeepResonance.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = DeepResonance.wav; sourceTree = "<group>"; };
 		0A1000DC2C00000000000005 /* MinimalTap.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = MinimalTap.wav; sourceTree = "<group>"; };
 		0A1000E12C00000000000006 /* WeatherKitSamplingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherKitSamplingService.swift; sourceTree = "<group>"; };
+		0A1000F02C00000000000005 /* LevelPlayBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LevelPlayBannerView.swift; sourceTree = "<group>"; };
 		0A1000F12C00000000000007 /* MapItemResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapItemResolver.swift; sourceTree = "<group>"; };
 		0A1000F32C00000000000008 /* GooglePlaceResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GooglePlaceResolver.swift; sourceTree = "<group>"; };
+		0A1000F82C00000000000005 /* AdConsentSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdConsentSheet.swift; sourceTree = "<group>"; };
 		0A1001012C00000000000009 /* ConsentManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsentManager.swift; sourceTree = "<group>"; };
 		1C36A72344C85323EDB4B2B8 /* CommuteAlarmLiveActivity.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CommuteAlarmLiveActivity.swift; sourceTree = "<group>"; };
+		262973271663C0D9E9899FDF /* VoicePersona.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VoicePersona.swift; sourceTree = "<group>"; };
+		342D9A76F5EC5AD990F7CD84 /* preview-bright-en.m4a */ = {isa = PBXFileReference; includeInIndex = 1; path = "preview-bright-en.m4a"; sourceTree = "<group>"; };
 		36DE7F14501F8A8F682E4478 /* RainyClockAlarmWidgetBundle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RainyClockAlarmWidgetBundle.swift; sourceTree = "<group>"; };
 		38716E405CDB08148FEFEA93 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		39C8C3492E7E1E5211E865AC /* AlarmViewModelSchedulingTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AlarmViewModelSchedulingTests.swift; sourceTree = "<group>"; };
+		39DEDC191EA3E78F71B4D8A1 /* preview-gentle-zh.m4a */ = {isa = PBXFileReference; includeInIndex = 1; path = "preview-gentle-zh.m4a"; sourceTree = "<group>"; };
+		3AD002638D80D3B245F91C05 /* RewardedAdController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RewardedAdController.swift; sourceTree = "<group>"; };
 		4133FF63012A434AB5C610F5 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		4F27BC082A98163C47E456A4 /* RainyClockAlarmWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RainyClockAlarmWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		57381698D3814E4FBA98C10A /* AIVoiceSheet.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AIVoiceSheet.swift; sourceTree = "<group>"; };
+		6BA273EA8BCD1B0999200C60 /* AIVoiceQuota.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AIVoiceQuota.swift; sourceTree = "<group>"; };
+		6C3FE90D63767F3FE105940E /* preview-mom-en.m4a */ = {isa = PBXFileReference; includeInIndex = 1; path = "preview-mom-en.m4a"; sourceTree = "<group>"; };
+		6DF2544063B4E1202AA50CBA /* preview-bright-zh.m4a */ = {isa = PBXFileReference; includeInIndex = 1; path = "preview-bright-zh.m4a"; sourceTree = "<group>"; };
 		7D92658ADF45F0EC2AD58E50 /* AlarmKitScheduler.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AlarmKitScheduler.swift; sourceTree = "<group>"; };
 		7D92658ADFA0F0EC2AD58B01 /* BackgroundWeatherRefresh.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BackgroundWeatherRefresh.swift; sourceTree = "<group>"; };
+		8609FAE441DF3D157DF646BD /* preview-steady-en.m4a */ = {isa = PBXFileReference; includeInIndex = 1; path = "preview-steady-en.m4a"; sourceTree = "<group>"; };
+		861C9010FF0EA0132823485F /* preview-buddy-en.m4a */ = {isa = PBXFileReference; includeInIndex = 1; path = "preview-buddy-en.m4a"; sourceTree = "<group>"; };
+		91F9D85B61E9E6AF09BBB425 /* preview-buddy-zh.m4a */ = {isa = PBXFileReference; includeInIndex = 1; path = "preview-buddy-zh.m4a"; sourceTree = "<group>"; };
+		9606BA5A5CBAB2AB6039C090 /* GeneratedVoiceAssemblerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GeneratedVoiceAssemblerTests.swift; sourceTree = "<group>"; };
+		A0D3D02201171DF13F744C9A /* preview-sergeant-zh.m4a */ = {isa = PBXFileReference; includeInIndex = 1; path = "preview-sergeant-zh.m4a"; sourceTree = "<group>"; };
+		BD49BAED1D38DE6ABCBCAB8E /* preview-sergeant-en.m4a */ = {isa = PBXFileReference; includeInIndex = 1; path = "preview-sergeant-en.m4a"; sourceTree = "<group>"; };
+		BEF28F46540B76D9879B6DA7 /* preview-mom-zh.m4a */ = {isa = PBXFileReference; includeInIndex = 1; path = "preview-mom-zh.m4a"; sourceTree = "<group>"; };
+		C21DFB581C278C05ABFA0647 /* AdReport.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AdReport.swift; sourceTree = "<group>"; };
+		D0E42F1A82A2DC0F58286FF0 /* GeneratedVoiceAssembler.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GeneratedVoiceAssembler.swift; sourceTree = "<group>"; };
+		DDC50EA36C988E419DE6D554 /* preview-steady-zh.m4a */ = {isa = PBXFileReference; includeInIndex = 1; path = "preview-steady-zh.m4a"; sourceTree = "<group>"; };
+		E5ECAFB90DC821FA5EE54ADD /* AIVoiceClient.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AIVoiceClient.swift; sourceTree = "<group>"; };
+		EF02EAB9B27600D9E3C12FA1 /* preview-gentle-en.m4a */ = {isa = PBXFileReference; includeInIndex = 1; path = "preview-gentle-en.m4a"; sourceTree = "<group>"; };
 		F4BB22C84DAA14A208462B12 /* CommuteAlarmMetadata.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CommuteAlarmMetadata.swift; sourceTree = "<group>"; };
 		FDA82D02716704A4024FBA29 /* AlarmSchedulingSettingsTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AlarmSchedulingSettingsTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -143,7 +187,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0A1000C42C00000000000004 /* GoogleMobileAds in Frameworks */,
+				0A1000F42C00000000000005 /* UnityMediationSDK in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -182,7 +226,8 @@
 				0A1000112C00000000000001 /* RainyClockApp.swift */,
 				0A1000922C00000000000002 /* AppEnvironment.swift */,
 				0A1000122C00000000000001 /* ContentView.swift */,
-				0A1000C02C00000000000004 /* AdMobBannerView.swift */,
+				0A1000F02C00000000000005 /* LevelPlayBannerView.swift */,
+				0A1000F82C00000000000005 /* AdConsentSheet.swift */,
 				0A1000A02C00000000000003 /* PrivacyInfo.xcprivacy */,
 				0A1000A72C00000000000003 /* RoutePreviewMapView.swift */,
 				0A1000A22C00000000000003 /* WeatherAttributionView.swift */,
@@ -203,6 +248,19 @@
 				0A1000DC2C00000000000005 /* MinimalTap.wav */,
 				0A1000402C00000000000002 /* Localizable.strings */,
 				0A1000412C00000000000002 /* InfoPlist.strings */,
+				57381698D3814E4FBA98C10A /* AIVoiceSheet.swift */,
+				342D9A76F5EC5AD990F7CD84 /* preview-bright-en.m4a */,
+				6DF2544063B4E1202AA50CBA /* preview-bright-zh.m4a */,
+				861C9010FF0EA0132823485F /* preview-buddy-en.m4a */,
+				91F9D85B61E9E6AF09BBB425 /* preview-buddy-zh.m4a */,
+				EF02EAB9B27600D9E3C12FA1 /* preview-gentle-en.m4a */,
+				39DEDC191EA3E78F71B4D8A1 /* preview-gentle-zh.m4a */,
+				6C3FE90D63767F3FE105940E /* preview-mom-en.m4a */,
+				BEF28F46540B76D9879B6DA7 /* preview-mom-zh.m4a */,
+				BD49BAED1D38DE6ABCBCAB8E /* preview-sergeant-en.m4a */,
+				A0D3D02201171DF13F744C9A /* preview-sergeant-zh.m4a */,
+				8609FAE441DF3D157DF646BD /* preview-steady-en.m4a */,
+				DDC50EA36C988E419DE6D554 /* preview-steady-zh.m4a */,
 			);
 			path = RainyClock;
 			sourceTree = "<group>";
@@ -222,6 +280,7 @@
 			children = (
 				0A1000132C00000000000001 /* CommuteAlarmSettings.swift */,
 				F4BB22C84DAA14A208462B12 /* CommuteAlarmMetadata.swift */,
+				262973271663C0D9E9899FDF /* VoicePersona.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -241,6 +300,12 @@
 				0A1000E12C00000000000006 /* WeatherKitSamplingService.swift */,
 				7D92658ADF45F0EC2AD58E50 /* AlarmKitScheduler.swift */,
 				7D92658ADFA0F0EC2AD58B01 /* BackgroundWeatherRefresh.swift */,
+				07A5A9EAEA066F80FAC943D3 /* GeneratedVoiceStore.swift */,
+				D0E42F1A82A2DC0F58286FF0 /* GeneratedVoiceAssembler.swift */,
+				E5ECAFB90DC821FA5EE54ADD /* AIVoiceClient.swift */,
+				6BA273EA8BCD1B0999200C60 /* AIVoiceQuota.swift */,
+				3AD002638D80D3B245F91C05 /* RewardedAdController.swift */,
+				C21DFB581C278C05ABFA0647 /* AdReport.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -260,6 +325,7 @@
 				0A1000872C00000000000002 /* WeatherSampleMapperTests.swift */,
 				FDA82D02716704A4024FBA29 /* AlarmSchedulingSettingsTests.swift */,
 				39C8C3492E7E1E5211E865AC /* AlarmViewModelSchedulingTests.swift */,
+				9606BA5A5CBAB2AB6039C090 /* GeneratedVoiceAssemblerTests.swift */,
 			);
 			path = RainyClockTests;
 			sourceTree = "<group>";
@@ -310,7 +376,7 @@
 			);
 			name = RainyClock;
 			packageProductDependencies = (
-				0A1000C32C00000000000004 /* GoogleMobileAds */,
+				0A1000F32C00000000000005 /* UnityMediationSDK */,
 			);
 			productName = RainyClock;
 			productReference = 0A1000192C00000000000001 /* RainyClock.app */;
@@ -381,7 +447,7 @@
 			mainGroup = 0A1000302C00000000000001;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				0A1000C22C00000000000004 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */,
+				0A1000F22C00000000000005 /* XCRemoteSwiftPackageReference "LevelPlay-Swift-Package" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 0A1000322C00000000000001 /* Products */;
@@ -422,6 +488,18 @@
 				0A1000092C00000000000001 /* Localizable.strings in Resources */,
 				0A10000A2C00000000000001 /* InfoPlist.strings in Resources */,
 				0A1000A12C00000000000003 /* PrivacyInfo.xcprivacy in Resources */,
+				752692FA157404C5E3CAEFFF /* preview-bright-en.m4a in Resources */,
+				A0338E5E582A4E84E222D889 /* preview-bright-zh.m4a in Resources */,
+				3A72E4BA911DE567BDEA8BE0 /* preview-buddy-en.m4a in Resources */,
+				DF082B611B71792BF1D6336D /* preview-buddy-zh.m4a in Resources */,
+				055C98A97C952DCC1CC69CC0 /* preview-gentle-en.m4a in Resources */,
+				B2EF991B654BB0E7A03A90AC /* preview-gentle-zh.m4a in Resources */,
+				5ED0BEB9D3318E359E99F0A2 /* preview-mom-en.m4a in Resources */,
+				F78A594DA66B7682BD358744 /* preview-mom-zh.m4a in Resources */,
+				05874822BCC1F7733B2BEE1F /* preview-sergeant-en.m4a in Resources */,
+				602074CD6CEA9C97CD29B77E /* preview-sergeant-zh.m4a in Resources */,
+				78C9359541A1A63A25859ED4 /* preview-steady-en.m4a in Resources */,
+				CFC9F616B873328E7A2F0342 /* preview-steady-zh.m4a in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -443,6 +521,7 @@
 				0A1000102C00000000000001 /* WeatherSampleMapperTests.swift in Sources */,
 				D9AFFD3EDD2005FE2CE06FEC /* AlarmSchedulingSettingsTests.swift in Sources */,
 				F7F9A507A2726D0344BDA3B7 /* AlarmViewModelSchedulingTests.swift in Sources */,
+				E02AA2444353D39C4B42A1E9 /* GeneratedVoiceAssemblerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -452,6 +531,8 @@
 			files = (
 				0A1000012C00000000000001 /* RainyClockApp.swift in Sources */,
 				0A1000022C00000000000001 /* ContentView.swift in Sources */,
+				0A1000F12C00000000000005 /* LevelPlayBannerView.swift in Sources */,
+				0A1000F92C00000000000005 /* AdConsentSheet.swift in Sources */,
 				0A1000032C00000000000001 /* CommuteAlarmSettings.swift in Sources */,
 				0A1000042C00000000000001 /* AlarmTimeCalculator.swift in Sources */,
 				0A1000052C00000000000001 /* NotificationScheduling.swift in Sources */,
@@ -467,10 +548,17 @@
 				0A1000A42C00000000000003 /* RoutePreviewService.swift in Sources */,
 				0A1000A52C00000000000003 /* RoutePreviewMapView.swift in Sources */,
 				0A1000A32C00000000000003 /* WeatherAttributionView.swift in Sources */,
-				0A1000C12C00000000000004 /* AdMobBannerView.swift in Sources */,
 				16908840039C92EF6FDD7931 /* CommuteAlarmMetadata.swift in Sources */,
 				672140296105B2FF93129911 /* AlarmKitScheduler.swift in Sources */,
 				6721402961A0B2FF93129B01 /* BackgroundWeatherRefresh.swift in Sources */,
+				12E2CB57CF460CA5D7EC382B /* GeneratedVoiceStore.swift in Sources */,
+				CC01D225E6E91D1422F2F457 /* GeneratedVoiceAssembler.swift in Sources */,
+				CF5CAA8FE6A0EB863437C561 /* AIVoiceSheet.swift in Sources */,
+				2D0102BC61B33B4F45B782AB /* AIVoiceClient.swift in Sources */,
+				AA98B6CDAFC126C83261B927 /* VoicePersona.swift in Sources */,
+				91824AA8244757AED10F11B2 /* AIVoiceQuota.swift in Sources */,
+				01D38ACAF517A7C2D707E95E /* RewardedAdController.swift in Sources */,
+				D901596ADED0CA3EC1B23B61 /* AdReport.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -646,7 +734,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = RainyClock/RainyClock.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 24;
+				CURRENT_PROJECT_VERSION = 27;
 				DEVELOPMENT_TEAM = MQJ88U9NAJ;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = RainyClock/Info.plist;
@@ -655,7 +743,8 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.6.6;
+				MARKETING_VERSION = 1.6.8;
+				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_BUNDLE_IDENTIFIER = com.shukaihu.RainyClock;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -674,7 +763,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = RainyClock/RainyClock.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 24;
+				CURRENT_PROJECT_VERSION = 27;
 				DEVELOPMENT_TEAM = MQJ88U9NAJ;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = RainyClock/Info.plist;
@@ -683,7 +772,8 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.6.6;
+				MARKETING_VERSION = 1.6.8;
+				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_BUNDLE_IDENTIFIER = com.shukaihu.RainyClock;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -700,11 +790,11 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 24;
+				CURRENT_PROJECT_VERSION = 27;
 				DEVELOPMENT_TEAM = MQJ88U9NAJ;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.6.6;
+				MARKETING_VERSION = 1.6.8;
 				PRODUCT_BUNDLE_IDENTIFIER = com.shukaihu.RainyClockTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -721,11 +811,11 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 24;
+				CURRENT_PROJECT_VERSION = 27;
 				DEVELOPMENT_TEAM = MQJ88U9NAJ;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.6.6;
+				MARKETING_VERSION = 1.6.8;
 				PRODUCT_BUNDLE_IDENTIFIER = com.shukaihu.RainyClockTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -742,7 +832,7 @@
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 24;
+				CURRENT_PROJECT_VERSION = 27;
 				DEVELOPMENT_TEAM = MQJ88U9NAJ;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RainyClockAlarmWidget/Info.plist;
@@ -754,7 +844,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.6.6;
+				MARKETING_VERSION = 1.6.8;
 				PRODUCT_BUNDLE_IDENTIFIER = com.shukaihu.RainyClock.AlarmWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -773,7 +863,7 @@
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 24;
+				CURRENT_PROJECT_VERSION = 27;
 				DEVELOPMENT_TEAM = MQJ88U9NAJ;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RainyClockAlarmWidget/Info.plist;
@@ -785,7 +875,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.6.6;
+				MARKETING_VERSION = 1.6.8;
 				PRODUCT_BUNDLE_IDENTIFIER = com.shukaihu.RainyClock.AlarmWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -842,21 +932,21 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		0A1000C22C00000000000004 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */ = {
+		0A1000F22C00000000000005 /* XCRemoteSwiftPackageReference "LevelPlay-Swift-Package" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/googleads/swift-package-manager-google-mobile-ads.git";
+			repositoryURL = "https://github.com/ironsource-mobile/LevelPlay-Swift-Package.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 13.5.0;
+				minimumVersion = 9.6.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		0A1000C32C00000000000004 /* GoogleMobileAds */ = {
+		0A1000F32C00000000000005 /* UnityMediationSDK */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 0A1000C22C00000000000004 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */;
-			productName = GoogleMobileAds;
+			package = 0A1000F22C00000000000005 /* XCRemoteSwiftPackageReference "LevelPlay-Swift-Package" */;
+			productName = UnityMediationSDK;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -1,97 +1,120 @@
+#if DEBUG
+import AdSupport
+#endif
 import AppTrackingTransparency
-import GoogleMobileAds
+import IronSource
 import UIKit
-import UserMessagingPlatform
 
-/// Drives Google's User Messaging Platform (UMP) consent flow and, behind it,
-/// Apple's App Tracking Transparency prompt.
+/// Drives the app's ad consent and, behind it, Apple's App Tracking
+/// Transparency prompt.
 ///
-/// Google requires consent to be collected from users in the EEA, the UK and
-/// Switzerland *before* the Mobile Ads SDK is initialised, so ad loading waits
-/// until `ConsentInformation` reports that ads may be requested. Users outside
-/// those regions are never shown a form and reach `canRequestAds` immediately.
+/// GDPR consent is collected by the app's own sheet (`AdConsentSheet`) and
+/// handed to Unity LevelPlay through `LPMPrivacySettings.setGDPRConsent`.
+/// Google's UMP used to own this job, but its forms live in the terminated
+/// AdMob account's console, and LevelPlay bundles no consent UI of its own —
+/// so the sheet is ours.
 ///
-/// ATT comes after the UMP form, per Google's documented ordering, and applies
-/// everywhere rather than only in regulated regions. Ads stay non-personalized
-/// until it is granted — see `AdMobBannerView`.
+/// LevelPlay reports nothing about the user's location, so the device region
+/// decides who is a GDPR user — and that is known before any SDK call, which
+/// buys a stricter ordering than the MAX setup this replaced: a GDPR user who
+/// has never answered sees the sheet first, and the SDK does not initialise
+/// (no traffic at all) until an answer exists. Either answer allows ads; the
+/// answer only decides personalisation. Everyone else initialises immediately
+/// and reaches `canRequestAds` when the SDK is ready.
 ///
-/// The published GDPR message also promises users an in-app way to change or
-/// withdraw their choice; `presentPrivacyOptions()` is that entry point.
+/// ATT comes after the consent decision, preserving the UMP-era ordering, and
+/// applies everywhere rather than only in regulated regions.
 @MainActor
 final class ConsentManager: ObservableObject {
     static let shared = ConsentManager()
 
-    /// Whether ads may be requested for this user. The banner stays out of the
-    /// view hierarchy until this turns true, so no ad request can precede consent.
+    /// Whether ads may be requested for this user: LevelPlay finished
+    /// initialising, and a GDPR user has an answer on file. The banner stays
+    /// out of the view hierarchy until this turns true, so no ad request can
+    /// precede consent or race SDK startup.
     @Published private(set) var canRequestAds = false
 
-    /// Whether this user must be offered a way back into the consent form.
-    /// Only regulated regions require the entry point, so it stays hidden elsewhere.
+    /// Whether the user must be offered a way back into the consent sheet.
+    /// Only GDPR regions require the entry point, so it stays hidden elsewhere.
     @Published private(set) var showsPrivacyOptions = false
 
-    /// Whether the user allowed tracking through the ATT prompt. Personalized ad
-    /// requests are gated on this; everyone else gets `npa=1`.
+    /// Whether the user allowed tracking through the ATT prompt.
     @Published private(set) var isTrackingAuthorized = false
 
-    /// Bumped whenever an answer that shapes the ad request changes. A `BannerView`
-    /// is configured once in `makeUIView`, so the banner has to be rebuilt to pick up
-    /// a new answer — a late ATT grant, or a consent choice the user just revised.
+    /// Bumped whenever an answer that shapes the ad request changes. The banner
+    /// view is configured once when it is built, so it has to be rebuilt to pick
+    /// up a new answer — a late ATT grant, or a consent choice the user revised.
     @Published private(set) var adConfigurationRevision = 0
 
-    /// Set when reopening the consent form failed, so the UI can say so instead of
-    /// leaving a button that appears to do nothing.
-    @Published var privacyOptionsFailed = false
+    /// Drives the consent sheet. Dismissing without choosing is allowed: the
+    /// user simply stays ad-free for the session and is asked again next launch.
+    @Published var isConsentSheetPresented = false
 
-    private var hasRequestedConsent = false
-    private var hasStartedMobileAds = false
+    /// User-defaults key for the stored GDPR answer; missing means "never
+    /// answered", which keeps ads (and the SDK itself) off for GDPR users
+    /// until the sheet is dealt with.
+    private static let consentDefaultsKey = "gdprPersonalizedAdsConsent"
+
+    private var hasStartedConsentFlow = false
+    private var hasStartedAdSdk = false
+    private var isAdSdkReady = false
+    private var isGDPRUser = false
     private var hasFinishedConsentFlow = false
 
     private init() {}
 
-    /// Refreshes the consent state and presents a form if one is required. Safe to
-    /// call on every activation — the work happens only once per launch.
+    /// Runs the consent flow and starts the ad SDK behind it. Safe to call on
+    /// every activation — the work happens at most once per launch, and a
+    /// failed SDK handshake unlatches it so the next foreground can retry.
     func requestConsentThenStartAds() {
-        guard !AppEnvironment.isRunningTests, !hasRequestedConsent else {
+        guard !AppEnvironment.isRunningTests, !hasStartedConsentFlow else {
             return
         }
-        hasRequestedConsent = true
+        hasStartedConsentFlow = true
 
-        ConsentInformation.shared.requestConsentInfoUpdate(with: Self.requestParameters()) { [weak self] error in
-            Task { @MainActor in
-                // Release the latch on failure. A cold start with no network used to
-                // burn the app's only attempt — no ads and no privacy-options entry
-                // point for the rest of that launch — because the sole caller runs
-                // once. Now the next foreground can try again.
-                if error != nil {
-                    self?.hasRequestedConsent = false
-                }
-                await self?.presentConsentFormIfRequired(updateError: error)
-            }
-        }
-    }
+        #if DEBUG
+        Self.logAdvertisingIdentifier()
+        #endif
 
-    /// Reopens the consent form so the user can change or withdraw their choice.
-    func presentPrivacyOptions() {
-        guard let viewController = UIApplication.shared.rainyClockRootViewController else {
+        isGDPRUser = Self.isGDPRRegion()
+        showsPrivacyOptions = isGDPRUser
+
+        if isGDPRUser, storedConsent == nil {
+            // The SDK is deliberately not started yet: the answer must reach
+            // `LPMPrivacySettings` *before* init, and an unanswered GDPR user
+            // stays entirely traffic-free. The flow continues from
+            // `consentSheetDidClose()`.
+            isConsentSheetPresented = true
             return
         }
 
         Task {
-            do {
-                try await ConsentForm.presentPrivacyOptionsForm(from: viewController)
-                privacyOptionsFailed = false
-            } catch {
-                // The form is loaded lazily, so a tap that lands before it is ready
-                // fails immediately while the SDK retries in the background. Saying
-                // nothing made the button look dead; the caller shows an alert.
-                privacyOptionsFailed = true
-            }
+            await finishConsentFlow()
+        }
+    }
 
-            refreshConsentState()
-            // The form can change purposes or vendors without moving `canRequestAds`,
-            // and the published GDPR message promises the choice takes effect. Rebuild
-            // the banner unconditionally so the next request carries the new answer.
-            adConfigurationRevision &+= 1
+    /// Reopens the consent sheet so the user can change their choice — the
+    /// entry point behind the Alarm tab's "Ad privacy options" row.
+    func presentPrivacyOptions() {
+        isConsentSheetPresented = true
+    }
+
+    /// Records the sheet's answer. Both answers allow ads; the value only
+    /// decides whether LevelPlay may personalise them.
+    func recordConsent(personalized: Bool) {
+        UserDefaults.standard.set(personalized, forKey: Self.consentDefaultsKey)
+        LPMPrivacySettings.setGDPRConsent(personalized)
+        // The banner configures its `LPMBannerAdView` once, so a revised answer
+        // only reaches the request stream by rebuilding it under a new identity.
+        adConfigurationRevision &+= 1
+        isConsentSheetPresented = false
+    }
+
+    /// Runs when the consent sheet closes, answered or dismissed. An answer
+    /// releases the SDK start; a dismissal leaves this launch ad-free.
+    func consentSheetDidClose() {
+        Task {
+            await finishConsentFlow()
         }
     }
 
@@ -105,24 +128,89 @@ final class ConsentManager: ObservableObject {
         await requestTrackingAuthorizationIfNeeded()
     }
 
-    private func presentConsentFormIfRequired(updateError: Error?) async {
-        // A failed refresh leaves the previous session's choice in place, so fall
-        // through to `canRequestAds` either way rather than giving up on ads.
-        if updateError == nil, let viewController = UIApplication.shared.rainyClockRootViewController {
-            try? await ConsentForm.loadAndPresentIfRequired(from: viewController)
+    /// Starts Unity LevelPlay. There is no Google demand behind it: the AdMob
+    /// account is terminated (appeal denied), so the Google SDK, its adapter
+    /// and `GADApplicationIdentifier` are gone on purpose — do not bring them
+    /// back. Unity's own demand fills through LevelPlay.
+    private func startAdSdk() {
+        guard !hasStartedAdSdk else {
+            return
+        }
+        hasStartedAdSdk = true
+
+        // A stored answer reaches LevelPlay before `init`, per its ordering
+        // guidance, so even the first request of the session carries it.
+        if let storedConsent {
+            LPMPrivacySettings.setGDPRConsent(storedConsent)
         }
 
-        hasFinishedConsentFlow = true
-        await requestTrackingAuthorizationIfNeeded()
-        refreshConsentState()
+        let appKey = Bundle.main.object(forInfoDictionaryKey: "LevelPlayAppKey") as? String ?? ""
+        guard !appKey.isEmpty, appKey != "YOUR-LEVELPLAY-APP-KEY" else {
+            // Skipping instead of crashing inside the SDK: with the placeholder
+            // key the app just runs ad-free, and this line says why.
+            print("[RainyClock] LevelPlayAppKey is still the placeholder, so LevelPlay never initialises and no ads load.")
+            return
+        }
+
+        #if DEBUG
+        // Launch with `-showLevelPlayTestSuite` to open LevelPlay's Test Suite
+        // once init lands. The flag must be set before init to take effect.
+        if ProcessInfo.processInfo.arguments.contains("-showLevelPlayTestSuite") {
+            LevelPlay.setMetaDataWithKey("is_test_suite", value: "enable")
+        }
+        #endif
+
+        let initRequest = LPMInitRequestBuilder(appKey: appKey).build()
+        LevelPlay.initWith(initRequest) { [weak self] _, error in
+            Task { @MainActor in
+                self?.adSdkDidInitialize(error: error)
+            }
+        }
     }
 
-    /// Asks for tracking authorization, which Apple requires before any data may be
-    /// used to track the user across apps — the ad SDK's device identifier included.
+    private func adSdkDidInitialize(error: Error?) {
+        if let error {
+            // Unlatch so the next foreground activation retries — LevelPlay
+            // recommends re-initialising after a failure, and a cold start with
+            // no network must not cost ads for the whole launch.
+            hasStartedAdSdk = false
+            hasStartedConsentFlow = false
+            #if DEBUG
+            print("[RainyClock] LevelPlay failed to initialise: \(error.localizedDescription)")
+            #endif
+            return
+        }
+
+        isAdSdkReady = true
+        updateCanRequestAds()
+        presentTestSuiteIfRequested()
+    }
+
+    /// Consent, then ATT, then the SDK — the order the AdMob build used and
+    /// the one Apple's guidance implies. Starting the SDK first is not fatal,
+    /// but the session's opening requests then go out without the advertising
+    /// identifier even when the user would have allowed tracking.
+    private func finishConsentFlow() async {
+        hasFinishedConsentFlow = true
+        await requestTrackingAuthorizationIfNeeded()
+
+        // A GDPR user who closed the sheet without answering stays ad-free for
+        // this launch and is asked again next time.
+        if !isGDPRUser || storedConsent != nil {
+            startAdSdk()
+        }
+
+        updateCanRequestAds()
+    }
+
+    /// Asks for tracking authorization, which Apple requires before any data may
+    /// be used to track the user across apps — the ad SDK's device identifier
+    /// included.
     ///
-    /// The system denies a request made while the app is not active *without showing
-    /// the prompt*, and the decision is then permanent, so a launch that has not
-    /// reached the foreground defers to `requestTrackingAuthorizationIfDeferred()`.
+    /// The system denies a request made while the app is not active *without
+    /// showing the prompt*, and the decision is then permanent, so a launch that
+    /// has not reached the foreground defers to
+    /// `requestTrackingAuthorizationIfDeferred()`.
     private func requestTrackingAuthorizationIfNeeded() async {
         guard !AppEnvironment.isRunningTests else {
             return
@@ -143,23 +231,17 @@ final class ConsentManager: ObservableObject {
         }
 
         isTrackingAuthorized = authorized
-        // A grant that arrives through the deferred path lands after the banner was
-        // built; without this the whole session would stay non-personalized.
+        // A grant that arrives through the deferred path lands after the banner
+        // was built; rebuilding it puts the new answer on the next request right
+        // away instead of whenever the auto-refresh cycle next comes around.
         adConfigurationRevision &+= 1
     }
 
-    private func refreshConsentState() {
-        showsPrivacyOptions = ConsentInformation.shared.privacyOptionsRequirementStatus == .required
+    private func updateCanRequestAds() {
+        // A GDPR user needs an answer on file — either answer — before the
+        // first request; everyone else only waits for the SDK itself.
+        let allowsAdRequests = isAdSdkReady && (!isGDPRUser || storedConsent != nil)
 
-        let allowsAdRequests = ConsentInformation.shared.canRequestAds
-        if allowsAdRequests, !hasStartedMobileAds {
-            hasStartedMobileAds = true
-            MobileAds.shared.start()
-        }
-
-        // Two-way on purpose. This used to only ever latch true, so a user who
-        // withdrew consent through the privacy options form kept seeing ads for the
-        // rest of the session — the opposite of what that form promises them.
         guard allowsAdRequests != canRequestAds else {
             return
         }
@@ -167,19 +249,57 @@ final class ConsentManager: ObservableObject {
         canRequestAds = allowsAdRequests
     }
 
-    private static func requestParameters() -> RequestParameters {
-        let parameters = RequestParameters()
+    private var storedConsent: Bool? {
+        UserDefaults.standard.object(forKey: Self.consentDefaultsKey) as? Bool
+    }
+
+    private func presentTestSuiteIfRequested() {
         #if DEBUG
-        // Launch with `-forceEEAConsentGeography` to rehearse the regulated-region
-        // flow from a simulator that is not actually in the EEA.
-        if ProcessInfo.processInfo.arguments.contains("-forceEEAConsentGeography") {
-            let debugSettings = DebugSettings()
-            debugSettings.geography = .EEA
-            parameters.debugSettings = debugSettings
+        if ProcessInfo.processInfo.arguments.contains("-showLevelPlayTestSuite"),
+           let viewController = UIApplication.shared.rainyClockRootViewController {
+            LevelPlay.launchTestSuite(viewController)
         }
         #endif
-        return parameters
     }
+
+    /// LevelPlay's init reports nothing about the user's location (unlike the
+    /// MAX handshake this replaced), so the device region decides. Erring
+    /// toward asking: a false positive costs one extra sheet, a false negative
+    /// serves ads without a legal basis.
+    private static func isGDPRRegion() -> Bool {
+        #if DEBUG
+        // Launch with `-forceGDPRConsentGeography` to rehearse the regulated-
+        // region flow from anywhere, stored answer permitting.
+        if ProcessInfo.processInfo.arguments.contains("-forceGDPRConsentGeography") {
+            return true
+        }
+        #endif
+
+        return Self.gdprRegions.contains(Locale.current.region?.identifier ?? "")
+    }
+
+    #if DEBUG
+    /// Prints the advertising identifier so it can be pasted into LevelPlay's
+    /// Setup → Test devices, which is how a real device gets test ads instead
+    /// of billable ones. The value is all zeros until ATT is granted, so the
+    /// first launch of a fresh install prints zeros and the next one prints
+    /// the real id.
+    private static func logAdvertisingIdentifier() {
+        let identifier = ASIdentifierManager.shared().advertisingIdentifier.uuidString
+        if identifier == "00000000-0000-0000-0000-000000000000" {
+            print("[RainyClock] Advertising ID unavailable (all zeros). Allow tracking when the prompt appears, then relaunch to read it.")
+        } else {
+            print("[RainyClock] Advertising ID for LevelPlay → Setup → Test devices: \(identifier)")
+        }
+    }
+    #endif
+
+    /// EEA members plus the UK.
+    private static let gdprRegions: Set<String> = [
+        "AT", "BE", "BG", "HR", "CY", "CZ", "DE", "DK", "EE", "ES", "FI", "FR",
+        "GB", "GR", "HU", "IE", "IS", "IT", "LI", "LT", "LU", "LV", "MT", "NL",
+        "NO", "PL", "PT", "RO", "SE", "SI", "SK",
+    ]
 }
 
 extension UIApplication {

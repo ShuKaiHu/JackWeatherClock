@@ -9,6 +9,12 @@ protocol NotificationScheduling: Sendable {
         normalAlarmDate: Date,
         weekdays: Set<Int>,
         sound: CommuteAlarmSettings.AlarmSound,
+        /// The file to play, from `CommuteAlarmSettings.soundFileNameOverride`.
+        /// Carried alongside `sound` rather than derived from it because a generated
+        /// clip's name is per-user and cannot come out of the enum, and because that
+        /// property is where the "file went missing, fall back to a shipped tone"
+        /// rule lives. `nil` means the system picks its own alarm tone.
+        soundFileNameOverride: String?,
         /// Minutes before the alarm rings again, or nil when the user turned
         /// snooze off. On iOS 26 this is AlarmKit's snooze; on older systems it is
         /// the follow-up ring interval, which is the same "how long until it nags
@@ -39,6 +45,7 @@ struct SystemAlarmScheduler: NotificationScheduling {
         normalAlarmDate: Date,
         weekdays: Set<Int>,
         sound: CommuteAlarmSettings.AlarmSound,
+        soundFileNameOverride: String?,
         snoozeMinutes: Int?,
         title: String,
         body: String
@@ -49,6 +56,7 @@ struct SystemAlarmScheduler: NotificationScheduling {
                 normalAlarmDate: normalAlarmDate,
                 weekdays: weekdays,
                 sound: sound,
+                soundFileNameOverride: soundFileNameOverride,
                 snoozeMinutes: snoozeMinutes,
                 title: title,
                 body: body
@@ -61,6 +69,7 @@ struct SystemAlarmScheduler: NotificationScheduling {
             normalAlarmDate: normalAlarmDate,
             weekdays: weekdays,
             sound: sound,
+            soundFileNameOverride: soundFileNameOverride,
             snoozeMinutes: snoozeMinutes,
             title: title,
             body: body
@@ -155,6 +164,7 @@ struct LocalNotificationScheduler: NotificationScheduling {
         normalAlarmDate: Date,
         weekdays: Set<Int>,
         sound: CommuteAlarmSettings.AlarmSound,
+        soundFileNameOverride: String?,
         snoozeMinutes: Int?,
         title: String,
         body: String
@@ -166,6 +176,7 @@ struct LocalNotificationScheduler: NotificationScheduling {
             normalAlarmDate: normalAlarmDate,
             weekdays: selectedWeekdays,
             soundRawValue: sound.rawValue,
+            soundFileNameOverride: soundFileNameOverride,
             followUpIntervalMinutes: snoozeMinutes ?? 0,
             title: title,
             body: body
@@ -234,7 +245,7 @@ struct LocalNotificationScheduler: NotificationScheduling {
         let content = UNMutableNotificationContent()
         content.title = plan.title
         content.body = plan.body
-        content.sound = notificationSound(for: CommuteAlarmSettings.AlarmSound(rawValue: plan.soundRawValue) ?? .rainyClock)
+        content.sound = notificationSound(for: plan)
         content.categoryIdentifier = categoryIdentifier
 
         // The ring date may sit on an earlier day than the normal alarm (rain lead time
@@ -338,13 +349,22 @@ struct LocalNotificationScheduler: NotificationScheduling {
         TimeInterval((ringOffsets(for: plan).last ?? 0) + 60)
     }
 
-    private static func notificationSound(for sound: CommuteAlarmSettings.AlarmSound) -> UNNotificationSound {
-        switch sound {
-        case .systemDefault:
-            .default
-        default:
-            UNNotificationSound(named: UNNotificationSoundName(sound.fileName))
+    /// `UNNotificationSound(named:)` searches the container's `Library/Sounds` before
+    /// the bundle, so a generated clip and a shipped tone are named the same way.
+    /// A file longer than 30 seconds, or one that is not there, is swapped for the
+    /// default tone silently — hence `GeneratedVoiceStore.assembledDuration` and the
+    /// existence check behind `soundFileNameOverride`.
+    private static func notificationSound(for plan: StoredAlarmPlan) -> UNNotificationSound {
+        let sound = CommuteAlarmSettings.AlarmSound(rawValue: plan.soundRawValue) ?? .rainyClock
+        if sound == .systemDefault {
+            return .default
         }
+
+        let fileName = plan.soundFileNameOverride ?? sound.fileName
+        guard !fileName.isEmpty else {
+            return UNNotificationSound(named: UNNotificationSoundName(CommuteAlarmSettings.AlarmSound.rainyClock.fileName))
+        }
+        return UNNotificationSound(named: UNNotificationSoundName(fileName))
     }
 
     private static func alarmIdentifier(for weekday: Int, offset: Int) -> String {
@@ -388,6 +408,10 @@ struct LocalNotificationScheduler: NotificationScheduling {
         var normalAlarmDate: Date
         var weekdays: Set<Int>
         var soundRawValue: String
+        /// Absent in plans stored before generated voices existed, and for those the
+        /// name still resolves from `soundRawValue`. Present, it wins — it is the
+        /// only way to name a per-user clip.
+        var soundFileNameOverride: String?
         /// Minutes between follow-up rings; `0` means the user turned snooze off.
         /// Absent in plans stored before 1.6.3, which used a fixed 5-minute interval.
         var followUpIntervalMinutes: Int?

@@ -550,6 +550,7 @@ final class AlarmViewModel: ObservableObject {
                 normalAlarmDate: summary.normalAlarmDate,
                 weekdays: settingsSnapshot.selectedWeekdays,
                 sound: settingsSnapshot.alarmSound,
+                soundFileNameOverride: settingsSnapshot.soundFileNameOverride,
                 snoozeMinutes: settingsSnapshot.effectiveSnoozeMinutes,
                 title: String(localized: "notification_title"),
                 body: body

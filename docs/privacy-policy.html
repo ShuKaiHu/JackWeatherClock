@@ -17,7 +17,7 @@
 <body>
 
 <h1>Rainy Clock</h1>
-<p class="subtitle">Privacy Policy · Last updated August 2026</p>
+<p class="subtitle">Privacy Policy · Last updated 31 August 2026</p>
 
 <h2>Overview</h2>
 <p>Rainy Clock is an iOS app that automatically adjusts your alarm time
@@ -27,21 +27,49 @@ your privacy. This policy explains what data is used and how.</p>
 <h2>Data We Do Not Collect</h2>
 <p>Rainy Clock does <strong>not</strong>:</p>
 <ul>
-  <li>Collect, store, or transmit any personal information to our servers.</li>
-  <li>Have a server or backend of any kind.</li>
+  <li>Ask for your name, email address, or any account. Rainy Clock has no sign-in.</li>
   <li>Use analytics SDKs.</li>
+  <li>Keep a database, a user profile, or request logs on any server we run.</li>
   <li>Track you across other companies' apps and websites without your explicit
       permission — see <a href="#tracking">Tracking</a>.</li>
 </ul>
 
 <h2>Data Stored On Your Device</h2>
 <p>The following settings are stored locally on your device using
-<code>UserDefaults</code> and never leave your device:</p>
+<code>UserDefaults</code>:</p>
 <ul>
   <li>Home and work address text (used solely to look up your commute route)</li>
   <li>Commute mode preference</li>
   <li>Alarm time, rain lead time, and rain probability threshold</li>
+  <li>How many AI voice alarms you have generated, so the free allowance can be counted</li>
+  <li>The words you last typed for an AI voice alarm, so the screen reopens on them</li>
 </ul>
+<p>None of these leave your device, with one exception: the words you type for an AI
+voice alarm are sent when you generate it. See <a href="#ai-voice">AI Voice Alarm</a>.</p>
+
+<h2 id="ai-voice">AI Voice Alarm</h2>
+<p>Rainy Clock can wake you with a spoken line instead of a tone. This is the only
+part of the app that sends anything you have written off your device, and it only
+happens when you tap <em>Generate</em>.</p>
+<ul>
+  <li><strong>What is sent:</strong> the words you typed, which of the six voices you
+      picked, and whether the app is in Chinese or English. Nothing else — not your
+      addresses, not your alarm time, not any device identifier.</li>
+  <li><strong>Where it goes:</strong> to a small relay service we run, which passes it
+      to <strong>Google's Gemini text-to-speech</strong> and returns the audio. The relay
+      exists because the key that authenticates the request cannot safely ship inside
+      an app.</li>
+  <li><strong>What is kept:</strong> the relay holds the words and the resulting audio in
+      memory for up to one hour, so that repeating the same request does not have to be
+      generated again. Nothing is written to a database or to a log, and nothing is
+      linked to you or to your device.</li>
+  <li><strong>The finished alarm sound stays on your phone.</strong> It is saved in the
+      app's own storage and is deleted when you replace it or delete the app.</li>
+</ul>
+<p>Google processes the text to produce the speech, under Google's
+<a href="https://policies.google.com/privacy">privacy policy</a>. We use the paid tier,
+where Google states that the content sent is not used to train its models.</p>
+<p>If you never use this feature, nothing you write ever leaves your phone.</p>
 
 <h2>Third-Party Services</h2>
 <p>When you enter addresses or tap "Schedule Smart Alarm," the app contacts
@@ -79,22 +107,24 @@ you:</p>
 <p>The iPhone version has no relay: it talks to Apple Weather directly.</p>
 
 <h2>Advertising</h2>
-<p>Rainy Clock displays one banner advertisement through Google AdMob. Google may
-process device, advertising, and interaction data to provide, limit, measure, and
-improve ads. AdMob is provided by Google LLC and is subject to Google's
-<a href="https://policies.google.com/privacy">Privacy Policy</a>.</p>
+<p>Rainy Clock displays one banner advertisement through Unity LevelPlay, the ad
+mediation platform operated by Unity Technologies (formerly ironSource). Unity and the
+advertising partners bidding through it may process device, advertising, and interaction
+data to provide, limit, measure, and improve ads. LevelPlay is subject to Unity's
+<a href="https://unity.com/legal/game-player-and-app-user-privacy-policy">Privacy Policy</a>.</p>
 
 <h2 id="tracking">Tracking</h2>
 <p><strong>On Android</strong> there is no App Tracking Transparency prompt — the mechanism
 does not exist on that platform. Whether the banner is personalised is governed entirely by
-the consent choice described at the end of this section, which the Google Mobile Ads SDK
-applies on its own. The rest of this section describes the iPhone version.</p>
+the consent choice described at the end of this section, which the app passes to the ad
+SDK. The rest of this section describes the iPhone version.</p>
 <p>The first time you open the app, iOS asks whether Rainy Clock may track your
 activity across other companies' apps and websites. This is Apple's App Tracking
 Transparency prompt, and your answer decides what happens:</p>
 <ul>
   <li><strong>If you allow it</strong>, the advertising identifier on your device may
-      be shared with Google so the banner can be matched to your interests.</li>
+      be shared with Unity and the advertising partners bidding through LevelPlay, so the
+      banner can be matched to your interests.</li>
   <li><strong>If you decline</strong>, or if you are never asked, ads are requested as
       non-personalized and the advertising identifier is not used to track you.</li>
 </ul>
@@ -126,9 +156,9 @@ shukaihu@icloud.com.</p>
 <h2>我們不收集的資料</h2>
 <p>Rainy Clock 不會：</p>
 <ul>
-  <li>將個人資料收集、儲存或傳送到我們的伺服器。</li>
-  <li>使用任何後端伺服器。</li>
+  <li>詢問你的姓名、電子郵件或任何帳號。Rainy Clock 沒有登入機制。</li>
   <li>使用分析 SDK。</li>
+  <li>在我們營運的伺服器上保留資料庫、使用者輪廓或請求紀錄。</li>
   <li>未經你明確允許，跨其他公司的 App 或網站追蹤你 —— 詳見<a href="#tracking-zh">追蹤</a>。</li>
 </ul>
 
@@ -138,7 +168,21 @@ shukaihu@icloud.com.</p>
   <li>住家與公司地址文字，用於查詢通勤路線。</li>
   <li>通勤方式偏好。</li>
   <li>鬧鐘時間、雨天提前時間與降雨機率門檻。</li>
+  <li>已經生成過幾次 AI 語音鬧鈴，用於計算免費次數。</li>
+  <li>你上次為 AI 語音鬧鈴輸入的文字，讓畫面重新打開時能帶回原本的內容。</li>
 </ul>
+<p>以上都不會離開你的裝置，只有一個例外：你為 AI 語音鬧鈴輸入的文字，會在你按下產生時送出。詳見 <a href="#ai-voice-zh">AI 語音鬧鈴</a>。</p>
+
+<h2 id="ai-voice-zh">AI 語音鬧鈴</h2>
+<p>Rainy Clock 可以用一段人聲取代鈴聲叫醒你。這是整個 App 裡<strong>唯一</strong>會把你寫的內容送出裝置的功能，而且只在你按下「產生」時才會發生。</p>
+<ul>
+  <li><strong>送出什麼：</strong>你輸入的文字、你選的六個聲音中的哪一個，以及 App 目前是中文還是英文。就這些——不包含你的地址、鬧鐘時間，或任何裝置識別碼。</li>
+  <li><strong>送到哪裡：</strong>先送到我們營運的一個小型轉發服務，再由它轉給 <strong>Google 的 Gemini 文字轉語音</strong>並取回音訊。之所以需要轉發，是因為驗證請求用的金鑰無法安全地放進 App 裡。</li>
+  <li><strong>保留多久：</strong>轉發服務會把文字與產生的音訊在記憶體中保留最多一小時，讓相同的請求不必重新生成。不會寫入任何資料庫或請求紀錄，也不會與你或你的裝置產生任何關聯。</li>
+  <li><strong>完成的鬧鈴音檔留在你的手機上。</strong>它存放在 App 自己的儲存空間，你更換它或刪除 App 時就會一併刪除。</li>
+</ul>
+<p>Google 為了產生語音而處理這段文字，適用 Google 的<a href="https://policies.google.com/privacy">隱私權政策</a>。我們使用付費方案，Google 聲明該方案送出的內容不會用於訓練其模型。</p>
+<p>如果你從不使用這個功能，你寫的任何內容都不會離開手機。</p>
 
 <h2>第三方服務</h2>
 <p>當你輸入地址或點選「排程智慧鬧鐘」時，App 會代表你使用下列服務：</p>
@@ -161,14 +205,14 @@ shukaihu@icloud.com.</p>
 <p>iPhone 版沒有這個轉發服務，它直接與 Apple Weather 連線。</p>
 
 <h2>廣告</h2>
-<p>Rainy Clock 會透過 Google AdMob 顯示一則橫幅廣告。Google 可能會處理裝置、廣告與互動資料，用於提供、限制、衡量與改善廣告。AdMob 由 Google LLC 提供，並受 Google 的
-<a href="https://policies.google.com/privacy">隱私權政策</a>約束。</p>
+<p>Rainy Clock 會透過 Unity LevelPlay 顯示一則橫幅廣告；LevelPlay 是由 Unity Technologies 營運的廣告中介平台（前身為 ironSource）。Unity 與透過它競價的廣告夥伴可能會處理裝置、廣告與互動資料，用於提供、限制、衡量與改善廣告。LevelPlay 受 Unity 的
+<a href="https://unity.com/legal/game-player-and-app-user-privacy-policy">隱私權政策</a>約束。</p>
 
 <h2 id="tracking-zh">追蹤</h2>
-<p><strong>Android 版沒有「App 追蹤透明度」提示</strong>——這個機制在該平台上並不存在。廣告是否個人化，完全取決於本節末尾所述的同意選擇，由 Google Mobile Ads SDK 自行套用。本節其餘內容描述的是 iPhone 版。</p>
+<p><strong>Android 版沒有「App 追蹤透明度」提示</strong>——這個機制在該平台上並不存在。廣告是否個人化，完全取決於本節末尾所述的同意選擇，由 App 傳遞給廣告 SDK。本節其餘內容描述的是 iPhone 版。</p>
 <p>第一次開啟 App 時，iOS 會詢問是否允許 Rainy Clock 追蹤你在其他公司 App 與網站上的活動。這是 Apple 的「App 追蹤透明度」提示，你的選擇決定接下來的行為：</p>
 <ul>
-  <li><strong>選擇允許</strong>：裝置上的廣告識別碼可能會提供給 Google，讓橫幅廣告更貼近你的興趣。</li>
+  <li><strong>選擇允許</strong>：裝置上的廣告識別碼可能會提供給 Unity 及透過 LevelPlay 競價的廣告夥伴，讓橫幅廣告更貼近你的興趣。</li>
   <li><strong>選擇不允許，或從未被詢問</strong>：廣告會以非個人化方式請求，廣告識別碼不會用於追蹤你。</li>
 </ul>
 <p>你可以隨時在<em>「設定 &rsaquo; 隱私權與安全性 &rsaquo; 追蹤」</em>更改這個選擇。無論選擇哪一種，App 的功能完全相同，差別只在廣告的關聯性。</p>

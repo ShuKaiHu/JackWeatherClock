@@ -17,10 +17,114 @@ Last updated: 2026-08-13.
 
 | | Version | State |
 | --- | --- | --- |
-| **Live on the App Store** | `1.6.5` | **Released 2026-08-04.** Confirmed against the public listing, not against this file — see the warning below |
+| **Live on the App Store** | `1.6.6` | **Released 2026-08-18.** Confirmed 2026-08-29 against the public listing with the `itunes.apple.com/lookup` command below — this file had still been claiming 正在等待審查, the same staleness it warns about |
+| Superseded | `1.6.5` | Released 2026-08-04 |
 | Superseded | `1.6.3 (18)` | Released 2026-07-28 |
 | Rejected, then resolved | `1.6.4 (19)` | Rejected 2026-08-01 on 5.1.2(i) and 2.1(a); both answered, and the fixes reached users in 1.6.5 |
-| **Uploaded, not submitted** | `1.6.6 (24)` | In App Store Connect since 2026-08-13. Still needs a `1.6.6` version record, the notes, the build attached, and a submission |
+| **Live on the App Store** | `1.6.7` | **Released 2026-08-30.** The ad-provider migration. Confirmed against the public listing on 2026-08-31 — this row had still been claiming 正在等待審查, the third time this file has gone stale the same way |
+| In progress | `1.6.8 (27)` | The AI voice alarm. Version bumped in both places; **not yet archived or submitted** — see the checklist in that section |
+
+**Ships with 1.6.6 (edited in ASC 2026-08-13):** both app names change — 繁體中文
+`RainyClock` → `Rainy Clock`, English `Rainy Clock: Rain Alarm` → `Rainy-Clock`. Plain
+"Rainy Clock" is still name-squatted in the English locale (409 on rename), but the
+hyphenated variant was accepted (details in `docs/appstore-metadata.md`).
+
+## 1.6.7 — off Google ads, onto Unity LevelPlay
+
+**The AdMob account was terminated and the appeal was denied (2026-08-29).** Every Google
+advertising component is gone on purpose — `GoogleMobileAds`, the UMP consent flow,
+`GADApplicationIdentifier` — and must not come back: Google demand needs a live AdMob
+account under any mediator, and UMP's forms are configured in that same dead console. A
+same-day AppLovin MAX detour was re-pointed to LevelPlay once the ad unit turned out to live
+in the Unity dashboard; the MAX code survives in git history if it is ever needed.
+
+What ships:
+
+- **Unity LevelPlay 9.6.0** (ironSource SDK via SPM, product `UnityMediationSDK`), one
+  anchored adaptive banner, ad unit `kay9cneaxvesx4p4`, app key `27d81ff8d` in `Info.plist`.
+- **The app's own GDPR consent sheet** (`AdConsentSheet`) feeding
+  `LPMPrivacySettings.setGDPRConsent`. The device region decides who is a GDPR user, and an
+  unanswered GDPR user keeps the SDK from initialising at all — stricter than the UMP flow,
+  which only gated the ad request.
+- Order restored to **consent → ATT → SDK start**, as the AdMob build had it.
+
+Two traps worth remembering:
+
+- **`OTHER_LDFLAGS = -ObjC` is mandatory.** IronSource is a static framework; without it the
+  app dies at launch inside the SDK's own init on a missing `ISAES256EncryptWithKey:`
+  selector. It only reproduces once a real app key is set, because a placeholder key skips
+  init entirely.
+- The **iOS ad unit and app key are iOS-only**. LevelPlay keys and units are per app, so
+  Android needs its own of both.
+
+Verified on the simulator on 2026-08-29: real creatives serve, a fresh one per launch. Those
+were real impressions on a real key — see the test-device rule in `CLAUDE.md`; do it through
+**Setup → Test devices** next time.
+
+**Consent wording reworked 2026-08-30** after reading the platform terms. The Data Protection
+Addendum requires the consent to name ironSource, and its advertising partners for the
+personalised tier, as controllers, and to carry a link to ironSource's privacy policy. The
+sheet now does all three, with both policy links pinned above the buttons rather than inside
+the scrolling prose — a link nobody scrolls to is not "included". The addendum's URLs for
+ironSource's privacy policy and its advertising-partner list are both dead (they redirect to
+Unity's generic legal and docs indexes); the app links Unity's live Game Player and App User
+Privacy Policy instead. **Ask ironSource support for the canonical URLs** and swap them in —
+it is one constant per platform.
+
+Still owed before submitting:
+
+- [x] **`app-ads.txt` published 2026-08-29** and verified live at
+      `https://shukaihu.github.io/app-ads.txt`: `OWNERDOMAIN=shukaihu.github.io` plus
+      `ironsrc.com, 679093, DIRECT`. The publisher id came from ironSource → Account → API
+      tab; the terminated AdMob line is gone. This was not optional housekeeping — a file
+      that lists no current seller reads as "LevelPlay is unauthorised" to any DSP that
+      checks it. The optional certification-authority field is deliberately omitted: it is
+      optional, and real-world files carrying it disagree on the value. The id is also the
+      account's `seller_id` in `ironsrc.com/sellers.json`, which is how a future check can
+      confirm it without logging in — the account was not listed there yet on 2026-08-29,
+      since sellers.json only carries accounts that have started transacting.
+- [x] **Archived 2026-08-30 as `build/RainyClock-1.6.7-26.xcarchive`** and verified: app and
+      `RainyClockAlarmWidget.appex` both report `1.6.7 (26)` (the lockstep that rejects
+      uploads when it slips), `LevelPlayAppKey` and the ATT usage string are present, no
+      `GAD*` keys survive, the only embedded framework is `IronSource.framework`, the privacy
+      manifest still carries the ITMS-91064-safe `NSPrivacyTracking = false` with an empty
+      domain list, and 152 SKAdNetwork ids are in place. The SDK really is in the shipped
+      binary — `LPMBannerAdView` and `LevelPlay` appear throughout it — and so is
+      `ISAES256EncryptWithKey:`, which is the proof that `-ObjC` did its job. The 51 KB
+      `IronSource.framework` in `Frameworks/` is a stub that carries the SDK's privacy
+      manifest; the code itself is statically linked, and `otool -L` shows no dynamic
+      dependency on it.
+- [x] **Uploaded 2026-08-30.** `xcodebuild -exportArchive` with
+      `ExportOptions-AppStoreUpload.plist` again needed no credentials by hand. One warning
+      worth knowing rather than fixing: `Upload Symbols Failed … did not include a dSYM for
+      the IronSource.framework`. It does not block the upload or review; it only means crash
+      frames inside ironSource's own code arrive unsymbolicated, because the vendor ships no
+      dSYM with the static framework. Turning `uploadSymbols` off to silence it would cost
+      the symbols for our own code too, so leave it.
+- [x] **Submitted 2026-08-30** with the notes and App Review text from
+      `docs/appstore-metadata.md`. **The App Privacy declaration needed no change for the ad
+      swap** — an earlier draft of this list claimed it did, and sent someone hunting for a
+      field that does not exist. Apple's questionnaire asks only which data types are
+      collected, for what purpose, and whether they are used for tracking; it phrases the
+      question as "you or your third-party partners" and never asks which partner. Data
+      types, purposes and the tracking answers are all unchanged by moving from Google to
+      Unity. The vendor name matters in the two places that already carry it: the privacy
+      policy page and the App Review note.
+- [x] **Test device registered 2026-08-30** — the iPhone 16 Pro, under **Setup → Test
+      devices**. Debug builds print the advertising id at launch
+      (`[RainyClock] Advertising ID for LevelPlay → Setup → Test devices: …`), which is the
+      only way to read it: iOS shows it nowhere, and SDK 9.6.0 dropped the old
+      `ISIntegrationHelper`. It reads as all zeros until ATT is granted — no prompt appeared
+      here because the App Store build had already been allowed on that phone, and the
+      decision survives installing a debug build over it, since the bundle id is the same.
+- [x] **Verified on the device 2026-08-30, and it is the check that mattered.** The device
+      build links IronSource statically, which the simulator never exercised — the `-ObjC`
+      launch crash came out of exactly that difference. `[LevelPlay] banner loaded from
+      ironsourceads, 402x50` on the iPhone 16 Pro, 402pt being that device's logical width,
+      so the anchored adaptive sizing is right too; a screenshot confirmed the banner on
+      screen. Getting there without billable impressions is worth remembering: launching with
+      `-forceGDPRConsentGeography` and dismissing the sheet without answering leaves
+      `startAdSdk()` uncalled, so the advertising id can be read with no ad request at all.
 
 > **This file said "1.6.5 waiting to upload" for nine days after 1.6.5 had already shipped.**
 > Nobody updated it after the upload, and an agent reading it repeated the claim back as
@@ -391,6 +495,156 @@ below xxxLarge changes shape. Verified on an iPhone 16e simulator via
 `xcrun simctl ui <device> content_size accessibility-extra-extra-extra-large`, in English and
 zh-Hant. **The Android `WeekdaySelector` has the same defect** — a fixed `Modifier.size(40.dp)`
 circle — and is untouched here.
+
+## AI voice alarm — in progress
+
+An alarm that wakes you with generated speech instead of a tone. Not shipping in any version yet.
+
+**The user writes the words; the app writes the delivery.** Decided 2026-08-30. The text is
+the user's own — the app does not compose it — but the app splits it into sentences and tags
+each with an emotion before synthesis, so the line is performed rather than read flat.
+
+That split is why the proxy takes an emotion *id* per segment and never a tag. Google sorts
+bracketed markup into four modes, and the one everybody reaches for first is the broken one:
+
+> **Mode 3: Vocalized markup (adjectives)** — "The markup tag itself is spoken as a word,
+> while also influencing the tone of the entire sentence." … "Warning: Because the tag itself
+> is spoken, this mode is likely an undesired side effect for most use cases. Prefer using the
+> Style Prompt to set these emotional tones instead."
+
+`[cheerful]`, `[urgent]`, `[encouraging]` are all Mode 3, so an alarm built the obvious way
+says the word "cheerful" out loud at 7 a.m. The emotion table therefore maps each intent onto
+Mode 2 (delivery: `[shouting]`, `[extremely fast]`) or Mode 4 (pacing), which carry the same
+feeling without being read out, and a test asserts no adjective-form tag can ever reach the
+model. Adverb-form tags (`[cheerfully]`, `[warmly]`, `[gently]`) are reported reliable by a
+third-party evaluation but are undocumented by Google; they are recorded against each emotion
+and stay off behind `TTS_ALLOW_UNVERIFIED_TAGS` until somebody has actually listened.
+
+**Which sentence gets which emotion is decided by a model, not by the app.** The split is done
+in code and the model only labels the pieces — it is never handed the text and asked for a
+rewrite, because the words are the user's and an alarm that says something they did not type
+is worse than one read flat. Labels come from the same closed vocabulary, so the labeller
+cannot invent a tag either. Any failure — quota, timeout, a hallucinated id — degrades that
+sentence to neutral and the clip is still generated.
+
+**First contact with the live API, 2026-08-30.** A key was issued and the pipeline ran
+end-to-end; three things came out of it that would otherwise cost someone an afternoon:
+
+- **`gemini-2.5-flash` is not available to new projects at all.** The API answers 404 with
+  "no longer available to new users … We recommend you to use the Interactions API". The three
+  TTS models *are* available, including `gemini-2.5-flash-preview-tts`, so the cheap costing
+  above still holds — but anything text-only must use `gemini-3.6-flash` or a `-lite` sibling.
+- **The free tier is unusable for development, not only for shipping.** Roughly ten TTS calls
+  exhausted the quota, and it does not recover on a useful timescale. Billing has to be
+  enabled before any real work; the EEA/UK clause already required it before any release.
+- **Content blocking is noise, not judgement.** `早安，該起床囉` — good morning, time to get
+  up — was refused with `content_blocked` on roughly one call in six, with identical requests
+  either side of it succeeding. It is not about the words, so the proxy retries it like a 5xx
+  and only reports 422 when every attempt is refused. An app that surfaced the first refusal
+  as "your text was rejected" would be telling users something both wrong and unactionable.
+
+**The Mode 3 warning does not reproduce, measured 2026-08-30.** Google documents that
+adjective-form markup is "spoken as a word". On `gemini-2.5-flash-preview-tts` with a
+Traditional Chinese transcript, it is not — across four samples each of eight tags, including
+Google's own examples:
+
+| tag | spoken? | vs untagged |
+| --- | --- | --- |
+| control: planted word "hello" | **4/4 spoken** | +1.11 s |
+| `[curious]`, `[bored]` (Google's own Mode 3 examples) | 0/4 | +0.33 s, +0.79 s |
+| `[cheerful]`, `[urgent]`, `[encouraging]` | 0/4 | +0.20 s, +0.29 s, +0.12 s |
+| `[cheerfully]` (adverb form) | 0/4 | +0.30 s |
+| `[shouting]`, `[extremely fast]` (documented Mode 2) | 0/4 | +0.60 s, −0.06 s |
+
+The positive control is what makes the negatives mean anything: a real word costs 1.1 s and is
+transcribed every time, while no tag cost more than 0.79 s or appeared once in 32 transcripts.
+The durations also show the tags *working* — `[bored]` drags the line out, `[extremely fast]`
+shortens it.
+
+**Rate limits decide the model, not price — measured 2026-08-30 on a paid Tier 1 project.**
+`gemini-2.5-flash-preview-tts` on the Gemini API is capped at **100 requests per day**; the
+error names the metric outright (`generate_requests_per_model_per_day, limit: 100`) and says
+to retry in ten hours. That is the whole app's budget for a day, not one user's — it is not a
+rate limit, it is an off switch. `gemini-3.1-flash-tts-preview` uses dynamic throughput limits
+and kept serving after 2.5 had stopped, so it is now the default despite costing twice as much
+per second (NT$0.20 against NT$0.10 for a ten-second clip, which is not the number that
+decides this). Tier 2 needs US$100 of cumulative spend plus three days, and whether it lifts
+the 2.5 cap is unknown.
+
+**The bigger consequence: the Gemini API is probably the wrong surface for production.** The
+same models are reachable through Cloud Text-to-Speech at **150 QPM with no documented daily
+cap**, raisable on request, and with an explicit `cmn-TW` locale field the Gemini API path does
+not have. The original reason for choosing the Gemini API — Cloud TTS refuses API keys and
+wants a service account — was reasoning about a bake-off script, not production: this proxy
+runs on Cloud Run, where a service account is the *native* credential and strictly less work
+than shipping and rotating a key. Switching surfaces is the next infrastructure decision.
+
+Scope: one model, one voice, one style prompt, zh-Hant only, four samples. Enough to stop
+designing around the warning, not enough to assume it is wrong everywhere — English in
+particular is untested, and these are preview models. The emotion table records how each tag
+was cleared so a future reader can tell measurement from assumption.
+
+**Vendor: Google Gemini-TTS**, decided 2026-08-30. It is the only one with both Taiwanese
+Mandarin and real prompt-driven tone control. Azure has the best zh-TW accent but its three
+zh-TW voices support **zero** emotion styles; OpenAI has the best tone control but its voices
+are English-native and audibly foreign in Mandarin. Model is `gemini-2.5-flash-preview-tts`,
+not `3.1` — half the price for output audio and without 3.1's documented habit of returning
+text tokens instead of audio.
+
+Costing, verified against Google's own pricing page: output audio is billed per token at
+US$10/1M, 25–32 tokens a second (the pricing page and the tokenisation doc disagree; assume
+32). A 10-second clip is therefore about **NT$0.10**. The Gemini API's free tier is unusable
+here — Google's terms require paid services for API clients available to users in the EEA,
+Switzerland or the UK, which an App Store listing reaches.
+
+Done:
+
+- [x] **Runtime-generated sounds work at all** — the device test above. This was the feature's
+      single make-or-break unknown, and the only prior public report of it was a failure.
+- [x] **Foundation in the app** (`0a87602`): `AlarmSound.aiVoice`, the clip name beside the
+      enum rather than in it, `restorableCases` so the settings decoder stops erasing it, a
+      fallback to a shipped tone when the file is missing, and `GeneratedVoiceStore` owning
+      `Library/Sounds` and the 28 s / 10 s constants.
+- [x] **`/v1/tts` on the existing `weather-proxy/`.** The Gemini key never ships. Reuses the
+      same three guards the weather route has, sized for a different asset: WeatherKit's
+      allowance is a call count that resets, but Gemini bills per token, so a scraped key is
+      an unbounded bill and `DAILY_TTS_LIMIT` (2,000 clips ≈ US$6.40) is a real ceiling rather
+      than an alert. **A Cloud Billing budget would not do this — those only notify.**
+      The client sends a persona id and the words; it cannot send a voice name or a style
+      prompt, or the endpoint becomes free general-purpose Gemini for anyone who reads the URL
+      out of the app. Deploy needs `GEMINI_API_KEY` set; without it the route answers 503 and
+      the app falls back to a tone, so a weather-only deployment still boots.
+
+Still open, roughly in order:
+
+- [x] **Deployed 2026-08-31.** `/v1/tts` is live on the same Cloud Run service as the weather
+      proxy, revision `00007-jjc`, memory raised 256Mi → 512Mi because the TTS cache holds
+      audio rather than a few hundred bytes of forecast and an OOM here would take the
+      weather down with it. The Gemini key is in Secret Manager as `gemini-api-key`,
+      matching how the WeatherKit private key is already held — it is not in the service's
+      env config, not in the repo, and not in the app. The Cloud Run service account needed
+      `roles/secretmanager.secretAccessor` granted **on the new secret**; the first deploy
+      failed on exactly that and left the previous revision serving, so the weather never
+      went down. Verified after: weather returns the same 25 hours it did before, and a
+      real clip generates end to end. `VoiceProxyURL` in `Info.plist` now points at it.
+- Free quota and the rewarded exchange ship, but nothing meters cost server-side beyond
+  `DAILY_TTS_LIMIT` (2,000 clips ≈ US$6.40/day).
+- **Whether the alarm can name a road.** `RouteWeatherSegment.name` is not a street name — it
+  is `住家` / `路程 ½` / `公司`, from a closed set of localised constants, and interior samples
+  are empty below 4 km and for transit entirely. So "忠孝東路那段會濕" is not currently
+  sayable; it renders as "路程一半那段會濕". Either reverse-geocode a thoroughfare at the
+  wettest sample (real work, needs its own fallback for Taiwan geocoding) or reword around
+  elapsed time. **This is a product decision and it is load-bearing** — the route-level line is
+  the only part of this feature no competitor can copy.
+- Free quota, and whether to meter at all. Rewarded video does **not** pay for this: at a
+  US$5 eCPM planning figure a completed view returns ~NT$0.155 against NT$0.10 of TTS, and
+  breaking even on 30 s clips would need US$19 eCPM, above any verifiable rewarded rate
+  anywhere. Guideline 3.2.2(x) permits ad-gating, so the obstacle is arithmetic, not policy.
+- `docs/privacy-policy.html` states the app transmits nothing to a server and names alarm time
+  and rain lead time as never leaving the device. Both become false the moment this ships;
+  those sentences need rewriting, not an appended paragraph.
+- Google's API terms prohibit use in a service "likely to be accessed by individuals under the
+  age of 18". Unresolved, and it is a binary ship gate.
 
 ## Backlog
 

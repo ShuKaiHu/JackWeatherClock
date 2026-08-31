@@ -2,14 +2,19 @@
 
 Ongoing state and the backlog live in `docs/STATUS-IOS.md`; this file is the submission reference.
 
+> The table below went three versions stale before anyone noticed, the same way `STATUS-IOS.md`
+> did. Two files carrying the same state will drift; the App Store listing is the only thing
+> that cannot. Before trusting either, run the `itunes.apple.com/lookup` command in
+> `docs/STATUS-IOS.md`.
+
 ## Current Build
 
 | Item | Status |
 | --- | --- |
-| App version | `1.6.5` (in development) |
-| Build number | `23` (`20` invalidated by ITMS-91064; `21` and `22` superseded before upload) |
-| Review status | `1.6.5 (23)` ready to upload and resubmit |
-| Last released | `1.6.3 (18)` — released to the App Store 2026-07-28 |
+| App version | `1.6.7` — the Google-to-Unity-LevelPlay ad migration |
+| Build number | `26` (`25` shipped as 1.6.6; `24` was superseded before submission) |
+| Review status | `1.6.7 (26)` submitted 2026-08-30, awaiting review |
+| Last released | `1.6.6` — released to the App Store 2026-08-18 |
 | Bundle identifier | `com.shukaihu.RainyClock` |
 | Extension bundle identifier | `com.shukaihu.RainyClock.AlarmWidget` (added in `1.6.3`) |
 | Device family | iPhone only |
@@ -43,9 +48,31 @@ The alarm rings through silent mode and Focus on iOS 26+ via AlarmKit. Points th
 - **Upgrade path.** An install that reaches iOS 26 without rescheduling keeps ringing through its old notification alarms (no gap, but no silent-mode piercing either). `rearmAlarmsIfNeeded()` therefore runs on every system, not just pre-26, and the Alarm tab shows `alarmkit_reschedule_notice` until the user schedules once and AlarmKit takes over.
 - **Localized strings shown by the alarm** are built with `bundle: .atURL(Bundle.main.bundleURL)` rather than the default `.main`. The widget extension decodes them in its own process, where `.main` is the appex and the lookup would fall back to printing the raw key.
 - **Verified on simulator:** authorization prompt, alarm arming, firing at the scheduled minute, `breaksThroughFocus: true` in the alert request, the selected `.wav` resolving from the app bundle, and the widget extension rendering `AlarmAttributes<CommuteAlarmMetadata>`.
+- **AlarmKit alert sounds have no 30-second limit, and do not have to ship in the bundle.**
+  Measured on a physical iPhone 16 Pro, iOS 26.5.2, 2026-08-30, with a throwaway harness
+  (`RainyClock/AlarmSoundLab.swift` on branch `ios/alarm-sound-lab`) playing spoken
+  second-by-second counting so the played extent is audible:
+  - A **120 s** bundled `.wav` played as the alert sound — no fallback to the system tone.
+    Every rung from 10 s to 120 s passed. This **contradicts the only public guidance**, an
+    Apple engineer's forum reply saying "less than 30 seconds"; that number is
+    `UNNotificationSound`'s documented limit (which *is* real, and still binds the pre-26
+    fallback path) and does not apply to AlarmKit. Apple documents no AlarmKit limit at all.
+  - A file **written at runtime** into the app container's `Library/Sounds`, under a name
+    that exists nowhere in the bundle, also played. So alarm audio can be generated or
+    downloaded on device — it does not have to be a build-time resource. Note the directory
+    does not exist in a fresh container and must be created; the harness also sets
+    `.completeUntilFirstUserAuthentication` so the file stays readable while the device is
+    locked. This contradicts Apple Forums thread 798140 (FB19779004, iOS 26 beta 8), where
+    the same manoeuvre silently fell back to the default — evidently fixed since.
+  - Both facts are undocumented and were observed on one OS build. AlarmKit's sound
+    behaviour has already changed across 26.0/26.1, so **re-check after any iOS update**
+    before relying on either.
+  - Still unmeasured: whether a long sound plays to its end, whether it loops, and how long
+    an unattended alarm keeps alerting. AlarmKit exposes no looping API, and the observed
+    behaviour flipped between 26.0 (played once) and 26.1 (repeats until stopped).
 - **Still needs a device pass before submitting:**
   - Ringing with the physical ring/silent switch off (a simulator has no switch).
-  - The snooze button round-trip, and whether a 18–24s custom `.wav` loops until stopped or falls silent.
+  - The snooze button round-trip.
   - The snooze Live Activity showing translated text ("賴床中"), not the raw key `alarm_snoozing_title` — this is the cross-process bundle resolution above.
   - Archiving: automatic signing has to mint the extension's provisioning profile, and both version numbers must match.
 

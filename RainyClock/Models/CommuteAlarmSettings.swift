@@ -36,6 +36,12 @@ struct CommuteAlarmSettings: Codable, Equatable {
         case energeticPulse
         case deepResonance
         case minimalTap
+        /// A clip this app generated and wrote into the container at runtime, rather
+        /// than one of the ten shipped tones. The file it names lives in
+        /// `settings.aiVoiceFileName`, not here — a raw-value enum cannot carry an
+        /// associated value, and `rawValue` is load-bearing in the picker tag, the
+        /// settings decoder, the schedule fingerprint and the stored notification plan.
+        case aiVoice
         case systemDefault
 
         static var allCases: [AlarmSound] {
@@ -56,12 +62,25 @@ struct CommuteAlarmSettings: Codable, Equatable {
         /// What the sound picker offers. The system alarm tone only appears on
         /// iOS 26+, where AlarmKit's `.default` resolves to it; the notification
         /// fallback has no way to reach the same tone.
+        ///
+        /// `aiVoice` is deliberately absent: it is chosen by generating a clip, not
+        /// by tapping a row, and a picker row with no file behind it would ring
+        /// silently. Use `restorableCases` for validating stored values.
         static var selectableCases: [AlarmSound] {
             if #available(iOS 26.0, *) {
                 allCases + [.systemDefault]
             } else {
                 allCases
             }
+        }
+
+        /// What may legitimately come back out of storage. Wider than
+        /// `selectableCases`, and the two must not be conflated: the decoder used to
+        /// validate against the picker list, which silently reset any sound the
+        /// picker does not offer back to `.rainyClock` on every launch. A generated
+        /// voice has to survive that round trip.
+        static var restorableCases: [AlarmSound] {
+            selectableCases + [.aiVoice]
         }
 
         /// True when the system picks the tone, so there is no bundled file to
@@ -94,6 +113,8 @@ struct CommuteAlarmSettings: Codable, Equatable {
                 String(localized: "alarm_sound_deep_resonance")
             case .minimalTap:
                 String(localized: "alarm_sound_minimal_tap")
+            case .aiVoice:
+                String(localized: "alarm_sound_ai_voice")
             case .systemDefault:
                 String(localized: "alarm_sound_system_default")
             }
@@ -121,6 +142,11 @@ struct CommuteAlarmSettings: Codable, Equatable {
                 "DeepResonance.wav"
             case .minimalTap:
                 "MinimalTap.wav"
+            case .aiVoice:
+                // No shipped file. The real name is per-user and lives in
+                // `settings.aiVoiceFileName`; resolve through
+                // `CommuteAlarmSettings.soundFileNameOverride` instead of reading this.
+                ""
             case .systemDefault:
                 "AlarmTone.wav"
             }
@@ -139,6 +165,15 @@ struct CommuteAlarmSettings: Codable, Equatable {
     var rainProbabilityThreshold: Double = 0.5
     var selectedWeekdays: Set<Int> = Self.allWeekdays
     var alarmSound: AlarmSound = .rainyClock
+    /// File name of the generated clip inside the container's `Library/Sounds`,
+    /// when `alarmSound == .aiVoice`. Kept beside the enum rather than inside it
+    /// so `AlarmSound` stays a plain raw-value enum.
+    var aiVoiceFileName: String?
+    /// What was said and who said it. Kept so the sheet reopens on what the user
+    /// last chose rather than a blank page — the clip itself is audio and cannot
+    /// be read back into a text field.
+    var aiVoicePersona: VoicePersona = .default
+    var aiVoiceText: String = ""
     var isSnoozeEnabled: Bool = true
     var snoozeDurationMinutes: Int = 5
 
@@ -164,7 +199,10 @@ struct CommuteAlarmSettings: Codable, Equatable {
         // A stored sound the running system cannot offer (the system alarm tone on
         // iOS 17–25) falls back rather than silently ringing something else.
         let decodedAlarmSound = try values.decodeIfPresent(AlarmSound.self, forKey: .alarmSound) ?? .rainyClock
-        alarmSound = AlarmSound.selectableCases.contains(decodedAlarmSound) ? decodedAlarmSound : .rainyClock
+        alarmSound = AlarmSound.restorableCases.contains(decodedAlarmSound) ? decodedAlarmSound : .rainyClock
+        aiVoiceFileName = try values.decodeIfPresent(String.self, forKey: .aiVoiceFileName)
+        aiVoicePersona = try values.decodeIfPresent(VoicePersona.self, forKey: .aiVoicePersona) ?? .default
+        aiVoiceText = try values.decodeIfPresent(String.self, forKey: .aiVoiceText) ?? ""
         isSnoozeEnabled = try values.decodeIfPresent(Bool.self, forKey: .isSnoozeEnabled) ?? true
         let decodedSnoozeDuration = try values.decodeIfPresent(Int.self, forKey: .snoozeDurationMinutes) ?? 5
         snoozeDurationMinutes = min(max(decodedSnoozeDuration, Self.snoozeDurationRange.lowerBound), Self.snoozeDurationRange.upperBound)
@@ -216,6 +254,10 @@ struct AlarmScheduleFingerprint: Codable, Equatable {
     var rainLeadTimeMinutes: Int
     var rainProbabilityThreshold: Double
     var alarmSoundRawValue: String
+    /// Part of the fingerprint so regenerating the voice counts as a settings
+    /// change: the existing reconcile pass then re-registers the alarm with the new
+    /// clip without any extra plumbing.
+    var aiVoiceFileName: String?
     var isSnoozeEnabled: Bool
     var snoozeDurationMinutes: Int
 }
@@ -238,6 +280,7 @@ extension AlarmScheduleFingerprint {
         rainLeadTimeMinutes = try values.decode(Int.self, forKey: .rainLeadTimeMinutes)
         rainProbabilityThreshold = try values.decode(Double.self, forKey: .rainProbabilityThreshold)
         alarmSoundRawValue = try values.decode(String.self, forKey: .alarmSoundRawValue)
+        aiVoiceFileName = try values.decodeIfPresent(String.self, forKey: .aiVoiceFileName)
         isSnoozeEnabled = try values.decodeIfPresent(Bool.self, forKey: .isSnoozeEnabled) ?? true
         snoozeDurationMinutes = try values.decodeIfPresent(Int.self, forKey: .snoozeDurationMinutes) ?? 5
     }
@@ -256,9 +299,29 @@ extension CommuteAlarmSettings {
             rainLeadTimeMinutes: rainLeadTimeMinutes,
             rainProbabilityThreshold: rainProbabilityThreshold,
             alarmSoundRawValue: alarmSound.rawValue,
+            aiVoiceFileName: alarmSound == .aiVoice ? aiVoiceFileName : nil,
             isSnoozeEnabled: isSnoozeEnabled,
             snoozeDurationMinutes: snoozeDurationMinutes
         )
+    }
+
+    /// The file the alarm should actually play, or `nil` to let the system choose
+    /// its own alarm tone.
+    ///
+    /// A generated clip can go missing between being chosen and being needed — the
+    /// user clears storage, restores to a new device, or generation half-failed — so
+    /// this falls back to a shipped tone rather than naming a file that is not there.
+    /// A wrong-sounding alarm is recoverable; a silent one is not.
+    var soundFileNameOverride: String? {
+        switch alarmSound {
+        case .systemDefault:
+            nil
+        case .aiVoice:
+            aiVoiceFileName.flatMap(GeneratedVoiceStore.existingFileName(named:))
+                ?? AlarmSound.rainyClock.fileName
+        default:
+            alarmSound.fileName
+        }
     }
 }
 

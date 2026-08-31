@@ -32,8 +32,20 @@ struct ContentView: View {
         }
         .background(Color.appBackground.ignoresSafeArea())
         .preferredColorScheme(.dark)
-        // Runs once the view hierarchy exists: the consent form needs a view
-        // controller to present from, which is not available during app `init()`.
+        // A GDPR user answers once before the first ad request; the same sheet
+        // reopens from the Alarm tab's privacy row to change the answer later.
+        .sheet(isPresented: $consentManager.isConsentSheetPresented) {
+            AdConsentSheet()
+        }
+        // Deliberately not `onDismiss`: the continuation (SDK start, then ATT)
+        // hangs off our own state flipping false — produced only by an answer
+        // or a real swipe-down — instead of UIKit's presentation callbacks,
+        // whose timing around launch is not worth trusting.
+        .onChange(of: consentManager.isConsentSheetPresented) { wasPresented, isPresented in
+            if wasPresented, !isPresented {
+                consentManager.consentSheetDidClose()
+            }
+        }
         .task {
             consentManager.requestConsentThenStartAds()
             // The armed alarm repeats weekly with the rain decision that was current
@@ -46,8 +58,8 @@ struct ContentView: View {
                 return
             }
 
-            // A launch that failed the consent update (no network, typically) left
-            // the latch open; this is the retry.
+            // Harmless after the first activation: the SDK starts only once,
+            // and AppLovin retries a failed handshake on its own.
             consentManager.requestConsentThenStartAds()
             Task {
                 await viewModel.refreshScheduledAlarmIfWeatherIsStale()
@@ -81,16 +93,13 @@ struct ContentView: View {
             .padding(.top, 12)
             .padding(.bottom, 22)
 
-            // Kept out of the hierarchy until UMP reports consent, so no ad request
-            // can precede it.
+            // Kept out of the hierarchy until consent is settled and LevelPlay
+            // has finished initialising, so no ad request can precede either.
             if !AppEnvironment.isRunningTests, consentManager.canRequestAds {
-                AdMobBannerView(
-                    adUnitID: AppEnvironment.adMobBannerAdUnitID,
-                    allowsPersonalizedAds: consentManager.isTrackingAuthorized
-                )
-                    // The banner configures its `BannerView` once, so a changed answer
-                    // — a late ATT grant, a revised consent choice — only reaches the
-                    // ad request by rebuilding it under a new identity.
+                LevelPlayBannerView(adUnitID: AppEnvironment.levelPlayBannerAdUnitID)
+                    // The banner configures its `LPMBannerAdView` once, so a revised
+                    // consent choice or a late ATT grant only reaches the ad request
+                    // stream by rebuilding it under a new identity.
                     .id(consentManager.adConfigurationRevision)
                     .frame(maxWidth: .infinity)
                     .background(Color.appBackground)
@@ -483,6 +492,8 @@ private struct AlarmTabView: View {
 
     @ObservedObject var viewModel: AlarmViewModel
     @ObservedObject private var consentManager = ConsentManager.shared
+    @State private var showsAIVoiceSheet = false
+    @State private var soundBeforeAIVoice: CommuteAlarmSettings.AlarmSound?
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     // Only consulted at accessibility text sizes, where the row wraps and the
     // chip finally has room to grow. Capped so AX5 doesn't produce a chip
@@ -568,13 +579,28 @@ private struct AlarmTabView: View {
                             Spacer()
                             Menu {
                                 Picker("alarm_sound", selection: $viewModel.settings.alarmSound) {
-                                    ForEach(CommuteAlarmSettings.AlarmSound.selectableCases) { sound in
+                                    ForEach(soundChoices) { sound in
                                         Text(sound.displayName).tag(sound)
                                     }
                                 }
                             } label: {
                                 Text(viewModel.settings.alarmSound.displayName)
                                     .foregroundStyle(.secondary)
+                            }
+                            // Selecting the spoken alarm opens the sheet, but only
+                            // on a change — so once it is chosen there is nothing
+                            // left to tap to edit it. This is that.
+                            if viewModel.settings.alarmSound == .aiVoice {
+                                Button {
+                                    stopSoundPreview()
+                                    showsAIVoiceSheet = true
+                                } label: {
+                                    Image(systemName: "square.and.pencil")
+                                        .font(.title3)
+                                }
+                                .buttonStyle(.plain)
+                                .foregroundStyle(Color.accentColor)
+                                .accessibilityLabel(Text("alarm_sound_ai_voice"))
                             }
                             // The system alarm tone lives in iOS, not in the app
                             // bundle, so there is nothing to play here.
@@ -613,8 +639,8 @@ private struct AlarmTabView: View {
                             }
                         }
 
-                        // Only regulated regions require this entry point, so UMP
-                        // decides whether it appears at all.
+                        // Only GDPR regions require this entry point — the
+                        // geography answer from MAX init decides.
                         if consentManager.showsPrivacyOptions {
                             HStack {
                                 Text("ad_privacy_options")
@@ -625,16 +651,20 @@ private struct AlarmTabView: View {
                                 .buttonStyle(.plain)
                                 .foregroundStyle(Color.accentColor)
                             }
-                            // UMP loads the form lazily, so an early tap is a
-                            // documented no-op. Say so instead of looking broken.
-                            .alert(
-                                Text("ad_privacy_options_failed_title"),
-                                isPresented: $consentManager.privacyOptionsFailed
-                            ) {
-                                Button("ok_button", role: .cancel) {}
-                            } message: {
-                                Text("ad_privacy_options_failed_body")
+                        }
+
+                        // Guideline 2.5.18: an app that carries ads must give
+                        // users a way to report an inappropriate or
+                        // age-inappropriate one. Unlike the consent row above,
+                        // this is required everywhere, not only under GDPR — so
+                        // it is not behind `showsPrivacyOptions`.
+                        HStack {
+                            Text("report_ad")
+                            Spacer()
+                            Link(destination: AdReport.mailURL) {
+                                Text("report_ad_action")
                             }
+                            .foregroundStyle(Color.accentColor)
                         }
                     }
                     .padding(18)
@@ -696,6 +726,12 @@ private struct AlarmTabView: View {
             .navigationTitle(String(localized: "tab_alarm"))
             .toolbar(.hidden, for: .navigationBar)
             .background(Color.appBackground)
+        }
+        .onChange(of: viewModel.settings.alarmSound) { previous, current in
+            soundSelectionChanged(from: previous, to: current)
+        }
+        .sheet(isPresented: $showsAIVoiceSheet, onDismiss: aiVoiceSheetDismissed) {
+            AIVoiceSheet(viewModel: viewModel)
         }
         .sheet(isPresented: $showsTimePicker) {
             NavigationStack {
@@ -872,6 +908,42 @@ private struct AlarmTabView: View {
         previewingSound == viewModel.settings.alarmSound
     }
 
+    /// The picker's contents. `aiVoice` appears only where it can actually be
+    /// produced, the same way an unset `LevelPlayAppKey` keeps the ad SDK out of
+    /// the build's behaviour rather than leaving a control that does nothing.
+    private var soundChoices: [CommuteAlarmSettings.AlarmSound] {
+        var choices = CommuteAlarmSettings.AlarmSound.selectableCases
+        if AIVoiceClient.isConfigured {
+            choices.append(.aiVoice)
+        }
+        return choices
+    }
+
+    /// Choosing the spoken alarm means writing it, so the picker opens the sheet
+    /// rather than selecting a file that may not exist yet. Backing out without a
+    /// clip puts the previous tone back — leaving `aiVoice` selected with nothing
+    /// behind it would show a sound the alarm would not actually ring.
+    private func soundSelectionChanged(from previous: CommuteAlarmSettings.AlarmSound,
+                                       to current: CommuteAlarmSettings.AlarmSound) {
+        guard current == .aiVoice, previous != .aiVoice, !showsAIVoiceSheet else {
+            return
+        }
+        stopSoundPreview()
+        soundBeforeAIVoice = previous
+        showsAIVoiceSheet = true
+    }
+
+    private func aiVoiceSheetDismissed() {
+        guard viewModel.settings.alarmSound == .aiVoice,
+              viewModel.settings.aiVoiceFileName.flatMap(GeneratedVoiceStore.existingFileName) == nil,
+              let previous = soundBeforeAIVoice else {
+            soundBeforeAIVoice = nil
+            return
+        }
+        viewModel.settings.alarmSound = previous
+        soundBeforeAIVoice = nil
+    }
+
     private func toggleSelectedSoundPreview() {
         if isPreviewingSelectedSound {
             stopSoundPreview()
@@ -880,12 +952,24 @@ private struct AlarmTabView: View {
         }
     }
 
+    /// The shipped tones live in the bundle; a generated one lives in the app's
+    /// own container. The alarm itself never needs to know the difference — both
+    /// paths resolve a bare file name — but this player opens the file directly,
+    /// so it does.
+    private func previewURL(for sound: CommuteAlarmSettings.AlarmSound) -> URL? {
+        if sound == .aiVoice {
+            return viewModel.settings.aiVoiceFileName.flatMap(GeneratedVoiceStore.url(named:))
+        }
+        let parts = sound.fileName.split(separator: ".", maxSplits: 1).map(String.init)
+        guard let resource = parts.first, let ext = parts.dropFirst().first else {
+            return nil
+        }
+        return Bundle.main.url(forResource: resource, withExtension: ext)
+    }
+
     private func previewSound(_ sound: CommuteAlarmSettings.AlarmSound) {
         stopSoundPreview()
-        let soundFile = sound.fileName.split(separator: ".", maxSplits: 1).map(String.init)
-        guard let resource = soundFile.first,
-              let fileExtension = soundFile.dropFirst().first,
-              let url = Bundle.main.url(forResource: resource, withExtension: fileExtension),
+        guard let url = previewURL(for: sound),
               let player = try? AVAudioPlayer(contentsOf: url) else {
             return
         }
