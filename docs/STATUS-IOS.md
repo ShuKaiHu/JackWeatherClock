@@ -519,9 +519,30 @@ model. Adverb-form tags (`[cheerfully]`, `[warmly]`, `[gently]`) are reported re
 third-party evaluation but are undocumented by Google; they are recorded against each emotion
 and stay off behind `TTS_ALLOW_UNVERIFIED_TAGS` until somebody has actually listened.
 
-**Untested, and worth ten minutes in AI Studio:** whether the adjective/adverb distinction is
-real — Google's Mode 3 examples are all adjectives, and the reliable third-party list is all
-adverbs. If adverbs are safe, the emotional range available roughly doubles.
+**Which sentence gets which emotion is decided by a model, not by the app.** The split is done
+in code and the model only labels the pieces — it is never handed the text and asked for a
+rewrite, because the words are the user's and an alarm that says something they did not type
+is worse than one read flat. Labels come from the same closed vocabulary, so the labeller
+cannot invent a tag either. Any failure — quota, timeout, a hallucinated id — degrades that
+sentence to neutral and the clip is still generated.
+
+**First contact with the live API, 2026-08-30.** A key was issued and the pipeline ran
+end-to-end; three things came out of it that would otherwise cost someone an afternoon:
+
+- **`gemini-2.5-flash` is not available to new projects at all.** The API answers 404 with
+  "no longer available to new users … We recommend you to use the Interactions API". The three
+  TTS models *are* available, including `gemini-2.5-flash-preview-tts`, so the cheap costing
+  above still holds — but anything text-only must use `gemini-3.6-flash` or a `-lite` sibling.
+- **The free tier is unusable for development, not only for shipping.** Roughly ten TTS calls
+  exhausted the quota, and it does not recover on a useful timescale. Billing has to be
+  enabled before any real work; the EEA/UK clause already required it before any release.
+- **The Mode 3 warning did not reproduce.** `[cheerful]` on `2.5-flash-preview-tts` with a
+  Chinese transcript was **not** spoken: transcribing the audio back showed 早安，該起床囉 with
+  no stray word, and the clip ran 2.01 s against 1.97 s for the untagged control. The method is
+  sound — a real English word planted in the same sentence ("hello") was transcribed 3/3 and
+  added 1.1 s. **One sample per tag, though, and against explicit documentation**, so the safe
+  mapping stays the default. Worth a proper run once billing is on: if adjective tags really
+  are safe on this model, the emotional range roughly doubles and the mapping simplifies.
 
 **Vendor: Google Gemini-TTS**, decided 2026-08-30. It is the only one with both Taiwanese
 Mandarin and real prompt-driven tone control. Azure has the best zh-TW accent but its three

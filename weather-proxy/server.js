@@ -11,6 +11,7 @@ const {
 } = require('./guards')
 const { PERSONA_IDS, EMOTION_IDS, styleLanguage } = require('./personas')
 const { synthesize, SAMPLE_RATE } = require('./tts')
+const { annotate, splitSentences } = require('./annotate')
 
 /**
  * How much speech a clip may contain. The app pads the rest of its 28-second
@@ -185,11 +186,17 @@ async function handleTTS(request, response) {
   // emotion *id* rather than a tag, because the tag a given feeling should
   // become is a moving target — Google reads adjective-form tags aloud as words
   // — and this way correcting one is a redeploy instead of an app release.
-  const segments = Array.isArray(body.segments)
-    ? body.segments
-    : typeof body.text === 'string'
-      ? [{ text: body.text, emotion: 'neutral' }]
-      : null
+  // Two ways in. `segments` lets the caller direct the line itself; `text` hands
+  // that job to the model, which is the normal path — the user types words, not
+  // stage directions.
+  let segments = Array.isArray(body.segments) ? body.segments : null
+  let annotateFrom = null
+
+  if (!segments && typeof body.text === 'string') {
+    const sentences = splitSentences(body.text, MAX_TTS_SEGMENTS)
+    segments = sentences.map((text) => ({ text, emotion: 'neutral' }))
+    annotateFrom = sentences
+  }
 
   if (!segments || segments.length === 0 || segments.length > MAX_TTS_SEGMENTS) {
     return sendJson(response, 400, { error: 'segments_required', limit: MAX_TTS_SEGMENTS })
@@ -211,6 +218,19 @@ async function handleTTS(request, response) {
   }
   if (characters > MAX_TTS_CHARACTERS) {
     return sendJson(response, 400, { error: 'text_too_long', limit: MAX_TTS_CHARACTERS })
+  }
+
+  // Labelling happens before the cache key is built, so the key covers the
+  // delivery that will actually be synthesized. A failed annotation degrades to
+  // neutral rather than blocking the clip.
+  if (annotateFrom) {
+    const emotions = await annotate({
+      apiKey: geminiApiKey,
+      sentences: annotateFrom,
+      persona,
+      language
+    })
+    segments = segments.map((segment, i) => ({ ...segment, emotion: emotions[i] ?? 'neutral' }))
   }
 
   // Same words, same delivery, same voice is the same audio — so a retry after a

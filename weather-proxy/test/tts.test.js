@@ -131,3 +131,41 @@ test('the audio blob is found wherever the response shape hides it', () => {
 test('a prose answer instead of audio reads as no audio, not as garbage', () => {
   assert.equal(extractAudio({ candidates: [{ content: { parts: [{ text: 'Sorry, I cannot' }] } }] }), null)
 })
+
+// --- sentence splitting, which decides what the model gets asked to label ---
+
+const { splitSentences } = require('../annotate')
+
+test('Chinese splits on its own punctuation, which carries no spaces', () => {
+  assert.deepEqual(
+    splitSentences('早安～該起床囉！今天外面下雨。快起來換衣服！', 8),
+    ['早安～該起床囉！', '今天外面下雨。', '快起來換衣服！']
+  )
+})
+
+test('English splits only when whitespace follows the stop', () => {
+  assert.deepEqual(
+    splitSentences('Good morning! It is raining today. Leave early.', 8),
+    ['Good morning!', 'It is raining today.', 'Leave early.']
+  )
+})
+
+test('a time survives, because an alarm line is full of them', () => {
+  assert.deepEqual(splitSentences('Leave at 7.30 today. Do not be late!', 8),
+    ['Leave at 7.30 today.', 'Do not be late!'])
+})
+
+test('text with no punctuation stays one segment rather than being chopped', () => {
+  assert.deepEqual(splitSentences('no punctuation here at all', 8), ['no punctuation here at all'])
+})
+
+test('past the limit the tail is joined, never dropped', () => {
+  // Losing the user's last sentence would be a silent edit of what they wrote.
+  const parts = splitSentences('a. b. c. d. e. f.', 3)
+  assert.equal(parts.length, 3)
+  assert.ok(parts.join(' ').includes('f.'))
+})
+
+test('an abbreviation does split, and that is accepted rather than unnoticed', () => {
+  assert.deepEqual(splitSentences('Meet Mr. Chen today.', 8), ['Meet Mr.', 'Chen today.'])
+})
