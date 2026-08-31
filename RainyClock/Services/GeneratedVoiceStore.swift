@@ -41,11 +41,19 @@ enum GeneratedVoiceStore {
     /// The name back again when the file is really there, otherwise `nil` — the
     /// signature callers need to fall back on a shipped tone.
     static func existingFileName(named fileName: String) -> String? {
+        url(named: fileName) == nil ? nil : fileName
+    }
+
+    /// Where the clip actually is, for anything that has to open it rather than
+    /// name it. The alarm paths only ever pass a bare name and let the system
+    /// resolve it; the in-app preview has to load the file itself, and would
+    /// otherwise search the bundle and come back empty.
+    static func url(named fileName: String) -> URL? {
         guard let url = directory?.appendingPathComponent(fileName),
               FileManager.default.fileExists(atPath: url.path) else {
             return nil
         }
-        return fileName
+        return url
     }
 
     /// Writes a clip and returns its file name, or `nil` on any failure.

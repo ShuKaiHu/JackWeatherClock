@@ -24,6 +24,7 @@ struct AIVoiceSheet: View {
     @State private var message: String?
     @State private var previewPlayer: AVAudioPlayer?
     @State private var playingPersona: VoicePersona?
+    @State private var previewTask: Task<Void, Never>?
 
     private let client: AIVoiceGenerating = AIVoiceClient()
 
@@ -69,33 +70,38 @@ struct AIVoiceSheet: View {
 
                 Section {
                     ForEach(VoicePersona.allCases) { candidate in
-                        Button {
-                            persona = candidate
-                        } label: {
-                            HStack(spacing: 12) {
-                                Image(systemName: persona == candidate ? "largecircle.fill.circle" : "circle")
-                                    .foregroundStyle(Color.accentColor)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(candidate.displayName)
-                                        .foregroundStyle(.primary)
-                                    Text(candidate.subtitle)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                                Spacer()
-                                Button {
-                                    playPreview(of: candidate)
-                                } label: {
-                                    Image(systemName: playingPersona == candidate
-                                          ? "stop.circle.fill" : "play.circle.fill")
-                                        .font(.title3)
-                                }
-                                .buttonStyle(.plain)
+                        // Not a Button wrapping a Button: SwiftUI gives the outer
+                        // one every tap, and the play control inside it silently
+                        // never fires. The row selects through a tap gesture so the
+                        // preview can stay a real button.
+                        HStack(spacing: 12) {
+                            Image(systemName: persona == candidate ? "largecircle.fill.circle" : "circle")
                                 .foregroundStyle(Color.accentColor)
-                                .accessibilityLabel(Text("preview_alarm_sound"))
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(candidate.displayName)
+                                    .foregroundStyle(.primary)
+                                Text(candidate.subtitle)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
                             }
+                            Spacer()
                         }
-                        .buttonStyle(.plain)
+                        // The whole row selects, including the empty space beside
+                        // the labels, but stops short of the preview button.
+                        .contentShape(Rectangle())
+                        .onTapGesture { persona = candidate }
+                        .overlay(alignment: .trailing) {
+                            Button {
+                                playPreview(of: candidate)
+                            } label: {
+                                Image(systemName: playingPersona == candidate
+                                      ? "stop.circle.fill" : "play.circle.fill")
+                                    .font(.title3)
+                            }
+                            .buttonStyle(.plain)
+                            .foregroundStyle(Color.accentColor)
+                            .accessibilityLabel(Text("preview_alarm_sound"))
+                        }
                     }
                 } header: {
                     Text("ai_voice_who_says_it")
@@ -124,28 +130,57 @@ struct AIVoiceSheet: View {
                     }
                 }
             }
+            .onAppear {
+                // Reopen on what was last chosen rather than a blank page: the clip
+                // is audio and cannot be read back into a text field, so the words
+                // have to come from settings or they are gone.
+                text = viewModel.settings.aiVoiceText
+                persona = viewModel.settings.aiVoicePersona
+            }
             .onDisappear { stopPreview() }
         }
     }
 
     private func playPreview(of candidate: VoicePersona) {
-        if playingPersona == candidate {
-            stopPreview()
+        let wasPlaying = playingPersona == candidate
+        // Unconditionally, before anything else. Replacing the player alone does
+        // not silence the old one — it plays on until it happens to be
+        // deallocated — so tapping a second voice used to leave two talking over
+        // each other.
+        stopPreview()
+        if wasPlaying {
             return
         }
-        guard let url = Bundle.main.url(forResource: candidate.previewResourceName, withExtension: "m4a") else {
+
+        guard let url = Bundle.main.url(forResource: candidate.previewResourceName, withExtension: "m4a"),
+              let player = try? AVAudioPlayer(contentsOf: url) else {
             return
         }
         // Without this the session inherits `.soloAmbient`, which plays nothing
         // while the ring switch is silenced — the same trap the tone preview hit.
         try? AVAudioSession.sharedInstance().setCategory(.playback, options: [.duckOthers])
         try? AVAudioSession.sharedInstance().setActive(true)
-        previewPlayer = try? AVAudioPlayer(contentsOf: url)
-        previewPlayer?.play()
+
+        previewPlayer = player
         playingPersona = candidate
+        player.prepareToPlay()
+        player.play()
+
+        // Reaching the end has to put the button back, or every voice the user
+        // auditions is left showing a stop control for audio that finished.
+        let duration = player.duration
+        previewTask = Task {
+            try? await Task.sleep(for: .milliseconds(Int(duration * 1_000)))
+            guard !Task.isCancelled, playingPersona == candidate else {
+                return
+            }
+            stopPreview()
+        }
     }
 
     private func stopPreview() {
+        previewTask?.cancel()
+        previewTask = nil
         previewPlayer?.stop()
         previewPlayer = nil
         playingPersona = nil

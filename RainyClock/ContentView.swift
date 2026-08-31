@@ -493,6 +493,7 @@ private struct AlarmTabView: View {
     @ObservedObject var viewModel: AlarmViewModel
     @ObservedObject private var consentManager = ConsentManager.shared
     @State private var showsAIVoiceSheet = false
+    @State private var soundBeforeAIVoice: CommuteAlarmSettings.AlarmSound?
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     // Only consulted at accessibility text sizes, where the row wraps and the
     // chip finally has room to grow. Capped so AX5 doesn't produce a chip
@@ -578,7 +579,7 @@ private struct AlarmTabView: View {
                             Spacer()
                             Menu {
                                 Picker("alarm_sound", selection: $viewModel.settings.alarmSound) {
-                                    ForEach(CommuteAlarmSettings.AlarmSound.selectableCases) { sound in
+                                    ForEach(soundChoices) { sound in
                                         Text(sound.displayName).tag(sound)
                                     }
                                 }
@@ -599,30 +600,6 @@ private struct AlarmTabView: View {
                                 .foregroundStyle(Color.accentColor)
                                 .accessibilityLabel(Text("preview_alarm_sound"))
                             }
-                        }
-
-                        // Its own row rather than an entry in the picker above: a
-                        // spoken alarm is written before it exists, so choosing it
-                        // means opening something, not selecting a row that would
-                        // otherwise name a file the app does not have yet.
-                        if AIVoiceClient.isConfigured {
-                            Button {
-                                showsAIVoiceSheet = true
-                            } label: {
-                                HStack {
-                                    Text("alarm_sound_ai_voice")
-                                        .foregroundStyle(.primary)
-                                    Spacer()
-                                    Text(viewModel.settings.alarmSound == .aiVoice
-                                         ? viewModel.settings.aiVoicePersona.displayName
-                                         : String(localized: "ai_voice_not_set"))
-                                        .foregroundStyle(.secondary)
-                                    Image(systemName: "chevron.right")
-                                        .font(.caption)
-                                        .foregroundStyle(.tertiary)
-                                }
-                            }
-                            .buttonStyle(.plain)
                         }
 
                         Toggle(isOn: $viewModel.settings.isSnoozeEnabled) {
@@ -721,7 +698,10 @@ private struct AlarmTabView: View {
             .toolbar(.hidden, for: .navigationBar)
             .background(Color.appBackground)
         }
-        .sheet(isPresented: $showsAIVoiceSheet) {
+        .onChange(of: viewModel.settings.alarmSound) { previous, current in
+            soundSelectionChanged(from: previous, to: current)
+        }
+        .sheet(isPresented: $showsAIVoiceSheet, onDismiss: aiVoiceSheetDismissed) {
             AIVoiceSheet(viewModel: viewModel)
         }
         .sheet(isPresented: $showsTimePicker) {
@@ -899,6 +879,42 @@ private struct AlarmTabView: View {
         previewingSound == viewModel.settings.alarmSound
     }
 
+    /// The picker's contents. `aiVoice` appears only where it can actually be
+    /// produced, the same way an unset `LevelPlayAppKey` keeps the ad SDK out of
+    /// the build's behaviour rather than leaving a control that does nothing.
+    private var soundChoices: [CommuteAlarmSettings.AlarmSound] {
+        var choices = CommuteAlarmSettings.AlarmSound.selectableCases
+        if AIVoiceClient.isConfigured {
+            choices.append(.aiVoice)
+        }
+        return choices
+    }
+
+    /// Choosing the spoken alarm means writing it, so the picker opens the sheet
+    /// rather than selecting a file that may not exist yet. Backing out without a
+    /// clip puts the previous tone back — leaving `aiVoice` selected with nothing
+    /// behind it would show a sound the alarm would not actually ring.
+    private func soundSelectionChanged(from previous: CommuteAlarmSettings.AlarmSound,
+                                       to current: CommuteAlarmSettings.AlarmSound) {
+        guard current == .aiVoice, previous != .aiVoice, !showsAIVoiceSheet else {
+            return
+        }
+        stopSoundPreview()
+        soundBeforeAIVoice = previous
+        showsAIVoiceSheet = true
+    }
+
+    private func aiVoiceSheetDismissed() {
+        guard viewModel.settings.alarmSound == .aiVoice,
+              viewModel.settings.aiVoiceFileName.flatMap(GeneratedVoiceStore.existingFileName) == nil,
+              let previous = soundBeforeAIVoice else {
+            soundBeforeAIVoice = nil
+            return
+        }
+        viewModel.settings.alarmSound = previous
+        soundBeforeAIVoice = nil
+    }
+
     private func toggleSelectedSoundPreview() {
         if isPreviewingSelectedSound {
             stopSoundPreview()
@@ -907,12 +923,24 @@ private struct AlarmTabView: View {
         }
     }
 
+    /// The shipped tones live in the bundle; a generated one lives in the app's
+    /// own container. The alarm itself never needs to know the difference — both
+    /// paths resolve a bare file name — but this player opens the file directly,
+    /// so it does.
+    private func previewURL(for sound: CommuteAlarmSettings.AlarmSound) -> URL? {
+        if sound == .aiVoice {
+            return viewModel.settings.aiVoiceFileName.flatMap(GeneratedVoiceStore.url(named:))
+        }
+        let parts = sound.fileName.split(separator: ".", maxSplits: 1).map(String.init)
+        guard let resource = parts.first, let ext = parts.dropFirst().first else {
+            return nil
+        }
+        return Bundle.main.url(forResource: resource, withExtension: ext)
+    }
+
     private func previewSound(_ sound: CommuteAlarmSettings.AlarmSound) {
         stopSoundPreview()
-        let soundFile = sound.fileName.split(separator: ".", maxSplits: 1).map(String.init)
-        guard let resource = soundFile.first,
-              let fileExtension = soundFile.dropFirst().first,
-              let url = Bundle.main.url(forResource: resource, withExtension: fileExtension),
+        guard let url = previewURL(for: sound),
               let player = try? AVAudioPlayer(contentsOf: url) else {
             return
         }
