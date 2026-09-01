@@ -11,18 +11,18 @@ sessions writing over each other. Anything true of both platforms goes in `docs/
 - Store copy, release notes, review notes → `docs/appstore-metadata.md`
 - Product reasoning and rejected alternatives (both platforms) → `docs/PRODUCT_DECISIONS.md`
 
-Last updated: 2026-08-13.
+Last updated: 2026-09-01.
 
 ## Where things stand
 
 | | Version | State |
 | --- | --- | --- |
-| **Live on the App Store** | `1.6.6` | **Released 2026-08-18.** Confirmed 2026-08-29 against the public listing with the `itunes.apple.com/lookup` command below — this file had still been claiming 正在等待審查, the same staleness it warns about |
-| Superseded | `1.6.5` | Released 2026-08-04 |
-| Superseded | `1.6.3 (18)` | Released 2026-07-28 |
-| Rejected, then resolved | `1.6.4 (19)` | Rejected 2026-08-01 on 5.1.2(i) and 2.1(a); both answered, and the fixes reached users in 1.6.5 |
-| Superseded | `1.6.7` | **Released 2026-08-30.** The ad-provider migration. Confirmed against the public listing on 2026-08-31 — this row had still been claiming 正在等待審查, the third time this file has gone stale the same way |
 | **Live on the App Store** | `1.6.8` | **Released 2026-09-01**, first attempt — confirmed against the public listing, not against this file. The AI voice alarm. Production checked after release: weather and `/v1/tts` both answer 200 |
+| Superseded | `1.6.7` | **Released 2026-08-30.** The ad-provider migration. Confirmed against the public listing on 2026-08-31 — this row had still been claiming 正在等待審查, the third time this file has gone stale the same way |
+| Superseded | `1.6.6` | Released 2026-08-18 |
+| Superseded | `1.6.5` | Released 2026-08-04 |
+| Rejected, then resolved | `1.6.4 (19)` | Rejected 2026-08-01 on 5.1.2(i) and 2.1(a); both answered, and the fixes reached users in 1.6.5 |
+| Superseded | `1.6.3 (18)` | Released 2026-07-28 |
 
 **Ships with 1.6.6 (edited in ASC 2026-08-13):** both app names change — 繁體中文
 `RainyClock` → `Rainy Clock`, English `Rainy Clock: Rain Alarm` → `Rainy-Clock`. Plain
