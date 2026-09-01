@@ -21,8 +21,8 @@ Last updated: 2026-08-13.
 | Superseded | `1.6.5` | Released 2026-08-04 |
 | Superseded | `1.6.3 (18)` | Released 2026-07-28 |
 | Rejected, then resolved | `1.6.4 (19)` | Rejected 2026-08-01 on 5.1.2(i) and 2.1(a); both answered, and the fixes reached users in 1.6.5 |
-| **Live on the App Store** | `1.6.7` | **Released 2026-08-30.** The ad-provider migration. Confirmed against the public listing on 2026-08-31 — this row had still been claiming 正在等待審查, the third time this file has gone stale the same way |
-| **Waiting for Review** | `1.6.8 (27)` | The AI voice alarm. Uploaded and **submitted 2026-09-01**; the CLI export path again needed no credentials by hand. Do not trust this row once review turns around — run the `itunes.apple.com/lookup` command above, which is what caught this file claiming 1.6.6 and 1.6.7 were still in review after both had shipped |
+| Superseded | `1.6.7` | **Released 2026-08-30.** The ad-provider migration. Confirmed against the public listing on 2026-08-31 — this row had still been claiming 正在等待審查, the third time this file has gone stale the same way |
+| **Live on the App Store** | `1.6.8` | **Released 2026-09-01**, first attempt — confirmed against the public listing, not against this file. The AI voice alarm. Production checked after release: weather and `/v1/tts` both answer 200 |
 
 **Ships with 1.6.6 (edited in ASC 2026-08-13):** both app names change — 繁體中文
 `RainyClock` → `Rainy Clock`, English `Rainy Clock: Rain Alarm` → `Rainy-Clock`. Plain
@@ -636,10 +636,19 @@ Still open, roughly in order:
   wettest sample (real work, needs its own fallback for Taiwan geocoding) or reword around
   elapsed time. **This is a product decision and it is load-bearing** — the route-level line is
   the only part of this feature no competitor can copy.
-- Free quota, and whether to meter at all. Rewarded video does **not** pay for this: at a
-  US$5 eCPM planning figure a completed view returns ~NT$0.155 against NT$0.10 of TTS, and
-  breaking even on 30 s clips would need US$19 eCPM, above any verifiable rewarded rate
-  anywhere. Guideline 3.2.2(x) permits ad-gating, so the obstacle is arithmetic, not policy.
+- Free quota, and whether to meter at all. **Recomputed 2026-09-01: rewarded video now pays
+  for this.** Two things changed under the old arithmetic: speech is capped at 10 s
+  (`GeneratedVoiceStore.maximumSpeechDuration` — the 28 s clip is mostly tone, which costs
+  nothing), and the Cloud TTS switch in `weather-proxy/tts.js` escapes the 100/day cap that
+  had forced the default onto `3.1`, so the model is `gemini-2.5-flash-tts` again at
+  US$10/1M audio tokens. One generation is ~320 tokens ≈ US$0.0032 ≈ NT$0.10; a completed
+  view at the US$5 eCPM planning figure returns ~NT$0.155, about 1.5× — break-even is
+  ~US$3.2 eCPM, below plausible iOS rewarded rates rather than above all of them. (The
+  earlier "US$19 eCPM to break even" was 30 s clips on `3.1` at twice the token price.) So
+  the one-video-one-generation exchange is at worst break-even, and Guideline 3.2.2(x)
+  permits ad-gating — what stays open is only how generous the free tier should be. One
+  caveat: billing follows what the model speaks, not what `truncateToSeconds` keeps, so
+  text long enough to overrun the cap still costs ~NT$0.01 a second past it.
 - `docs/privacy-policy.html` states the app transmits nothing to a server and names alarm time
   and rain lead time as never leaving the device. Both become false the moment this ships;
   those sentences need rewriting, not an appended paragraph.
