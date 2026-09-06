@@ -11,7 +11,7 @@ sessions writing over each other. Anything true of both platforms goes in `docs/
 - Store copy, release notes, review notes → `docs/appstore-metadata.md`
 - Product reasoning and rejected alternatives (both platforms) → `docs/PRODUCT_DECISIONS.md`
 
-Last updated: 2026-09-01.
+Last updated: 2026-09-06.
 
 ## Where things stand
 
@@ -125,6 +125,17 @@ Still owed before submitting:
       screen. Getting there without billable impressions is worth remembering: launching with
       `-forceGDPRConsentGeography` and dismissing the sheet without answering leaves
       `startAdSdk()` uncalled, so the advertising id can be read with no ad request at all.
+- [x] **ironSource Ads account approved 2026-09-06** (email "Your ironSource Ads account is
+      approved"). Nothing was left to do on our side: both instances under app key
+      `27d81ff8d` — Banner `25243021` and Rewarded Video `25248417`, both bidding — were
+      already Active, and the SDK had been in the shipping app since 1.6.7. First 14 days of
+      Performance (Aug 24 – Sep 6): $0.57 revenue on 552 impressions across 140 sessions,
+      peak 12 DAU on 2026-09-01 (the 1.6.8 release day), settling to 1–3 DAU after — so
+      eCPM is about $1, and single days move the chart. The dashboard also notes that the
+      **ironSource Ads direct demand network was sunset on 2026-04-30**; supply now comes
+      through the ironSource Exchange, which the current LevelPlay SDK still reaches. Unity
+      recommends moving to the Unity Ads SDK ("Unity Vector") eventually — a backlog
+      candidate, not an action item.
 
 > **This file said "1.6.5 waiting to upload" for nine days after 1.6.5 had already shipped.**
 > Nobody updated it after the upload, and an agent reading it repeated the claim back as
@@ -659,6 +670,27 @@ Still open, roughly in order:
 
 Ordered by value, not urgency. None of these block a release.
 
+**Next update: add Unity Ads as a second demand source under LevelPlay.** *(Decided
+2026-09-06 after the ironSource approval email; not urgent, ride along with the next build.)*
+The app links only the LevelPlay core (`UnityMediationSDK`) and no network adapter, so the
+banner has exactly one bidder: the ironSource Exchange. ironSource's own direct-demand
+network was sunset on 2026-04-30 and those budgets moved to Unity Ads ("Unity Vector"),
+which is why the main line in Performance clears about $0.20 eCPM. Unity's sunset FAQ
+says LevelPlay users need do nothing to keep iSX serving, and in the same breath says to
+integrate the Unity Ads SDK and activate the network in LevelPlay to reach the moved demand.
+This is *adding a network under LevelPlay*, not replacing LevelPlay; the consent
+architecture stays. Steps: (1) dashboard Setup → Networks → Unity Ads, link the app to a
+Unity project for a Game ID and let it create the Banner bidding instance; (2) add the SPM
+package `ironsource-mobile/LevelPlay-UnityAds-Adapter-Swift-Package`, which pulls in the
+Unity Ads SDK; (3) verify on the **device**, not the simulator — another statically linked
+SDK is exactly the `-ObjC` launch-crash shape, and the test device must still be listed
+under Setup → Test devices first; (4) re-check the privacy manifest the Unity Ads SDK ships
+and the App Privacy answers (already declare tracking; Unity Ads and ironSource are the
+same controller, so the consent copy should not need to change); (5) accept the larger
+binary. Expected effect is eCPM, not volume — at the current scale the dollars stay small
+either way, and whether the banner is worth keeping at this DAU is a product call, not
+this item.
+
 0. **Handle the users whose background refresh can never run.** *(Raised 2026-08-03, approach
    not decided.)* `BackgroundWeatherRefresh` is what makes each morning's alarm reflect that
    morning's forecast, and it silently does nothing when **Background App Refresh is switched
@@ -678,15 +710,15 @@ Ordered by value, not urgency. None of these block a release.
 2. **Clear the "Sign-in required" checkbox in App Review Information.** It is checked with a
    demo account even though the app has no login. It has never caused a rejection, but the
    credentials sit there for no reason.
-3. **Refresh `SKAdNetworkItems` occasionally.** 50 identifiers were declared in `1.6.2 (17)`;
-   Google adds buyers to its list over time.
-4. **Confirm the AdMob payments and tax profile is complete.** Earnings are withheld past the
-   payout threshold otherwise. Worth settling before there is anything to withhold.
+3. **Refresh `SKAdNetworkItems` occasionally.** 50 identifiers were declared in `1.6.2 (17)`
+   from Google's list; the relevant list is now ironSource's / Unity's, and adding Unity Ads
+   (above) is the natural moment to regenerate it.
+4. **Confirm the ironSource payments and tax profile is complete.** Earnings are withheld
+   past the payout threshold otherwise. Worth settling before there is anything to withhold
+   — the first $0.57 arrived in the 14 days to 2026-09-06. (This item used to say AdMob;
+   that account is gone.)
 5. **Google Places fallback is dormant.** `GooglePlacesAPIKey` is empty in
    `RainyClock/Info.plist`, so address lookup relies entirely on Apple geocoding.
-6. **Google SDK frames symbolicate poorly.** Xcode upload warns about missing dSYMs for
-   `GoogleMobileAds` and `UserMessagingPlatform`. Does not block upload; only limits crash
-   reports inside those frameworks.
 
 ## Environment gotchas
 
